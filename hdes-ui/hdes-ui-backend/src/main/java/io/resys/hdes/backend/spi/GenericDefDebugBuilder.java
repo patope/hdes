@@ -138,7 +138,7 @@ public class GenericDefDebugBuilder implements DefDebugBuilder {
       // TODO, separate task runners for different resource types
       
       // DT only 
-      HdesExecutable.Input dtInput = reader.build(input, task.getInput());
+      HdesExecutable.InputValue dtInput = reader.build(input, task.getInput());
       HdesExecutable.DecisionTable dt = (DecisionTable) task.getValue();
       HdesExecutable.Output dtOutput = dt.apply(dtInput);
       

@@ -32,11 +32,9 @@ import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyAll;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
-import io.resys.hdes.compiler.api.Flow;
-import io.resys.hdes.compiler.api.Flow.FlowState;
-import io.resys.hdes.compiler.api.Flow.FlowTaskState;
 import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.api.HdesExecutable.DecisionTable;
+import io.resys.hdes.compiler.api.HdesExecutable.Flow;
 import io.resys.hdes.compiler.spi.NamingContext;
 
 public class JavaNamingContext implements NamingContext {
@@ -180,19 +178,6 @@ public class JavaNamingContext implements NamingContext {
     @Override
     public TypeName superinterface(FlowBody node) {
       return ParameterizedTypeName.get(ClassName.get(Flow.class), input(node), output(node), state(node));
-    }
-
-    @Override
-    public TypeName stateSuperinterface(FlowBody node) {
-      return ParameterizedTypeName.get(ClassName.get(FlowState.class), input(node), output(node));
-    }
-
-    @Override
-    public TypeName taskStateSuperinterface(FlowBody body, FlowTaskNode task) {
-      return ParameterizedTypeName.get(
-          ClassName.get(FlowTaskState.class),
-          task.getRef().map(ref -> refInput(ref)).orElse(ClassName.get(Void.class)),
-          task.getRef().map(ref -> refOutput(ref)).orElse(ClassName.get(Void.class)));
     }
 
     @Override

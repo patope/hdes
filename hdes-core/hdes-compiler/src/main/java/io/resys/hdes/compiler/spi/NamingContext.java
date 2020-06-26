@@ -62,7 +62,6 @@ public interface NamingContext {
     TypeName superinterface(FlowBody node); 
     
     ClassName state(FlowBody node);
-    TypeName stateSuperinterface(FlowBody node);
     
     ClassName impl(FlowBody node);
     
@@ -73,6 +72,5 @@ public interface NamingContext {
     ClassName output(FlowBody node, ObjectTypeDefNode object);
     
     ClassName taskState(FlowBody body, FlowTaskNode task);
-    TypeName taskStateSuperinterface(FlowBody body, FlowTaskNode task);
   }
 }

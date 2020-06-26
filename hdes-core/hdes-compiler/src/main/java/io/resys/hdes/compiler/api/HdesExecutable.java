@@ -21,17 +21,36 @@ package io.resys.hdes.compiler.api;
  */
 
 import java.io.Serializable;
+import java.util.List;
 
 import org.immutables.value.Value;
 
-public interface HdesExecutable<I extends HdesExecutable.Input, M extends HdesExecutable.Meta, V extends HdesExecutable.OutputValue> {
+public interface HdesExecutable<I extends HdesExecutable.InputValue, M extends HdesExecutable.Meta, V extends HdesExecutable.OutputValue> {
   
   // Core
+  
   enum SourceType { FL, MT, DT, ST }
-  interface Meta extends Serializable {}
+  enum ExecutionStatus { COMPLETED, WAITING, RUNNING, ERROR }
+  
+  interface Meta extends Serializable {
+    String getId();
+    ExecutionStatus getStatus();
+    long getStart();
+    long getEnd();
+    long getTime();
+    List<ExecutableError> getErrors();
+  }
+  
   interface OutputValue extends Serializable {}
-  interface Input extends Serializable {}
+  interface InputValue extends Serializable {}
 
+  @Value.Immutable
+  interface ExecutableError {
+    String getId();
+    String getTrace();
+    String getValue();
+  }
+  
   @Value.Immutable
   interface MetaToken {
     String getValue();
@@ -60,9 +79,11 @@ public interface HdesExecutable<I extends HdesExecutable.Input, M extends HdesEx
   SourceType getSourceType();
   
   // Markers for sub types
-  interface DecisionTable<I extends Input, V extends OutputValue> extends HdesExecutable<I, DecisionTableMeta, V> {}
-  interface Flow<I extends Input, M extends Meta, V extends OutputValue> extends HdesExecutable<I, M, V> {}
-  interface ManualTask<I extends Input, M extends Meta, V extends OutputValue> extends HdesExecutable<I, M, V> {}
-  interface ServiceTask<I extends Input, M extends Meta, V extends OutputValue> extends HdesExecutable<I, M, V> {}
+  interface DecisionTable<I extends InputValue, V extends OutputValue> extends HdesExecutable<I, DecisionTableMeta, V> {}
+  interface Flow<I extends InputValue, M extends FlowMeta, V extends OutputValue> extends HdesExecutable<I, M, V> {}
+  
+  interface ExpressionTask<I extends InputValue, M extends ExpressionTaskMeta, V extends OutputValue> extends HdesExecutable<I, M, V> {}
+  interface ManualTask<I extends InputValue, M extends Meta, V extends OutputValue> extends HdesExecutable<I, M, V> {}
+  interface ServiceTask<I extends InputValue, M extends Meta, V extends OutputValue> extends HdesExecutable<I, M, V> {}
 
 }

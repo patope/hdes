@@ -48,8 +48,8 @@ import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.ThenPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
-import io.resys.hdes.compiler.api.Flow;
 import io.resys.hdes.compiler.api.HdesCompilerException;
+import io.resys.hdes.compiler.api.HdesExecutable;
 import io.resys.hdes.compiler.spi.NamingContext;
 import io.resys.hdes.compiler.spi.java.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.java.visitors.FlJavaSpec.FlHeaderSpec;
@@ -79,8 +79,7 @@ public class FlAstNodeVisitorJavaInterface extends FlAstNodeVisitorTemplate<FlJa
     TypeSpec.Builder stateBuilder = TypeSpec
         .interfaceBuilder(naming.fl().state(node))
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-        .addAnnotation(Value.Immutable.class)
-        .addSuperinterface(naming.fl().stateSuperinterface(node));
+        .addAnnotation(Value.Immutable.class);
     // tasks
     if (node.getTask().isPresent()) {
       
@@ -104,7 +103,7 @@ public class FlAstNodeVisitorJavaInterface extends FlAstNodeVisitorTemplate<FlJa
     TypeSpec.Builder stateBuilder = TypeSpec.interfaceBuilder(naming.fl().taskState(body, node))
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
         .addAnnotation(Value.Immutable.class)
-        .addSuperinterface(naming.fl().taskStateSuperinterface(body, node));
+        ;
     FlTasksSpec children = visitTaskPointer(node.getNext());
     return ImmutableFlTasksSpec.builder()
         .addValues(ImmutableFlTaskSpec.builder().task(node).type(stateBuilder.build()).build())
@@ -132,7 +131,7 @@ public class FlAstNodeVisitorJavaInterface extends FlAstNodeVisitorTemplate<FlJa
   public FlTypesSpec visitInputs(FlowInputs node) {
     TypeSpec.Builder inputBuilder = TypeSpec
         .interfaceBuilder(naming.fl().input(body))
-        .addSuperinterface(Flow.FlowInput.class)
+        .addSuperinterface(HdesExecutable.InputValue.class)
         .addAnnotation(Immutable.class)
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
     List<TypeSpec> nested = new ArrayList<>();
@@ -151,7 +150,7 @@ public class FlAstNodeVisitorJavaInterface extends FlAstNodeVisitorTemplate<FlJa
   public FlTypesSpec visitOutputs(FlowOutputs node) {
     TypeSpec.Builder outputBuilder = TypeSpec
         .interfaceBuilder(naming.fl().output(body))
-        .addSuperinterface(Flow.FlowOutput.class)
+        .addSuperinterface(HdesExecutable.OutputValue.class)
         .addAnnotation(Immutable.class)
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
     List<TypeSpec> nested = new ArrayList<>();
@@ -209,7 +208,7 @@ public class FlAstNodeVisitorJavaInterface extends FlAstNodeVisitorTemplate<FlJa
     ClassName typeName = node.getDirection() == DirectionType.IN ? naming.fl().input(body, node) : naming.fl().output(body, node);
     TypeSpec.Builder objectBuilder = TypeSpec
         .interfaceBuilder(typeName)
-        .addSuperinterface(node.getDirection() == DirectionType.IN ? Flow.FlowInput.class : Flow.FlowOutput.class)
+        .addSuperinterface(node.getDirection() == DirectionType.IN ? HdesExecutable.InputValue.class : HdesExecutable.OutputValue.class)
         .addAnnotation(Immutable.class)
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
     List<TypeSpec> nested = new ArrayList<>();

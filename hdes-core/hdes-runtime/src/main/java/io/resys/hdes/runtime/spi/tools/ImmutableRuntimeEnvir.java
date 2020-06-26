@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 import io.resys.hdes.compiler.api.HdesCompiler.Resource;
 import io.resys.hdes.compiler.api.HdesCompiler.TypeName;
 import io.resys.hdes.compiler.api.HdesExecutable;
-import io.resys.hdes.compiler.api.HdesExecutable.Input;
+import io.resys.hdes.compiler.api.HdesExecutable.InputValue;
 import io.resys.hdes.compiler.api.HdesExecutable.Output;
 import io.resys.hdes.compiler.api.HdesWhen;
 import io.resys.hdes.compiler.spi.HdesWhenGen;
@@ -72,7 +72,7 @@ public class ImmutableRuntimeEnvir implements RuntimeEnvir {
     try {
       Resource resource = values.get(name);
       
-      Class<? extends HdesExecutable.Input> input = (Class<? extends Input>) classLoader.findClass(resource.getInput().getPkg() + "$" + resource.getInput().getName());
+      Class<? extends HdesExecutable.InputValue> input = (Class<? extends InputValue>) classLoader.findClass(resource.getInput().getPkg() + "$" + resource.getInput().getName());
       Class<? extends HdesExecutable.Output> output = (Class<? extends Output>) classLoader.findClass(resource.getInput().getPkg() + "$" + resource.getOutput().getName());
       
       HdesWhen when = HdesWhenGen.get();

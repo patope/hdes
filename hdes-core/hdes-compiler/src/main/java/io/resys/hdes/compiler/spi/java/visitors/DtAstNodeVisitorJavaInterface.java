@@ -94,7 +94,7 @@ public class DtAstNodeVisitorJavaInterface extends DtAstNodeVisitorTemplate<DtJa
     };
         
     TypeSpec.Builder inputBuilder = from.apply(naming.dt().input(body))
-        .addSuperinterface(HdesExecutable.Input.class);
+        .addSuperinterface(HdesExecutable.InputValue.class);
     
     TypeSpec.Builder outputBuilder = from.apply(naming.dt().outputEntry(body))
         .addSuperinterface(HdesExecutable.OutputValue.class);

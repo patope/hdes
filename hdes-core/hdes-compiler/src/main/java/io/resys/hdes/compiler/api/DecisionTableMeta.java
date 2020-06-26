@@ -31,8 +31,6 @@ import io.resys.hdes.compiler.api.HdesExecutable.MetaToken;
 @Value.Immutable
 public interface DecisionTableMeta extends HdesExecutable.Meta {
   
-  long getTime();
-  
   Map<Integer, DecisionTableMetaEntry> getValues();
 
   @Value.Immutable

@@ -45,13 +45,9 @@ import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
 import io.resys.hdes.ast.api.nodes.FlowNode.ThenPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
-import io.resys.hdes.compiler.api.Flow.ExecutionStatusType;
-import io.resys.hdes.compiler.api.Flow.FlowExecutionLog;
 import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.api.HdesWhen;
-import io.resys.hdes.compiler.api.ImmutableFlowExecutionLog;
 import io.resys.hdes.compiler.spi.NamingContext;
-import io.resys.hdes.compiler.spi.java.FlowUtil;
 import io.resys.hdes.compiler.spi.java.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.java.visitors.FlJavaSpec.FlCodeSpec;
 import io.resys.hdes.compiler.spi.java.visitors.FlJavaSpec.FlTaskVisitSpec;
@@ -121,18 +117,19 @@ public class FlAstNodeVisitorJavaGen extends FlAstNodeVisitorTemplate<FlJavaSpec
       .addModifiers(Modifier.PROTECTED)
       .addParameter(ParameterSpec.builder(naming.fl().input(node), "input").build())
       .returns(naming.immutableBuilder(flowState))
-      .addCode(CodeBlock.builder()
+/*      .addCode(CodeBlock.builder()
           .add("return $T.builder()", naming.immutable(flowState))
           .add("\r\n  ").add(".id($S)", node.getId())
           .add("\r\n  ").add(".type($T.RUNNING)", ExecutionStatusType.class)
           .add("\r\n  ").add(".input(input)")
           .add("\r\n  ").add(".log($L)", CodeBlock.builder()
+          
           .add("$T.builder()", ImmutableFlowExecutionLog.class)
           .add("\r\n    ").add(".id($S)", "start")
           .add("\r\n    ").add(".start(System.currentTimeMillis())")
           .add("\r\n    ").add(".build()").build())
           .addStatement("")
-          .build())
+          .build()) */
       .build();
   }
 
@@ -143,7 +140,7 @@ public class FlAstNodeVisitorJavaGen extends FlAstNodeVisitorTemplate<FlJavaSpec
         .addParameter(ParameterSpec.builder(flowState, "currentState").build())
         .returns(naming.immutableBuilder(flowState))
         .addStatement("long end = System.currentTimeMillis()")
-        .addStatement(CodeBlock.builder()
+/*        .addStatement(CodeBlock.builder()
             .add("return $T.builder()", naming.immutable(flowState))
             .add("\r\n  ").add(".from(currentState)")
             .add("\r\n  ").add(".log($L)", CodeBlock.builder()
@@ -153,7 +150,9 @@ public class FlAstNodeVisitorJavaGen extends FlAstNodeVisitorTemplate<FlJavaSpec
                 .add("\r\n    ").add(".end(end)")
                 .add("\r\n    ").add(".parent(currentState.getLog())")
                 .add("\r\n    ").add(".build()").build())
-            .build()).build();
+                
+            .build()) */
+          .build();
   }
   
   @Override
@@ -198,7 +197,7 @@ public class FlAstNodeVisitorJavaGen extends FlAstNodeVisitorTemplate<FlJavaSpec
       .add(visitMapping(parent).getValue())
       .addStatement("long end = System.currentTimeMillis()")
       
-      // build execution log
+      /* build execution log
       .add("\r\n")
       .add("$T log = $T.builder()", FlowExecutionLog.class, ImmutableFlowExecutionLog.class)
       .add("\r\n  ").add(".id($S)", parent.getId())
@@ -206,7 +205,8 @@ public class FlAstNodeVisitorJavaGen extends FlAstNodeVisitorTemplate<FlJavaSpec
       .add("\r\n  ").add(".start(start)").add(".end(end)")
       .add("\r\n  ").add(".duration(end - start)")
       .add("\r\n  ").addStatement(".build()")
-    
+      */
+      
       // create new state
       .add("\r\n")
       .add("$T after = $T.builder()", flowState, naming.immutable(flowState))

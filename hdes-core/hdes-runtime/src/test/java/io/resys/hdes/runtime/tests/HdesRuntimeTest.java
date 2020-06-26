@@ -129,7 +129,7 @@ public class HdesRuntimeTest {
       List<Resource> resources = compiler.parser().add(name, src).build();
       RuntimeEnvir runtime = ImmutableHdesRuntime.builder().from(resources).build();
       RuntimeTask task = runtime.get(name);
-      HdesExecutable.Input input = objectMapper.convertValue(data, task.getInput());
+      HdesExecutable.InputValue input = objectMapper.convertValue(data, task.getInput());
       DecisionTable dt = (DecisionTable) task.getValue();
       HdesExecutable.Output<DecisionTableMeta, ? extends OutputValue> output = dt.apply(input);
       
