@@ -35,8 +35,6 @@ public interface NamingContext {
   
   FlNamingContext fl();
   DtNamingContext dt();
-  ClassName immutable(ClassName src);
-  ClassName immutableBuilder(ClassName src);
   
   interface DtNamingContext {
     String pkg(DecisionTableBody body);

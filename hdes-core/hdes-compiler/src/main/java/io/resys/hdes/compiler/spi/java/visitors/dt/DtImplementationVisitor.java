@@ -84,7 +84,7 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
   @Override
   public DtTypesSpec visitHeaders(Headers node) {
     Function<ClassName, TypeSpec.Builder> from = (name) -> {
-      ClassName jsonType = naming.immutable(name);
+      ClassName jsonType = JavaSpecUtil.immutable(name);
       return TypeSpec
           .interfaceBuilder(name)
           .addAnnotation(Immutable.class)

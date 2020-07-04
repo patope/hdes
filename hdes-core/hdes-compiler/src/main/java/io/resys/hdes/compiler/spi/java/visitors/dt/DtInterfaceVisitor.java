@@ -123,7 +123,7 @@ public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> 
   @Override
   public DtMethodsSpec visitHitPolicyMatrix(HitPolicyMatrix node) {
     ClassName outputName = naming.dt().output(body);
-    ClassName immutableOutputName = naming.immutable(outputName);
+    ClassName immutableOutputName = JavaSpecUtil.immutable(outputName);
     
     CodeBlock.Builder statements = CodeBlock.builder()
         .addStatement("long start = System.currentTimeMillis()")
@@ -259,7 +259,7 @@ public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> 
       .add("\r\n")
       .addStatement("$T.Builder<$T, $T> builder = $T.builder()", ImmutableOutput.class, DecisionTableMeta.class, outputName, ImmutableOutput.class)
       .addStatement("return builder.meta(meta).value($L).build()", 
-          CodeBlock.builder().add("$T.builder().values(result).build()", naming.immutable(outputName)).build())
+          CodeBlock.builder().add("$T.builder().values(result).build()", JavaSpecUtil.immutable(outputName)).build())
       .build();
 
     return ImmutableDtMethodsSpec.builder().addValue(

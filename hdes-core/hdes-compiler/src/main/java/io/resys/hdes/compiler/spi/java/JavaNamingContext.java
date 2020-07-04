@@ -43,6 +43,7 @@ import io.resys.hdes.executor.api.HdesExecutable.Flow;
 import io.resys.hdes.executor.api.HdesExecutable.Output;
 
 public class JavaNamingContext implements NamingContext {
+  
   private final AstEnvir envir;
   private final String root;
   private final String fl;
@@ -60,17 +61,6 @@ public class JavaNamingContext implements NamingContext {
     this.dtNaming = new JavaDtNamingContext(this);
   }
   
-  @Override
-  public ClassName immutable(ClassName src) {
-    String pkg = src.packageName();
-    String top = pkg.substring(0, pkg.lastIndexOf("."));
-    return ClassName.get(top, "Immutable" + src.simpleName());
-  }
-  @Override
-  public ClassName immutableBuilder(ClassName src) {
-    ClassName type = immutable(src);
-    return ClassName.get(type.packageName(), type.simpleName() + ".Builder");
-  }  
   @Override
   public FlNamingContext fl() {
     return flNaming;

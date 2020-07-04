@@ -33,6 +33,7 @@ import com.squareup.javapoet.TypeSpec;
 
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.compiler.spi.NamingContext;
+import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
 import io.resys.hdes.executor.api.DecisionTableMeta;
 import io.resys.hdes.executor.api.FlowMeta;
 import io.resys.hdes.executor.api.HdesExecutable.ExecutionStatus;
@@ -52,7 +53,7 @@ public class FlAstNodeVisitorJavaGen extends FlAstNodeVisitorTemplate<FlJavaSpec
   @Override
   public TypeSpec visitBody(FlowBody body) {
     ClassName outputName = naming.fl().output(body);
-    ClassName immutableOutputName = naming.immutable(outputName);
+    ClassName immutableOutputName = JavaSpecUtil.immutable(outputName);
     ParameterizedTypeName returnType = ParameterizedTypeName
         .get(ClassName.get(Output.class), ClassName.get(FlowMeta.class), outputName);
     

@@ -25,10 +25,22 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+import com.squareup.javapoet.ClassName;
+
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
 
 public class JavaSpecUtil {
   
+  public static ClassName immutable(ClassName src) {
+    String pkg = src.packageName();
+    String top = pkg.substring(0, pkg.lastIndexOf("."));
+    return ClassName.get(top, "Immutable" + src.simpleName());
+  }
+  
+  public static ClassName immutableBuilder(ClassName src) {
+    ClassName type = immutable(src);
+    return ClassName.get(type.packageName(), type.simpleName() + ".Builder");
+  }  
   
   public static String getMethodCall(String name) {
     String[] src = name.split("\\.");
