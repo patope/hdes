@@ -1,4 +1,4 @@
-package io.resys.hdes.compiler.spi.java.visitors;
+package io.resys.hdes.compiler.spi.java.visitors.fl;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -53,10 +53,10 @@ import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.spi.NamingContext;
 import io.resys.hdes.compiler.spi.NamingContext.TaskRefNaming;
-import io.resys.hdes.compiler.spi.java.JavaSpecUtil;
-import io.resys.hdes.compiler.spi.java.visitors.FlJavaSpec.FlHeaderSpec;
-import io.resys.hdes.compiler.spi.java.visitors.FlJavaSpec.FlMethodSpec;
-import io.resys.hdes.compiler.spi.java.visitors.FlJavaSpec.FlTypesSpec;
+import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
+import io.resys.hdes.compiler.spi.java.visitors.fl.FlJavaSpec.FlHeaderSpec;
+import io.resys.hdes.compiler.spi.java.visitors.fl.FlJavaSpec.FlMethodSpec;
+import io.resys.hdes.compiler.spi.java.visitors.fl.FlJavaSpec.FlTypesSpec;
 import io.resys.hdes.executor.api.HdesExecutable;
 
 public class FlAstNodeVisitorJavaInterface extends FlAstNodeVisitorTemplate<FlJavaSpec, TypeSpec> {

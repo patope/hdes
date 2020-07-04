@@ -36,6 +36,7 @@ import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.spi.ImmutableTaskRefNaming;
 import io.resys.hdes.compiler.spi.NamingContext;
+import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
 import io.resys.hdes.executor.api.DecisionTableMeta;
 import io.resys.hdes.executor.api.HdesExecutable.DecisionTable;
 import io.resys.hdes.executor.api.HdesExecutable.Flow;

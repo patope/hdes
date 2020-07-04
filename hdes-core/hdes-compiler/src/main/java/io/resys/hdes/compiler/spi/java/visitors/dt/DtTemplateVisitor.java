@@ -1,4 +1,4 @@
-package io.resys.hdes.compiler.spi.java.visitors;
+package io.resys.hdes.compiler.spi.java.visitors.dt;
 
 /*-
  * #%L
@@ -47,7 +47,7 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.NotUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.OrOperation;
 
-public class DtAstNodeVisitorTemplate<T, R> implements DtAstNodeVisitor<T, R> {
+public class DtTemplateVisitor<T, R> implements DtAstNodeVisitor<T, R> {
   @Override
   public T visitTypeName(TypeName node) {
     throw new IllegalArgumentException("Not implemented");

@@ -1,4 +1,4 @@
-package io.resys.hdes.compiler.spi.java.visitors;
+package io.resys.hdes.compiler.spi.java.visitors.dt;
 
 /*-
  * #%L

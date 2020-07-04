@@ -42,6 +42,10 @@ import io.resys.hdes.compiler.api.ImmutableTypeDeclaration;
 import io.resys.hdes.compiler.api.ImmutableTypeName;
 import io.resys.hdes.compiler.spi.NamingContext;
 import io.resys.hdes.compiler.spi.java.JavaNamingContext;
+import io.resys.hdes.compiler.spi.java.visitors.dt.DtImplementationVisitor;
+import io.resys.hdes.compiler.spi.java.visitors.dt.DtInterfaceVisitor;
+import io.resys.hdes.compiler.spi.java.visitors.fl.FlAstNodeVisitorJavaGen;
+import io.resys.hdes.compiler.spi.java.visitors.fl.FlAstNodeVisitorJavaInterface;
 import io.resys.hdes.executor.api.HdesExecutable;
 
 public class JavaAstEnvirVisitor {
@@ -70,8 +74,8 @@ public class JavaAstEnvirVisitor {
     final var interfaceBuilder = new StringBuilder();
     final var implementationBuilder = new StringBuilder();
     
-    final TypeSpec superInterface = visitDt(body, new DtAstNodeVisitorJavaInterface(naming).visitDecisionTableBody(body), naming, interfaceBuilder);
-    final TypeSpec implementation = visitDt(body, new DtAstNodeVisitorJavaGen(naming).visitDecisionTableBody(body), naming, implementationBuilder);
+    final TypeSpec superInterface = visitDt(body, new DtImplementationVisitor(naming).visitDecisionTableBody(body), naming, interfaceBuilder);
+    final TypeSpec implementation = visitDt(body, new DtInterfaceVisitor(naming).visitDecisionTableBody(body), naming, implementationBuilder);
     final var interfaceType = ImmutableTypeName.builder().name(superInterface.name).pkg(pkg).build();
     final var implementationType = ImmutableTypeName.builder().name(implementation.name).pkg(pkg).build();
     

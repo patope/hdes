@@ -1,4 +1,4 @@
-package io.resys.hdes.compiler.spi.java.visitors;
+package io.resys.hdes.compiler.spi.java.visitors.dt;
 
 /*-
  * #%L
@@ -66,10 +66,10 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.NotUnaryOperation;
 import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.spi.NamingContext;
-import io.resys.hdes.compiler.spi.java.JavaSpecUtil;
-import io.resys.hdes.compiler.spi.java.visitors.DtJavaSpec.DtCodeSpec;
-import io.resys.hdes.compiler.spi.java.visitors.DtJavaSpec.DtCodeSpecPair;
-import io.resys.hdes.compiler.spi.java.visitors.DtJavaSpec.DtMethodsSpec;
+import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
+import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtCodeSpec;
+import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtCodeSpecPair;
+import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtMethodsSpec;
 import io.resys.hdes.executor.api.DecisionTableMeta;
 import io.resys.hdes.executor.api.DecisionTableMeta.DecisionTableMetaEntry;
 import io.resys.hdes.executor.api.HdesExecutable.ExecutionStatus;
@@ -83,12 +83,12 @@ import io.resys.hdes.executor.api.ImmutableMetaToken;
 import io.resys.hdes.executor.api.ImmutableOutput;
 import io.resys.hdes.executor.spi.exceptions.DecisionTableHitPolicyFirstException;
 
-public class DtAstNodeVisitorJavaGen extends DtAstNodeVisitorTemplate<DtJavaSpec, TypeSpec> {
+public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> {
   private final static String HEADER_REF = "//header ref to be replaces";
   private final NamingContext naming;
   private DecisionTableBody body;
 
-  public DtAstNodeVisitorJavaGen(NamingContext naming) {
+  public DtInterfaceVisitor(NamingContext naming) {
     super();
     this.naming = naming;
   }
@@ -102,7 +102,7 @@ public class DtAstNodeVisitorJavaGen extends DtAstNodeVisitorTemplate<DtJavaSpec
         .addSuperinterface(naming.dt().interfaze(node))
         .addJavadoc(node.getDescription().orElse(""))
         .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "$S", "unused").build())
-        .addAnnotation(AnnotationSpec.builder(javax.annotation.processing.Generated.class).addMember("value", "$S", DtAstNodeVisitorJavaGen.class.getCanonicalName()).build())
+        .addAnnotation(AnnotationSpec.builder(javax.annotation.processing.Generated.class).addMember("value", "$S", DtInterfaceVisitor.class.getCanonicalName()).build())
         .addMethod(MethodSpec.constructorBuilder()
             .addModifiers(Modifier.PUBLIC)
             .addParameter(ParameterSpec.builder(HdesWhen.class, "when").build())

@@ -1,4 +1,4 @@
-package io.resys.hdes.compiler.spi.java.visitors;
+package io.resys.hdes.compiler.spi.java.visitors.fl;
 
 /*-
  * #%L
@@ -33,7 +33,6 @@ import com.squareup.javapoet.TypeSpec;
 
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.compiler.spi.NamingContext;
-import io.resys.hdes.compiler.spi.java.FlowUtil;
 import io.resys.hdes.executor.api.DecisionTableMeta;
 import io.resys.hdes.executor.api.FlowMeta;
 import io.resys.hdes.executor.api.HdesExecutable.ExecutionStatus;
@@ -59,7 +58,7 @@ public class FlAstNodeVisitorJavaGen extends FlAstNodeVisitorTemplate<FlJavaSpec
     
     CodeBlock.Builder statements = CodeBlock.builder()
       .addStatement("long start = System.currentTimeMillis()")
-      .addStatement("$T tasks = $T.create()", FlowUtil.MutableFlowTasks.class, FlowUtil.MutableFlowTasks.class)
+      //.addStatement("$T tasks = $T.create()", FlowUtil.MutableFlowTasks.class, FlowUtil.MutableFlowTasks.class)
       .addStatement("$T.Builder result = $T.builder()", immutableOutputName, immutableOutputName)
       
       

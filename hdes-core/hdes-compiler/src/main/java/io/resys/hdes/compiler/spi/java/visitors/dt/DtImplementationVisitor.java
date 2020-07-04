@@ -1,4 +1,4 @@
-package io.resys.hdes.compiler.spi.java.visitors;
+package io.resys.hdes.compiler.spi.java.visitors.dt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,18 +50,18 @@ import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyMatrix;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.MatrixRow;
 import io.resys.hdes.ast.api.nodes.ImmutableScalarTypeDefNode;
 import io.resys.hdes.compiler.spi.NamingContext;
-import io.resys.hdes.compiler.spi.java.JavaSpecUtil;
-import io.resys.hdes.compiler.spi.java.visitors.DtJavaSpec.DtMethodSpec;
-import io.resys.hdes.compiler.spi.java.visitors.DtJavaSpec.DtMethodsSpec;
-import io.resys.hdes.compiler.spi.java.visitors.DtJavaSpec.DtTypesSpec;
+import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
+import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtMethodSpec;
+import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtMethodsSpec;
+import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtTypesSpec;
 import io.resys.hdes.executor.api.HdesExecutable;
 
-public class DtAstNodeVisitorJavaInterface extends DtAstNodeVisitorTemplate<DtJavaSpec, TypeSpec> {
+public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> {
 
   private final NamingContext naming;
   private DecisionTableBody body;
 
-  public DtAstNodeVisitorJavaInterface(NamingContext naming) {
+  public DtImplementationVisitor(NamingContext naming) {
     super();
     this.naming = naming;
   }
@@ -71,7 +71,7 @@ public class DtAstNodeVisitorJavaInterface extends DtAstNodeVisitorTemplate<DtJa
     this.body = node;
     List<AnnotationSpec> annotations = Arrays.asList(
         AnnotationSpec.builder(javax.annotation.processing.Generated.class)
-        .addMember("value", "$S", DtAstNodeVisitorJavaInterface.class.getCanonicalName()).build());
+        .addMember("value", "$S", DtImplementationVisitor.class.getCanonicalName()).build());
     
     TypeSpec result = TypeSpec.interfaceBuilder(naming.dt().interfaze(node))
         .addModifiers(Modifier.PUBLIC)
