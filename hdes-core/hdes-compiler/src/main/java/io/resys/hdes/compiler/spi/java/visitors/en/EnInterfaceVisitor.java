@@ -1,24 +1,6 @@
 package io.resys.hdes.compiler.spi.java.visitors.en;
 
-/*-
- * #%L
- * hdes-compiler
- * %%
- * Copyright (C) 2020 Copyright 2020 ReSys OÜ
- * %%
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * #L%
- */
+import com.squareup.javapoet.TypeSpec;
 
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
@@ -41,119 +23,120 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.TypeRefNode;
 
-public class JavaExpressionAstNodeVisitor implements ExpressionAstNodeVisitor<Object, Object> {
+public class EnInterfaceVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, TypeSpec> {
 
   @Override
-  public Object visitTypeName(TypeName node) {
+  public EnJavaSpec visitTypeName(TypeName node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Object visitLiteral(Literal node) {
+  public EnJavaSpec visitLiteral(Literal node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Object visitExpressionBody(ExpressionBody node) {
+  public TypeSpec visitExpressionBody(ExpressionBody node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Object visitNotUnaryOperation(NotUnaryOperation node) {
+  public EnJavaSpec visitNotUnaryOperation(NotUnaryOperation node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Object visitNegateUnaryOperation(NegateUnaryOperation node) {
+  public EnJavaSpec visitNegateUnaryOperation(NegateUnaryOperation node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Object visitPositiveUnaryOperation(PositiveUnaryOperation node) {
+  public EnJavaSpec visitPositiveUnaryOperation(PositiveUnaryOperation node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Object visitPreIncrementUnaryOperation(PreIncrementUnaryOperation node) {
+  public EnJavaSpec visitPreIncrementUnaryOperation(PreIncrementUnaryOperation node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Object visitPreDecrementUnaryOperation(PreDecrementUnaryOperation node) {
+  public EnJavaSpec visitPreDecrementUnaryOperation(PreDecrementUnaryOperation node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Object visitPostIncrementUnaryOperation(PostIncrementUnaryOperation node) {
+  public EnJavaSpec visitPostIncrementUnaryOperation(PostIncrementUnaryOperation node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Object visitPostDecrementUnaryOperation(PostDecrementUnaryOperation node) {
+  public EnJavaSpec visitPostDecrementUnaryOperation(PostDecrementUnaryOperation node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Object visitMethodRefNode(MethodRefNode node) {
+  public EnJavaSpec visitMethodRefNode(MethodRefNode node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Object visitTypeRefNode(TypeRefNode node) {
+  public EnJavaSpec visitTypeRefNode(TypeRefNode node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Object visitEqualityOperation(EqualityOperation node) {
+  public EnJavaSpec visitEqualityOperation(EqualityOperation node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Object visitConditionalExpression(ConditionalExpression node) {
+  public EnJavaSpec visitAndOperation(AndOperation node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Object visitBetweenExpression(BetweenExpression node) {
+  public EnJavaSpec visitOrOperation(OrOperation node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Object visitAndOperation(AndOperation node) {
+  public EnJavaSpec visitConditionalExpression(ConditionalExpression node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Object visitOrOperation(OrOperation node) {
+  public EnJavaSpec visitBetweenExpression(BetweenExpression node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Object visitAdditiveOperation(AdditiveOperation node) {
+  public EnJavaSpec visitAdditiveOperation(AdditiveOperation node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Object visitMultiplicativeOperation(MultiplicativeOperation node) {
+  public EnJavaSpec visitMultiplicativeOperation(MultiplicativeOperation node) {
     // TODO Auto-generated method stub
     return null;
   }
+
 }
