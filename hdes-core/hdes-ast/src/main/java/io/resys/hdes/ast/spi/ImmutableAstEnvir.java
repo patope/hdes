@@ -26,6 +26,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -64,25 +66,39 @@ public class ImmutableAstEnvir implements AstEnvir {
   }
   @Override
   public BodyNode getBody(String id) {
-    if(!body.containsKey(id)) {
-      throw new AstNodeException("No node by id: " + id + "!");
-    }
+    Assertions.isTrue(body.containsKey(id), () ->
+      new StringBuilder("No node by given identifier: ").append(id).append("!").append(System.lineSeparator())
+      .append("Known identifiers: ").append(body.keySet()).toString()
+    );
+    
     return body.get(id);
   }
   @Override
   public String getSrc(String id) {
-    if(!src.containsKey(id)) {
-      throw new AstNodeException("No node by id: " + id + "!");
-    }
+    Assertions.isTrue(src.containsKey(id), () ->
+      new StringBuilder("No src by given identifier: ").append(id).append("!").append(System.lineSeparator())
+      .append("Known identifiers: ").append(src.keySet()).toString()
+    );
     return src.get(id);
   }
   @Override
   public List<ErrorNode> getErrors(String id) {
-    if(!src.containsKey(id)) {
-      throw new AstNodeException("No node by id: " + id + "!");
-    }
+    Assertions.isTrue(src.containsKey(id), () ->
+      new StringBuilder("No src by given identifier: ").append(id).append("!").append(System.lineSeparator())
+      .append("Known identifiers: ").append(src.keySet()).toString()
+    );
     return errors.get(id);
   }
+  
+  @Override
+  public BodyNode getByAstId(String bodyId) {
+    Optional<BodyNode> result = body.values().stream().filter(b -> b.getId().getValue().equals(bodyId)).findFirst();
+    Assertions.isTrue(result.isPresent(), () -> 
+      new StringBuilder("No body node by given identifier: ").append(bodyId).append("!").append(System.lineSeparator())
+      .append("Known identifiers: ").append(body.values().stream().map(b -> b.getId().getValue()).collect(Collectors.toList())).toString());
+    return result.get();
+  }
+  
   @Override
   public Map<String, List<ErrorNode>> getErrors() {
     return errors;

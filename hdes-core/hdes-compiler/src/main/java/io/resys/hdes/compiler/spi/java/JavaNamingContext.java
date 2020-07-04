@@ -26,26 +26,32 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
+import io.resys.hdes.ast.api.AstEnvir;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyAll;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
-import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
+import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.api.HdesExecutable.DecisionTable;
-import io.resys.hdes.compiler.api.HdesExecutable.Flow;
+import io.resys.hdes.compiler.spi.ImmutableTaskRefNaming;
 import io.resys.hdes.compiler.spi.NamingContext;
+import io.resys.hdes.executor.api.DecisionTableMeta;
+import io.resys.hdes.executor.api.HdesExecutable.DecisionTable;
+import io.resys.hdes.executor.api.HdesExecutable.Flow;
+import io.resys.hdes.executor.api.HdesExecutable.Output;
 
 public class JavaNamingContext implements NamingContext {
+  private final AstEnvir envir;
   private final String root;
   private final String fl;
   private final String dt;
   private final JavaFlNamingContext flNaming;
   private final JavaDtNamingContext dtNaming;
 
-  public JavaNamingContext(String root, String fl, String dt) {
+  public JavaNamingContext(AstEnvir envir, String root, String fl, String dt) {
     super();
+    this.envir = envir;
     this.root = root;
     this.fl = root + "." + fl;
     this.dt = root + "." + dt;
@@ -129,6 +135,14 @@ public class JavaNamingContext implements NamingContext {
         return ClassName.get(parent.dt + "." + node.getId().getValue(), node.getId().getValue() + "OutputEntry");        
       }
       return output(node);
+    }
+
+    @Override
+    public ParameterizedTypeName returnType(DecisionTableBody body) {
+      ClassName outputName = output(body);
+      ParameterizedTypeName returnType = ParameterizedTypeName
+          .get(ClassName.get(Output.class), ClassName.get(DecisionTableMeta.class), outputName);
+      return returnType;
     } 
   }
 
@@ -154,10 +168,10 @@ public class JavaNamingContext implements NamingContext {
     public ClassName impl(FlowBody node) {
       return ClassName.get(parent.fl, node.getId().getValue() + "Gen");
     }
-
+    
     @Override
     public ClassName state(FlowBody node) {
-      return ClassName.get(interfaze(node).canonicalName(), node.getId().getValue() + "State");
+      return ClassName.get(parent.fl, node.getId().getValue() + "State");
     }
 
     @Override
@@ -171,13 +185,8 @@ public class JavaNamingContext implements NamingContext {
     }
 
     @Override
-    public ClassName taskState(FlowBody body, FlowTaskNode task) {
-      return ClassName.get(interfaze(body).canonicalName(), body.getId().getValue() + task.getId());
-    }
-
-    @Override
     public TypeName superinterface(FlowBody node) {
-      return ParameterizedTypeName.get(ClassName.get(Flow.class), input(node), output(node), state(node));
+      return ParameterizedTypeName.get(ClassName.get(Flow.class), input(node), output(node));
     }
 
     @Override
@@ -191,9 +200,17 @@ public class JavaNamingContext implements NamingContext {
     }
 
     @Override
-    public ClassName ref(TaskRef node) {
+    public TaskRefNaming ref(TaskRef node) {
       switch (node.getType()) {
-      case DECISION_TABLE: return parent.dt().interfaze(node.getValue());
+      case DECISION_TABLE: {
+        String typeName = node.getValue();
+        DecisionTableBody body = (DecisionTableBody) parent.envir.getByAstId(typeName);
+        return ImmutableTaskRefNaming.builder()
+            .type(parent.dt().interfaze(body))
+            .returnType(parent.dt().returnType(body))
+            .build(); 
+          
+      }
       //case FLOW_TASK: return ClassName.get(parent, node.getValue());
       //case MANUAL_TASK: return ClassName.get(parent, node.getValue());
       //case SERVICE_TASK: return ClassName.get(parent, node.getValue());
@@ -201,6 +218,11 @@ public class JavaNamingContext implements NamingContext {
       }
     }
 
+    /*
+    @Override
+    public ClassName taskState(FlowBody body, FlowTaskNode task) {
+      return ClassName.get(interfaze(body).canonicalName(), body.getId().getValue() + task.getId());
+    }
     @Override
     public String refMethod(TaskRef ref) {
       return JavaSpecUtil.decapitalize(ref(ref).simpleName());
@@ -227,6 +249,7 @@ public class JavaNamingContext implements NamingContext {
       default: throw new HdesCompilerException(HdesCompilerException.builder().unknownFlTaskRef(node));
       }
     }
+    */
   }
 
   public static Config config() {
@@ -234,10 +257,16 @@ public class JavaNamingContext implements NamingContext {
   }
 
   public static class Config {
+    private AstEnvir envir;
     private String root;
     private String flows;
     private String decisionTables;
 
+    public Config ast(AstEnvir envir) {
+      this.envir = envir;
+      return this;
+    }
+    
     public Config root(String root) {
       this.root = root;
       return this;
@@ -254,7 +283,10 @@ public class JavaNamingContext implements NamingContext {
     }
 
     public JavaNamingContext build() {
+      Assertions.notNull(envir, () -> "ast can't be null!");
+      
       return new JavaNamingContext(
+          envir,
           Optional.ofNullable(root).orElse("io.resys.hdes.compiler"),
           Optional.ofNullable(flows).orElse("fl"),
           Optional.ofNullable(decisionTables).orElse("dt"));

@@ -37,24 +37,25 @@ import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.compiler.api.HdesCompiler.Resource;
 import io.resys.hdes.compiler.api.HdesCompiler.TypeName;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.api.HdesExecutable;
 import io.resys.hdes.compiler.api.ImmutableResource;
 import io.resys.hdes.compiler.api.ImmutableTypeDeclaration;
 import io.resys.hdes.compiler.api.ImmutableTypeName;
 import io.resys.hdes.compiler.spi.NamingContext;
 import io.resys.hdes.compiler.spi.java.JavaNamingContext;
+import io.resys.hdes.executor.api.HdesExecutable;
 
 public class JavaAstEnvirVisitor {
-  private final NamingContext naming = JavaNamingContext.config().build();
   
   public List<Resource> visit(AstEnvir envir) {
     List<Resource> values = new ArrayList<>();
+    NamingContext naming = JavaNamingContext.config().ast(envir).build();
+    
     for(AstNode ast : envir.getBody().values()) {
       
       if(ast instanceof DecisionTableBody) {
-        values.add(visit((DecisionTableBody) ast));
+        values.add(visit((DecisionTableBody) ast, naming));
       } else if(ast instanceof FlowBody) {
-        values.add(visit((FlowBody) ast, envir));
+        values.add(visit((FlowBody) ast, envir, naming));
       } else {
         throw new HdesCompilerException(HdesCompilerException.builder().unknownAst(ast));
       }
@@ -64,13 +65,13 @@ public class JavaAstEnvirVisitor {
     return Collections.unmodifiableList(values);
   }
   
-  private Resource visit(DecisionTableBody body) {
+  private Resource visit(DecisionTableBody body, NamingContext naming) {
     final var pkg = naming.dt().pkg(body);
     final var interfaceBuilder = new StringBuilder();
     final var implementationBuilder = new StringBuilder();
     
-    final TypeSpec superInterface = visitDt(body, new DtAstNodeVisitorJavaInterface(naming).visitDecisionTableBody(body), interfaceBuilder);
-    final TypeSpec implementation = visitDt(body, new DtAstNodeVisitorJavaGen(naming).visitDecisionTableBody(body), implementationBuilder);
+    final TypeSpec superInterface = visitDt(body, new DtAstNodeVisitorJavaInterface(naming).visitDecisionTableBody(body), naming, interfaceBuilder);
+    final TypeSpec implementation = visitDt(body, new DtAstNodeVisitorJavaGen(naming).visitDecisionTableBody(body), naming, implementationBuilder);
     final var interfaceType = ImmutableTypeName.builder().name(superInterface.name).pkg(pkg).build();
     final var implementationType = ImmutableTypeName.builder().name(implementation.name).pkg(pkg).build();
     
@@ -91,11 +92,11 @@ public class JavaAstEnvirVisitor {
         .build();
   }
   
-  private Resource visit(FlowBody body, AstEnvir envir) {
+  private Resource visit(FlowBody body, AstEnvir envir, NamingContext naming) {
     StringBuilder interfaceBuilder = new StringBuilder();
     StringBuilder implementationBuilder = new StringBuilder();
-    TypeSpec superInterface = visitFlow(body, new FlAstNodeVisitorJavaInterface(naming).visitBody(body), interfaceBuilder);
-    TypeSpec implementation = visitFlow(body, new FlAstNodeVisitorJavaGen(naming).visitBody(body), implementationBuilder);
+    TypeSpec superInterface = visitFlow(body, new FlAstNodeVisitorJavaInterface(naming).visitBody(body), naming, interfaceBuilder);
+    TypeSpec implementation = visitFlow(body, new FlAstNodeVisitorJavaGen(naming).visitBody(body), naming, implementationBuilder);
 
     return ImmutableResource.builder()
         .type(HdesExecutable.SourceType.FL)
@@ -116,7 +117,7 @@ public class JavaAstEnvirVisitor {
         .build();
   }
 
-  private TypeSpec visitFlow(FlowBody body, TypeSpec type, Appendable appendable) {
+  private TypeSpec visitFlow(FlowBody body, TypeSpec type, NamingContext naming, Appendable appendable) {
     try {
       JavaFile file = JavaFile.builder(naming.fl().pkg(body), type).build();
       file.writeTo(appendable);
@@ -126,7 +127,7 @@ public class JavaAstEnvirVisitor {
     }
   }
   
-  private TypeSpec visitDt(DecisionTableBody body, TypeSpec type, Appendable appendable) {
+  private TypeSpec visitDt(DecisionTableBody body, TypeSpec type, NamingContext naming, Appendable appendable) {
     try {
       JavaFile file = JavaFile.builder(naming.dt().pkg(body), type).build();
       file.writeTo(appendable);

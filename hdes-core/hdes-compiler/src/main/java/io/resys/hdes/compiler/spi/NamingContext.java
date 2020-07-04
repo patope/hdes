@@ -1,5 +1,7 @@
 package io.resys.hdes.compiler.spi;
 
+import org.immutables.value.Value;
+
 /*-
  * #%L
  * hdes-compiler
@@ -21,12 +23,12 @@ package io.resys.hdes.compiler.spi;
  */
 
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
-import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
 
 public interface NamingContext {
@@ -45,23 +47,30 @@ public interface NamingContext {
     ClassName input(DecisionTableBody node);
    // ClassName inputSuperinterface(DecisionTableBody node);
     
+    ParameterizedTypeName returnType(DecisionTableBody node);
     ClassName output(DecisionTableBody node);
     ClassName outputEntry(DecisionTableBody node);
     //ClassName outputSuperinterface(DecisionTableBody node);
   }
- 
+  
   interface FlNamingContext {
     String pkg(FlowBody body);
     
+    TaskRefNaming ref(TaskRef ref);
+    
+    
+    /*
     ClassName ref(TaskRef ref);
     ClassName refInput(TaskRef ref);
     ClassName refOutput(TaskRef ref);
     String refMethod(TaskRef ref);
+    ClassName taskState(FlowBody body, FlowTaskNode task);
+    */
+    
     
     ClassName interfaze(FlowBody node);
     TypeName superinterface(FlowBody node); 
-    
-    ClassName state(FlowBody node);
+    ClassName state(FlowBody body);
     
     ClassName impl(FlowBody node);
     
@@ -70,7 +79,12 @@ public interface NamingContext {
     
     ClassName output(FlowBody node);
     ClassName output(FlowBody node, ObjectTypeDefNode object);
-    
-    ClassName taskState(FlowBody body, FlowTaskNode task);
   }
+  
+  @Value.Immutable
+  interface TaskRefNaming {
+    ClassName getType();
+    ParameterizedTypeName getReturnType();
+  }
+  
 }

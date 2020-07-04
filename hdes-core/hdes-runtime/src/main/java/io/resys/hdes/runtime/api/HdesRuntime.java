@@ -27,7 +27,7 @@ import javax.tools.Diagnostic;
 import org.immutables.value.Value;
 
 import io.resys.hdes.compiler.api.HdesCompiler.Resource;
-import io.resys.hdes.compiler.api.HdesExecutable;
+import io.resys.hdes.executor.api.HdesExecutable;
 
 public interface HdesRuntime {
   

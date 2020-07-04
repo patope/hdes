@@ -1,4 +1,4 @@
-package io.resys.hdes.compiler.api;
+package io.resys.hdes.executor.api;
 
 import org.immutables.value.Value;
 

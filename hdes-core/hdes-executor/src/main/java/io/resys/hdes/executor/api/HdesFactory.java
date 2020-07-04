@@ -1,4 +1,4 @@
-package io.resys.hdes.compiler.api;
+package io.resys.hdes.executor.api;
 
 /*-
  * #%L
@@ -20,23 +20,6 @@ package io.resys.hdes.compiler.api;
  * #L%
  */
 
-import java.io.Serializable;
-import java.util.Map;
-
-import org.immutables.value.Value;
-
-import io.resys.hdes.compiler.api.HdesExecutable.MetaToken;
-
-
-@Value.Immutable
-public interface DecisionTableMeta extends HdesExecutable.Meta {
+public interface HdesFactory {
   
-  Map<Integer, DecisionTableMetaEntry> getValues();
-
-  @Value.Immutable
-  interface DecisionTableMetaEntry extends Serializable {
-    int getId();
-    int getIndex();
-    MetaToken getToken();
-  }
 }

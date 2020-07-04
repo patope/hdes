@@ -38,16 +38,25 @@ public class FlJavaHdesCompilerTest {
   public void simpleFlow() {
     List<Resource> code = compiler.parser()
         .add("SimpleFlow.hdes", file("SimpleFlow.hdes"))
-    .build();
+        .add("SimpleHitPolicyFirstDt.hdes", file("SimpleHitPolicyFirstDt.hdes"))
+        .build();
+    print(code);
   }
 
   @Test
   public void arrayFlow() {
     List<Resource> code = compiler.parser()
         .add("ArrayFlow.hdes", file("ArrayFlow.hdes"))
-    .build();
+        .build();
+    print(code);
   }
-  
+
+  public static void print(List<Resource> resources) {
+    for (Resource r : resources) {
+      r.getDeclarations().forEach(d -> System.out.println(d.getValue()));
+    }
+  }
+
   public static String file(String name) {
     try {
       return IOUtils.toString(FlJavaHdesCompilerTest.class.getClassLoader().getResourceAsStream(name), StandardCharsets.UTF_8);

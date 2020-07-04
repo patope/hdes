@@ -1,6 +1,8 @@
 package io.resys.hdes.compiler.spi.java.visitors;
 
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,7 +28,6 @@ import java.util.Optional;
 
 import javax.lang.model.element.Modifier;
 
-import org.immutables.value.Value;
 import org.immutables.value.Value.Immutable;
 
 import com.squareup.javapoet.AnnotationSpec;
@@ -45,17 +46,18 @@ import io.resys.hdes.ast.api.nodes.FlowNode.FlowInputs;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowOutputs;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskPointer;
+import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
 import io.resys.hdes.ast.api.nodes.FlowNode.ThenPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.api.HdesExecutable;
 import io.resys.hdes.compiler.spi.NamingContext;
+import io.resys.hdes.compiler.spi.NamingContext.TaskRefNaming;
 import io.resys.hdes.compiler.spi.java.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.java.visitors.FlJavaSpec.FlHeaderSpec;
-import io.resys.hdes.compiler.spi.java.visitors.FlJavaSpec.FlTaskSpec;
-import io.resys.hdes.compiler.spi.java.visitors.FlJavaSpec.FlTasksSpec;
+import io.resys.hdes.compiler.spi.java.visitors.FlJavaSpec.FlMethodSpec;
 import io.resys.hdes.compiler.spi.java.visitors.FlJavaSpec.FlTypesSpec;
+import io.resys.hdes.executor.api.HdesExecutable;
 
 public class FlAstNodeVisitorJavaInterface extends FlAstNodeVisitorTemplate<FlJavaSpec, TypeSpec> {
   private final NamingContext naming;
@@ -69,62 +71,63 @@ public class FlAstNodeVisitorJavaInterface extends FlAstNodeVisitorTemplate<FlJa
   @Override
   public TypeSpec visitBody(FlowBody node) {
     this.body = node;
+    
+    TypeSpec.Builder stateBuilder = TypeSpec
+        .interfaceBuilder(naming.fl().state(node))
+        .addAnnotation(Immutable.class)
+        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+        .addSuperinterface(Serializable.class)
+        .addMethods(node.getTask().map(t -> visitTask(t).getValue()).orElse(Collections.emptyList()));
+    
     TypeSpec.Builder flowBuilder = TypeSpec.interfaceBuilder(naming.fl().interfaze(node))
         .addModifiers(Modifier.PUBLIC)
         .addAnnotation(AnnotationSpec.builder(javax.annotation.processing.Generated.class).addMember("value", "$S", FlAstNodeVisitorJavaInterface.class.getCanonicalName()).build())
         .addSuperinterface(naming.fl().superinterface(node))
         .addTypes(visitInputs(node.getInputs()).getValues())
-        .addTypes(visitOutputs(node.getOutputs()).getValues());
-    // State
-    TypeSpec.Builder stateBuilder = TypeSpec
-        .interfaceBuilder(naming.fl().state(node))
-        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-        .addAnnotation(Value.Immutable.class);
-    // tasks
-    if (node.getTask().isPresent()) {
+        .addTypes(visitOutputs(node.getOutputs()).getValues())
+        .addType(stateBuilder.build());
+
+    return flowBuilder.build();
+  }
+
+  @Override
+  public FlMethodSpec visitTask(FlowTaskNode node) {
+
+    List<MethodSpec> value = new ArrayList<>();
+    
+    // figure out ref
+    if(!node.getRef().isEmpty()) {
       
-      for (FlTaskSpec task : visitTask(node.getTask().get()).getValues()) {
-        flowBuilder.addType(task.getType());
-        String typeName = task.getType().name;
-        stateBuilder.addMethod(MethodSpec
-            .methodBuilder(JavaSpecUtil.getMethodName(typeName.substring(body.getId().getValue().length())))
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .returns(ParameterizedTypeName.get(
-                task.getTask().getLoop().map(l -> ClassName.get(List.class)).orElse(ClassName.get(Optional.class)),
-                ClassName.get("", typeName)))
-            .build());
-      }
+      TaskRef ref = node.getRef().get();
+      TaskRefNaming type = naming.fl().ref(ref);
+      
+      value.add(MethodSpec.methodBuilder(JavaSpecUtil.getMethodName(node.getId()))
+          .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+          .returns(node.getLoop().isPresent() ? 
+              ParameterizedTypeName.get(ClassName.get(List.class), type.getReturnType()) : 
+              type.getReturnType())
+          .build());
     }
-    return flowBuilder.addType(stateBuilder.build()).build();
+    FlMethodSpec children = visitTaskPointer(node.getNext());
+    value.addAll(children.getValue());
+    
+    return ImmutableFlMethodSpec.builder().addAllValue(value).build();
   }
 
   @Override
-  public FlTasksSpec visitTask(FlowTaskNode node) {
-    TypeSpec.Builder stateBuilder = TypeSpec.interfaceBuilder(naming.fl().taskState(body, node))
-        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-        .addAnnotation(Value.Immutable.class)
-        ;
-    FlTasksSpec children = visitTaskPointer(node.getNext());
-    return ImmutableFlTasksSpec.builder()
-        .addValues(ImmutableFlTaskSpec.builder().task(node).type(stateBuilder.build()).build())
-        .addAllValues(children.getValues())
-        .build();
-  }
-
-  @Override
-  public FlTasksSpec visitTaskPointer(FlowTaskPointer node) {
+  public FlMethodSpec visitTaskPointer(FlowTaskPointer node) {
     if (node instanceof ThenPointer) {
       ThenPointer then = (ThenPointer) node;
       return visitTask(then.getTask().get());
     } else if (node instanceof WhenThenPointer) {
-      List<FlTaskSpec> values = new ArrayList<>();
+      List<MethodSpec> values = new ArrayList<>();
       WhenThenPointer whenThen = (WhenThenPointer) node;
       for (WhenThen c : whenThen.getValues()) {
-        values.addAll(visitTaskPointer(c.getThen()).getValues());
+        values.addAll(visitTaskPointer(c.getThen()).getValue());
       }
-      return ImmutableFlTasksSpec.builder().values(values).build();
+      return ImmutableFlMethodSpec.builder().value(values).build();
     }
-    return ImmutableFlTasksSpec.builder().build();
+    return ImmutableFlMethodSpec.builder().build();
   }
 
   @Override

@@ -1,4 +1,4 @@
-package io.resys.hdes.compiler.api;
+package io.resys.hdes.executor.api;
 
 /*-
  * #%L
@@ -20,12 +20,23 @@ package io.resys.hdes.compiler.api;
  * #L%
  */
 
-public class DecisionTableHitPolicyFirstException extends RuntimeException {
-  private static final long serialVersionUID = -2741344591344941378L;
+import java.io.Serializable;
+import java.util.Map;
 
-  public DecisionTableHitPolicyFirstException(String message) {
-    super(message);
+import org.immutables.value.Value;
+
+import io.resys.hdes.executor.api.HdesExecutable.MetaToken;
+
+
+@Value.Immutable
+public interface DecisionTableMeta extends HdesExecutable.Meta {
+  
+  Map<Integer, DecisionTableMetaEntry> getValues();
+
+  @Value.Immutable
+  interface DecisionTableMetaEntry extends Serializable {
+    int getId();
+    int getIndex();
+    MetaToken getToken();
   }
-  
-  
 }

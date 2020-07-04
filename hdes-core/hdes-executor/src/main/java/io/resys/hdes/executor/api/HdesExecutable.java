@@ -1,4 +1,4 @@
-package io.resys.hdes.compiler.api;
+package io.resys.hdes.executor.api;
 
 /*-
  * #%L
@@ -80,7 +80,7 @@ public interface HdesExecutable<I extends HdesExecutable.InputValue, M extends H
   
   // Markers for sub types
   interface DecisionTable<I extends InputValue, V extends OutputValue> extends HdesExecutable<I, DecisionTableMeta, V> {}
-  interface Flow<I extends InputValue, M extends FlowMeta, V extends OutputValue> extends HdesExecutable<I, M, V> {}
+  interface Flow<I extends InputValue, V extends OutputValue> extends HdesExecutable<I, FlowMeta, V> {}
   
   interface ExpressionTask<I extends InputValue, M extends ExpressionTaskMeta, V extends OutputValue> extends HdesExecutable<I, M, V> {}
   interface ManualTask<I extends InputValue, M extends Meta, V extends OutputValue> extends HdesExecutable<I, M, V> {}

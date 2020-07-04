@@ -38,6 +38,7 @@ public interface FlJavaSpec {
     MethodSpec getValue();
     List<TypeSpec> getChildren();
   }
+  
   @Value.Immutable
   public interface FlTaskSpec extends FlJavaSpec {
     FlowTaskNode getTask();
@@ -61,9 +62,12 @@ public interface FlJavaSpec {
     Optional<CodeBlock> getWhen();
     FlTaskVisitSpec getThen();
   }
+  
+  @Value.Immutable
   public interface FlMethodSpec extends FlJavaSpec {
-    MethodSpec getValue();
+    List<MethodSpec> getValue();
   }
+  
   @Value.Immutable
   public interface FlCodeSpecPair extends FlJavaSpec {
     CodeBlock getKey();

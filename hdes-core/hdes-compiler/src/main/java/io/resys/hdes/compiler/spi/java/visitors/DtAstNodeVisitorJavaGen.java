@@ -64,25 +64,24 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.AndOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.BetweenExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.NotUnaryOperation;
-import io.resys.hdes.compiler.api.DecisionTableHitPolicyFirstException;
-import io.resys.hdes.compiler.api.DecisionTableMeta;
-import io.resys.hdes.compiler.api.DecisionTableMeta.DecisionTableMetaEntry;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.api.HdesExecutable.ExecutionStatus;
-import io.resys.hdes.compiler.api.HdesExecutable.MetaToken;
-import io.resys.hdes.compiler.api.HdesExecutable.Output;
-import io.resys.hdes.compiler.api.HdesExecutable.SourceType;
-import io.resys.hdes.compiler.api.HdesWhen;
-import io.resys.hdes.compiler.api.ImmutableDecisionTableMeta;
-import io.resys.hdes.compiler.api.ImmutableDecisionTableMetaEntry;
-import io.resys.hdes.compiler.api.ImmutableMetaStamp;
-import io.resys.hdes.compiler.api.ImmutableMetaToken;
-import io.resys.hdes.compiler.api.ImmutableOutput;
 import io.resys.hdes.compiler.spi.NamingContext;
 import io.resys.hdes.compiler.spi.java.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.java.visitors.DtJavaSpec.DtCodeSpec;
 import io.resys.hdes.compiler.spi.java.visitors.DtJavaSpec.DtCodeSpecPair;
 import io.resys.hdes.compiler.spi.java.visitors.DtJavaSpec.DtMethodsSpec;
+import io.resys.hdes.executor.api.DecisionTableMeta;
+import io.resys.hdes.executor.api.DecisionTableMeta.DecisionTableMetaEntry;
+import io.resys.hdes.executor.api.HdesExecutable.ExecutionStatus;
+import io.resys.hdes.executor.api.HdesExecutable.MetaToken;
+import io.resys.hdes.executor.api.HdesExecutable.SourceType;
+import io.resys.hdes.executor.api.HdesWhen;
+import io.resys.hdes.executor.api.ImmutableDecisionTableMeta;
+import io.resys.hdes.executor.api.ImmutableDecisionTableMetaEntry;
+import io.resys.hdes.executor.api.ImmutableMetaStamp;
+import io.resys.hdes.executor.api.ImmutableMetaToken;
+import io.resys.hdes.executor.api.ImmutableOutput;
+import io.resys.hdes.executor.spi.exceptions.DecisionTableHitPolicyFirstException;
 
 public class DtAstNodeVisitorJavaGen extends DtAstNodeVisitorTemplate<DtJavaSpec, TypeSpec> {
   private final static String HEADER_REF = "//header ref to be replaces";
@@ -138,30 +137,25 @@ public class DtAstNodeVisitorJavaGen extends DtAstNodeVisitorTemplate<DtJavaSpec
     }
     
     statements
-    .addStatement("long end = System.currentTimeMillis()")
-    .add("$T meta = $T.builder()", DecisionTableMeta.class, ImmutableDecisionTableMeta.class)
-    .add("\r\n  ").add(".id($S).status($T.COMPLETED) ", body.getId().getValue(), ExecutionStatus.class)
-    .add("\r\n  ").add(".start(start).end(end).time(end - start)")
-    .add("\r\n  ").addStatement(".values(metaValues).build()", body.getId().getValue(), ExecutionStatus.class);
+      .addStatement("long end = System.currentTimeMillis()")
+      .add("$T meta = $T.builder()", DecisionTableMeta.class, ImmutableDecisionTableMeta.class)
+      .add("\r\n  ").add(".id($S).status($T.COMPLETED) ", body.getId().getValue(), ExecutionStatus.class)
+      .add("\r\n  ").add(".start(start).end(end).time(end - start)")
+      .add("\r\n  ").addStatement(".values(metaValues).build()", body.getId().getValue(), ExecutionStatus.class);
 
-    
     statements
       .add("\r\n")
       .addStatement("$T.Builder<$T, $T> builder = $T.builder()", ImmutableOutput.class, DecisionTableMeta.class, outputName, ImmutableOutput.class)
       .addStatement("return builder.meta(meta).value(result.build()).build()")
       .build();
-
-    
-    ParameterizedTypeName returnType = ParameterizedTypeName
-        .get(ClassName.get(Output.class), ClassName.get(DecisionTableMeta.class), outputName);
-    
+        
     return ImmutableDtMethodsSpec.builder().addValue(
         
         MethodSpec.methodBuilder("apply")
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
             .addParameter(ParameterSpec.builder(naming.dt().input(body), "input").build())
-            .returns(returnType)
+            .returns(naming.dt().returnType(body))
             .addCode(statements.build())
             .build()
             
@@ -252,9 +246,7 @@ public class DtAstNodeVisitorJavaGen extends DtAstNodeVisitorTemplate<DtJavaSpec
     }
     
     ClassName outputName = naming.dt().output(body);
-    ParameterizedTypeName returnType = ParameterizedTypeName
-        .get(ClassName.get(Output.class), ClassName.get(DecisionTableMeta.class), outputName);
-       
+
     statements
     .addStatement("long end = System.currentTimeMillis()")
     .add("$T meta = $T.builder()", DecisionTableMeta.class, ImmutableDecisionTableMeta.class)
@@ -275,7 +267,7 @@ public class DtAstNodeVisitorJavaGen extends DtAstNodeVisitorTemplate<DtJavaSpec
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
             .addParameter(ParameterSpec.builder(naming.dt().input(body), "input").build())
-            .returns(returnType)
+            .returns(naming.dt().returnType(body))
             .addCode(statements.build())
             .build()).build();
   }
@@ -321,10 +313,10 @@ public class DtAstNodeVisitorJavaGen extends DtAstNodeVisitorTemplate<DtJavaSpec
     statements.addStatement("throw new $T($S)", DecisionTableHitPolicyFirstException.class, 
         "No rules where match for DT: '" + body.getId().getValue() + "' with hit policy 'FIRST'!");
     
-    ClassName outputName = naming.dt().output(body);
-    ParameterizedTypeName returnType = ParameterizedTypeName
-        .get(ClassName.get(Output.class), ClassName.get(DecisionTableMeta.class), outputName);
     
+    ClassName outputName = naming.dt().output(body);
+    ParameterizedTypeName returnType = naming.dt().returnType(body);
+
     return ImmutableDtMethodsSpec.builder().addValue(
 
         MethodSpec.methodBuilder("createResult")
@@ -342,7 +334,6 @@ public class DtAstNodeVisitorJavaGen extends DtAstNodeVisitorTemplate<DtJavaSpec
               .add("\r\n  ").add(".id($S).status($T.COMPLETED) ", body.getId().getValue(), ExecutionStatus.class)
               .add("\r\n  ").add(".start(start).end(end).time(end - start)")
               .add("\r\n  ").addStatement(".values(metaValues).build()", body.getId().getValue(), ExecutionStatus.class)
-
               
               .addStatement("$T.Builder<$T, $T> builder = $T.builder()", ImmutableOutput.class, DecisionTableMeta.class, outputName, ImmutableOutput.class)
               .addStatement("return builder.meta(meta).value(result).build()")

@@ -13,7 +13,7 @@ headers: {
 tasks: {
   firstTask: {
     then: switch
-    decision-table: BestDt uses: { name: arg1, lastName: arg2 } },
+    decision-table: SimpleHitPolicyFirstDt uses: { name: arg1, lastName: arg2 } },
   
   switch: {
     when: arg1 > 10 then: secondTask,
@@ -21,5 +21,5 @@ tasks: {
 
   secondTask: {
     then: end as: { }
-    decision-table: Best2Dt uses: { name: arg1, lastName: arg2 } }
+    decision-table: SimpleHitPolicyFirstDt uses: { name: arg1, lastName: arg2 } }
 }

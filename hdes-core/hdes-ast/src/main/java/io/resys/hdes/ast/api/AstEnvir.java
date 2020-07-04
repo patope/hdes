@@ -29,7 +29,13 @@ import io.resys.hdes.ast.api.nodes.AstNode.ErrorNode;
 
 public interface AstEnvir {
   Map<String, BodyNode> getBody();
+  
+  // internal or external id depends how the source was build
   BodyNode getBody(String id);
+  
+  // internal id parsed from ast structure
+  BodyNode getByAstId(String bodyId);
+  
   String getSrc(String id);
   Map<String, List<ErrorNode>> getErrors();
   List<ErrorNode> getErrors(String id);

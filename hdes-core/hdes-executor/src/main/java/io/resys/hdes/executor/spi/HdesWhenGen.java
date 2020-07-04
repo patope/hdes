@@ -1,4 +1,4 @@
-package io.resys.hdes.compiler.spi;
+package io.resys.hdes.executor.spi;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -7,7 +7,7 @@ import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 
-import io.resys.hdes.compiler.api.HdesWhen;
+import io.resys.hdes.executor.api.HdesWhen;
 
 /*-
  * #%L

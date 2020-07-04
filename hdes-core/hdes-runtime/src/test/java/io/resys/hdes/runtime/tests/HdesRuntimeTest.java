@@ -31,13 +31,13 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.resys.hdes.compiler.api.DecisionTableMeta;
 import io.resys.hdes.compiler.api.HdesCompiler;
 import io.resys.hdes.compiler.api.HdesCompiler.Resource;
-import io.resys.hdes.compiler.api.HdesExecutable;
-import io.resys.hdes.compiler.api.HdesExecutable.DecisionTable;
-import io.resys.hdes.compiler.api.HdesExecutable.OutputValue;
 import io.resys.hdes.compiler.spi.java.JavaHdesCompiler;
+import io.resys.hdes.executor.api.DecisionTableMeta;
+import io.resys.hdes.executor.api.HdesExecutable;
+import io.resys.hdes.executor.api.HdesExecutable.DecisionTable;
+import io.resys.hdes.executor.api.HdesExecutable.OutputValue;
 import io.resys.hdes.runtime.api.HdesRuntime.RuntimeEnvir;
 import io.resys.hdes.runtime.api.HdesRuntime.RuntimeTask;
 import io.resys.hdes.runtime.spi.ImmutableHdesRuntime;

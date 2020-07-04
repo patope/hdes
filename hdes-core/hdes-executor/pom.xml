@@ -6,30 +6,17 @@
     <version>999-SNAPSHOT</version>
   </parent>
   <packaging>jar</packaging>
-  <artifactId>hdes-compiler</artifactId>
-
+  <artifactId>hdes-executor</artifactId>
 
   <dependencies>
-    <dependency>
-      <groupId>io.resys.hdes</groupId>
-      <artifactId>hdes-ast</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.resys.hdes</groupId>
-      <artifactId>hdes-executor</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.squareup</groupId>
-      <artifactId>javapoet</artifactId>
-    </dependency>
     <dependency>
       <groupId>org.immutables</groupId>
       <artifactId>value</artifactId>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
     </dependency>
 
     <dependency>

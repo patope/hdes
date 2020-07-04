@@ -24,7 +24,7 @@ import java.util.List;
 
 import org.immutables.value.Value;
 
-import io.resys.hdes.compiler.api.HdesExecutable.SourceType;
+import io.resys.hdes.executor.api.HdesExecutable.SourceType;
 
 public interface HdesCompiler {
 

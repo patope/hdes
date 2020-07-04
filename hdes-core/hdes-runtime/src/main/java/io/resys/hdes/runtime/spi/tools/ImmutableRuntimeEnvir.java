@@ -32,11 +32,11 @@ import org.slf4j.LoggerFactory;
 
 import io.resys.hdes.compiler.api.HdesCompiler.Resource;
 import io.resys.hdes.compiler.api.HdesCompiler.TypeName;
-import io.resys.hdes.compiler.api.HdesExecutable;
-import io.resys.hdes.compiler.api.HdesExecutable.InputValue;
-import io.resys.hdes.compiler.api.HdesExecutable.Output;
-import io.resys.hdes.compiler.api.HdesWhen;
-import io.resys.hdes.compiler.spi.HdesWhenGen;
+import io.resys.hdes.executor.api.HdesExecutable;
+import io.resys.hdes.executor.api.HdesExecutable.InputValue;
+import io.resys.hdes.executor.api.HdesExecutable.Output;
+import io.resys.hdes.executor.api.HdesWhen;
+import io.resys.hdes.executor.spi.HdesWhenGen;
 import io.resys.hdes.runtime.api.HdesRuntime.RuntimeEnvir;
 import io.resys.hdes.runtime.api.HdesRuntime.RuntimeTask;
 import io.resys.hdes.runtime.api.ImmutableRuntimeTask;

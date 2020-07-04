@@ -49,12 +49,12 @@ import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyFirst;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyMatrix;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.MatrixRow;
 import io.resys.hdes.ast.api.nodes.ImmutableScalarTypeDefNode;
-import io.resys.hdes.compiler.api.HdesExecutable;
 import io.resys.hdes.compiler.spi.NamingContext;
 import io.resys.hdes.compiler.spi.java.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.java.visitors.DtJavaSpec.DtMethodSpec;
 import io.resys.hdes.compiler.spi.java.visitors.DtJavaSpec.DtMethodsSpec;
 import io.resys.hdes.compiler.spi.java.visitors.DtJavaSpec.DtTypesSpec;
+import io.resys.hdes.executor.api.HdesExecutable;
 
 public class DtAstNodeVisitorJavaInterface extends DtAstNodeVisitorTemplate<DtJavaSpec, TypeSpec> {
 
