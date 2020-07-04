@@ -2,6 +2,7 @@ package io.resys.hdes.compiler.spi.java.visitors.en;
 
 import com.squareup.javapoet.TypeSpec;
 
+import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.ExpressionAstNodeVisitor;
@@ -22,121 +23,173 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.PostIncrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.TypeRefNode;
+import io.resys.hdes.compiler.api.HdesCompilerException;
+import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnRefSpec;
 
-public class EnInterfaceVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, TypeSpec> {
-
-  @Override
-  public EnJavaSpec visitTypeName(TypeName node) {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
-  @Override
-  public EnJavaSpec visitLiteral(Literal node) {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
+public class EnInterfaceVisitor implements ExpressionAstNodeVisitor<EnRefSpec, TypeSpec> {
   @Override
   public TypeSpec visitExpressionBody(ExpressionBody node) {
     // TODO Auto-generated method stub
+    
+    visit(node.getValue());
+    
     return null;
   }
 
   @Override
-  public EnJavaSpec visitNotUnaryOperation(NotUnaryOperation node) {
+  public EnRefSpec visitTypeName(TypeName node) {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public EnJavaSpec visitNegateUnaryOperation(NegateUnaryOperation node) {
+  public EnRefSpec visitMethodRefNode(MethodRefNode node) {
     // TODO Auto-generated method stub
     return null;
+  }
+  
+  
+  @Override
+  public EnRefSpec visitTypeRefNode(TypeRefNode node) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+  
+  @Override
+  public EnRefSpec visitLiteral(Literal node) {
+    return ImmutableEnRefSpec.builder().build();
   }
 
   @Override
-  public EnJavaSpec visitPositiveUnaryOperation(PositiveUnaryOperation node) {
-    // TODO Auto-generated method stub
-    return null;
+  public EnRefSpec visitNotUnaryOperation(NotUnaryOperation node) {
+    return visit(node.getValue());
   }
 
   @Override
-  public EnJavaSpec visitPreIncrementUnaryOperation(PreIncrementUnaryOperation node) {
-    // TODO Auto-generated method stub
-    return null;
+  public EnRefSpec visitNegateUnaryOperation(NegateUnaryOperation node) {
+    return visit(node.getValue());
   }
 
   @Override
-  public EnJavaSpec visitPreDecrementUnaryOperation(PreDecrementUnaryOperation node) {
-    // TODO Auto-generated method stub
-    return null;
+  public EnRefSpec visitPositiveUnaryOperation(PositiveUnaryOperation node) {
+    return visit(node.getValue());
   }
 
   @Override
-  public EnJavaSpec visitPostIncrementUnaryOperation(PostIncrementUnaryOperation node) {
-    // TODO Auto-generated method stub
-    return null;
+  public EnRefSpec visitPreIncrementUnaryOperation(PreIncrementUnaryOperation node) {
+    return visit(node.getValue());
   }
 
   @Override
-  public EnJavaSpec visitPostDecrementUnaryOperation(PostDecrementUnaryOperation node) {
-    // TODO Auto-generated method stub
-    return null;
+  public EnRefSpec visitPreDecrementUnaryOperation(PreDecrementUnaryOperation node) {
+    return visit(node.getValue());
   }
 
   @Override
-  public EnJavaSpec visitMethodRefNode(MethodRefNode node) {
-    // TODO Auto-generated method stub
-    return null;
+  public EnRefSpec visitPostIncrementUnaryOperation(PostIncrementUnaryOperation node) {
+    return visit(node.getValue());
   }
 
   @Override
-  public EnJavaSpec visitTypeRefNode(TypeRefNode node) {
-    // TODO Auto-generated method stub
-    return null;
+  public EnRefSpec visitPostDecrementUnaryOperation(PostDecrementUnaryOperation node) {
+    return visit(node.getValue());
   }
 
   @Override
-  public EnJavaSpec visitEqualityOperation(EqualityOperation node) {
-    // TODO Auto-generated method stub
-    return null;
+  public EnRefSpec visitEqualityOperation(EqualityOperation node) {
+    return ImmutableEnRefSpec.builder()
+        .addAllValues(visit(node.getLeft()).getValues())
+        .addAllValues(visit(node.getRight()).getValues())
+        .build();
   }
 
   @Override
-  public EnJavaSpec visitAndOperation(AndOperation node) {
-    // TODO Auto-generated method stub
-    return null;
+  public EnRefSpec visitAndOperation(AndOperation node) {
+    return ImmutableEnRefSpec.builder()
+        .addAllValues(visit(node.getLeft()).getValues())
+        .addAllValues(visit(node.getRight()).getValues())
+        .build();
   }
 
   @Override
-  public EnJavaSpec visitOrOperation(OrOperation node) {
-    // TODO Auto-generated method stub
-    return null;
+  public EnRefSpec visitOrOperation(OrOperation node) {
+    return ImmutableEnRefSpec.builder()
+        .addAllValues(visit(node.getLeft()).getValues())
+        .addAllValues(visit(node.getRight()).getValues())
+        .build();
   }
 
   @Override
-  public EnJavaSpec visitConditionalExpression(ConditionalExpression node) {
-    // TODO Auto-generated method stub
-    return null;
+  public EnRefSpec visitConditionalExpression(ConditionalExpression node) {
+    return ImmutableEnRefSpec.builder()
+        .addAllValues(visit(node.getLeft()).getValues())
+        .addAllValues(visit(node.getRight()).getValues())
+        .build();
   }
 
   @Override
-  public EnJavaSpec visitBetweenExpression(BetweenExpression node) {
-    // TODO Auto-generated method stub
-    return null;
+  public EnRefSpec visitBetweenExpression(BetweenExpression node) {
+    return ImmutableEnRefSpec.builder()
+        .addAllValues(visit(node.getLeft()).getValues())
+        .addAllValues(visit(node.getRight()).getValues())
+        .addAllValues(visit(node.getValue()).getValues())
+        .build();
   }
 
   @Override
-  public EnJavaSpec visitAdditiveOperation(AdditiveOperation node) {
-    // TODO Auto-generated method stub
-    return null;
+  public EnRefSpec visitAdditiveOperation(AdditiveOperation node) {
+    return ImmutableEnRefSpec.builder()
+        .addAllValues(visit(node.getLeft()).getValues())
+        .addAllValues(visit(node.getRight()).getValues())
+        .build();
   }
 
   @Override
-  public EnJavaSpec visitMultiplicativeOperation(MultiplicativeOperation node) {
-    // TODO Auto-generated method stub
-    return null;
+  public EnRefSpec visitMultiplicativeOperation(MultiplicativeOperation node) {
+    return ImmutableEnRefSpec.builder()
+        .addAllValues(visit(node.getLeft()).getValues())
+        .addAllValues(visit(node.getRight()).getValues())
+        .build();
   }
 
+  private EnRefSpec visit(AstNode node) {
+    if (node instanceof TypeName) {
+      return visitTypeName((TypeName) node);
+    } else if (node instanceof Literal) {
+      return visitLiteral((Literal) node);
+    } else if (node instanceof NotUnaryOperation) {
+      return visitNotUnaryOperation((NotUnaryOperation) node);
+    } else if (node instanceof NegateUnaryOperation) {
+      return visitNegateUnaryOperation((NegateUnaryOperation) node);
+    } else if (node instanceof PositiveUnaryOperation) {
+      return visitPositiveUnaryOperation((PositiveUnaryOperation) node);
+    } else if (node instanceof PreIncrementUnaryOperation) {
+      return visitPreIncrementUnaryOperation((PreIncrementUnaryOperation) node);
+    } else if (node instanceof PreDecrementUnaryOperation) {
+      return visitPreDecrementUnaryOperation((PreDecrementUnaryOperation) node);
+    } else if (node instanceof PostIncrementUnaryOperation) {
+      return visitPostIncrementUnaryOperation((PostIncrementUnaryOperation) node);
+    } else if (node instanceof PostDecrementUnaryOperation) {
+      return visitPostDecrementUnaryOperation((PostDecrementUnaryOperation) node);
+    } else if (node instanceof MethodRefNode) {
+      return visitMethodRefNode((MethodRefNode) node);
+    } else if (node instanceof TypeRefNode) {
+      return visitTypeRefNode((TypeRefNode) node);
+    } else if (node instanceof EqualityOperation) {
+      return visitEqualityOperation((EqualityOperation) node);
+    } else if (node instanceof AndOperation) {
+      return visitAndOperation((AndOperation) node);
+    } else if (node instanceof OrOperation) {
+      return visitOrOperation((OrOperation) node);
+    } else if (node instanceof ConditionalExpression) {
+      return visitConditionalExpression((ConditionalExpression) node);
+    } else if (node instanceof BetweenExpression) {
+      return visitBetweenExpression((BetweenExpression) node);
+    } else if (node instanceof AdditiveOperation) {
+      return visitAdditiveOperation((AdditiveOperation) node);
+    } else if (node instanceof MultiplicativeOperation) {
+      return visitMultiplicativeOperation((MultiplicativeOperation) node);
+    }
+    throw new HdesCompilerException(HdesCompilerException.builder().unknownDTExpressionNode(node));
+  }
 }
