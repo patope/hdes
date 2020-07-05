@@ -44,8 +44,8 @@ import io.resys.hdes.compiler.spi.NamingContext;
 import io.resys.hdes.compiler.spi.java.JavaNamingContext;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtImplementationVisitor;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtInterfaceVisitor;
-import io.resys.hdes.compiler.spi.java.visitors.fl.FlAstNodeVisitorJavaGen;
-import io.resys.hdes.compiler.spi.java.visitors.fl.FlAstNodeVisitorJavaInterface;
+import io.resys.hdes.compiler.spi.java.visitors.fl.FlImplementationVisitor;
+import io.resys.hdes.compiler.spi.java.visitors.fl.FlInterfaceVisitor;
 import io.resys.hdes.executor.api.HdesExecutable;
 
 public class JavaAstEnvirVisitor {
@@ -99,8 +99,8 @@ public class JavaAstEnvirVisitor {
   private Resource visit(FlowBody body, AstEnvir envir, NamingContext naming) {
     StringBuilder interfaceBuilder = new StringBuilder();
     StringBuilder implementationBuilder = new StringBuilder();
-    TypeSpec superInterface = visitFlow(body, new FlAstNodeVisitorJavaInterface(naming).visitBody(body), naming, interfaceBuilder);
-    TypeSpec implementation = visitFlow(body, new FlAstNodeVisitorJavaGen(naming).visitBody(body), naming, implementationBuilder);
+    TypeSpec superInterface = visitFlow(body, new FlInterfaceVisitor(naming).visitBody(body), naming, interfaceBuilder);
+    TypeSpec implementation = visitFlow(body, new FlImplementationVisitor(naming).visitBody(body), naming, implementationBuilder);
 
     return ImmutableResource.builder()
         .type(HdesExecutable.SourceType.FL)

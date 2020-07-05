@@ -51,6 +51,7 @@ import io.resys.hdes.ast.HdesParser.UnaryExpressionNotPlusMinusContext;
 import io.resys.hdes.ast.HdesParserBaseVisitor;
 import io.resys.hdes.ast.api.AstNodeException;
 import io.resys.hdes.ast.api.nodes.AstNode;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
 import io.resys.hdes.ast.api.nodes.ExpressionNode;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveType;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
@@ -58,7 +59,6 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityType;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodRefNode;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MultiplicativeType;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.TypeRefNode;
 import io.resys.hdes.ast.api.nodes.ImmutableAdditiveOperation;
 import io.resys.hdes.ast.api.nodes.ImmutableAndOperation;
 import io.resys.hdes.ast.api.nodes.ImmutableBetweenExpression;
@@ -105,7 +105,7 @@ public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
     return ImmutableMethodRefNode.builder()
         .token(token(ctx))
         .name(nodes.of(RedundentMethodName.class).get().getValue())
-        .type(nodes.of(TypeRefNode.class))
+        .type(nodes.of(TypeName.class))
         .values(nodes.of(RedundentArgs.class).map(a -> a.getValues()).orElse(Collections.emptyList()))
         .build();
   }

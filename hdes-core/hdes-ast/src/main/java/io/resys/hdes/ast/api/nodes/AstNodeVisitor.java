@@ -1,5 +1,7 @@
 package io.resys.hdes.ast.api.nodes;
 
+import java.util.List;
+
 /*-
  * #%L
  * hdes-ast
@@ -56,12 +58,9 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.PostDecrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PostIncrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.TypeRefNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.EndPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
-import io.resys.hdes.ast.api.nodes.FlowNode.FlowInputs;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowLoop;
-import io.resys.hdes.ast.api.nodes.FlowNode.FlowOutputs;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.MappingValue;
@@ -80,7 +79,6 @@ import io.resys.hdes.ast.api.nodes.ManualTaskNode.ManualTaskActions;
 import io.resys.hdes.ast.api.nodes.ManualTaskNode.ManualTaskBody;
 import io.resys.hdes.ast.api.nodes.ManualTaskNode.ManualTaskDropdowns;
 import io.resys.hdes.ast.api.nodes.ManualTaskNode.ManualTaskForm;
-import io.resys.hdes.ast.api.nodes.ManualTaskNode.ManualTaskInputs;
 import io.resys.hdes.ast.api.nodes.ManualTaskNode.ThenAction;
 import io.resys.hdes.ast.api.nodes.ManualTaskNode.WhenAction;
 
@@ -118,7 +116,6 @@ public interface AstNodeVisitor<T, R> {
     T visitPostIncrementUnaryOperation(PostIncrementUnaryOperation node);
     T visitPostDecrementUnaryOperation(PostDecrementUnaryOperation node);
     T visitMethodRefNode(MethodRefNode node);
-    T visitTypeRefNode(TypeRefNode node);
     T visitEqualityOperation(EqualityOperation node);
     T visitAndOperation(AndOperation node);
     T visitOrOperation(OrOperation node);
@@ -157,8 +154,8 @@ public interface AstNodeVisitor<T, R> {
   // flow
   interface FlowAstNodeVisitor<T, R> extends TypeDefVisitor<T, R> {
     R visitBody(FlowBody node);
-    T visitInputs(FlowInputs node);
-    T visitOutputs(FlowOutputs node);
+    T visitInputs(List<TypeDefNode> node);
+    T visitOutputs(List<TypeDefNode> node);
     T visitTask(FlowTaskNode node);
     
     T visitTaskPointer(FlowTaskPointer node);
@@ -177,7 +174,7 @@ public interface AstNodeVisitor<T, R> {
   // mt
   interface MtAstNodeVisitor<T, R> extends TypeDefVisitor<T, R> {
     R visitManualTaskBody(ManualTaskBody node);
-    T visitManualTaskInputs(ManualTaskInputs node);
+    T visitManualTaskInputs(List<TypeDefNode> node);
     T visitManualTaskDropdowns(ManualTaskDropdowns node);
     T visitManualTaskStatements(ManualTaskActions node);
     T visitManualTaskForm(ManualTaskForm node);

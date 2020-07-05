@@ -21,16 +21,16 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.PostDecrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PostIncrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.TypeRefNode;
+import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnRefSpec;
 
-public class EnTemplateVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, TypeSpec> {
+public class EnTemplateVisitor implements ExpressionAstNodeVisitor<EnRefSpec, TypeSpec> {
   @Override
-  public EnJavaSpec visitTypeName(TypeName node) {
+  public EnRefSpec visitTypeName(TypeName node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnJavaSpec visitLiteral(Literal node) {
+  public EnRefSpec visitLiteral(Literal node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
@@ -40,82 +40,77 @@ public class EnTemplateVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, T
   }
 
   @Override
-  public EnJavaSpec visitNotUnaryOperation(NotUnaryOperation node) {
+  public EnRefSpec visitNotUnaryOperation(NotUnaryOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnJavaSpec visitNegateUnaryOperation(NegateUnaryOperation node) {
+  public EnRefSpec visitNegateUnaryOperation(NegateUnaryOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnJavaSpec visitPositiveUnaryOperation(PositiveUnaryOperation node) {
+  public EnRefSpec visitPositiveUnaryOperation(PositiveUnaryOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnJavaSpec visitPreIncrementUnaryOperation(PreIncrementUnaryOperation node) {
+  public EnRefSpec visitPreIncrementUnaryOperation(PreIncrementUnaryOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnJavaSpec visitPreDecrementUnaryOperation(PreDecrementUnaryOperation node) {
+  public EnRefSpec visitPreDecrementUnaryOperation(PreDecrementUnaryOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnJavaSpec visitPostIncrementUnaryOperation(PostIncrementUnaryOperation node) {
+  public EnRefSpec visitPostIncrementUnaryOperation(PostIncrementUnaryOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnJavaSpec visitPostDecrementUnaryOperation(PostDecrementUnaryOperation node) {
+  public EnRefSpec visitPostDecrementUnaryOperation(PostDecrementUnaryOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnJavaSpec visitMethodRefNode(MethodRefNode node) {
+  public EnRefSpec visitMethodRefNode(MethodRefNode node) {
+    throw new IllegalArgumentException("Not implemented");
+  }
+  
+  @Override
+  public EnRefSpec visitEqualityOperation(EqualityOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnJavaSpec visitTypeRefNode(TypeRefNode node) {
+  public EnRefSpec visitAndOperation(AndOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnJavaSpec visitEqualityOperation(EqualityOperation node) {
+  public EnRefSpec visitOrOperation(OrOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnJavaSpec visitAndOperation(AndOperation node) {
+  public EnRefSpec visitConditionalExpression(ConditionalExpression node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnJavaSpec visitOrOperation(OrOperation node) {
+  public EnRefSpec visitBetweenExpression(BetweenExpression node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnJavaSpec visitConditionalExpression(ConditionalExpression node) {
+  public EnRefSpec visitAdditiveOperation(AdditiveOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnJavaSpec visitBetweenExpression(BetweenExpression node) {
-    throw new IllegalArgumentException("Not implemented");
-  }
-
-  @Override
-  public EnJavaSpec visitAdditiveOperation(AdditiveOperation node) {
-    throw new IllegalArgumentException("Not implemented");
-  }
-
-  @Override
-  public EnJavaSpec visitMultiplicativeOperation(MultiplicativeOperation node) {
+  public EnRefSpec visitMultiplicativeOperation(MultiplicativeOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 }

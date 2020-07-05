@@ -42,10 +42,10 @@ import io.resys.hdes.executor.api.HdesWhen;
 import io.resys.hdes.executor.api.ImmutableDecisionTableMeta;
 import io.resys.hdes.executor.api.ImmutableOutput;
 
-public class FlAstNodeVisitorJavaGen extends FlAstNodeVisitorTemplate<FlJavaSpec, TypeSpec> {
+public class FlImplementationVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> {
   private final NamingContext naming;
 
-  public FlAstNodeVisitorJavaGen(NamingContext naming) {
+  public FlImplementationVisitor(NamingContext naming) {
     super();
     this.naming = naming;
   }
@@ -80,7 +80,7 @@ public class FlAstNodeVisitorJavaGen extends FlAstNodeVisitorTemplate<FlJavaSpec
     return TypeSpec.classBuilder(naming.fl().impl(body))
         .addModifiers(Modifier.PUBLIC)
         .addSuperinterface(naming.fl().interfaze(body))
-        .addAnnotation(AnnotationSpec.builder(javax.annotation.processing.Generated.class).addMember("value", "$S", FlAstNodeVisitorJavaGen.class.getCanonicalName()).build())
+        .addAnnotation(AnnotationSpec.builder(javax.annotation.processing.Generated.class).addMember("value", "$S", FlImplementationVisitor.class.getCanonicalName()).build())
         .addMethod(MethodSpec.constructorBuilder()
             .addModifiers(Modifier.PUBLIC)
             .addParameter(ParameterSpec.builder(HdesWhen.class, "when").build())

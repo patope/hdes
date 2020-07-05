@@ -82,14 +82,9 @@ public interface ExpressionNode extends AstNode {
    */
   @Value.Immutable
   interface MethodRefNode extends ExpressionNode {
-    Optional<TypeRefNode> getType();
+    Optional<TypeName> getType();
     String getName();
     List<AstNode> getValues();
-  }
-
-  @Value.Immutable
-  interface TypeRefNode extends ExpressionNode {
-    String getName();
   }
 
   /*

@@ -23,7 +23,6 @@ package io.resys.hdes.ast.spi.visitors.ast;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.immutables.value.Value;
@@ -47,7 +46,6 @@ import io.resys.hdes.ast.HdesParser.WhenThenPointerArgsContext;
 import io.resys.hdes.ast.HdesParser.WhenThenPointerContext;
 import io.resys.hdes.ast.api.AstNodeException;
 import io.resys.hdes.ast.api.nodes.AstNode;
-import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
 import io.resys.hdes.ast.api.nodes.AstNode.Headers;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
@@ -66,9 +64,7 @@ import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 import io.resys.hdes.ast.api.nodes.ImmutableEndPointer;
 import io.resys.hdes.ast.api.nodes.ImmutableFlowBody;
-import io.resys.hdes.ast.api.nodes.ImmutableFlowInputs;
 import io.resys.hdes.ast.api.nodes.ImmutableFlowLoop;
-import io.resys.hdes.ast.api.nodes.ImmutableFlowOutputs;
 import io.resys.hdes.ast.api.nodes.ImmutableFlowTaskNode;
 import io.resys.hdes.ast.api.nodes.ImmutableMapping;
 import io.resys.hdes.ast.api.nodes.ImmutableMappingArray;
@@ -117,18 +113,7 @@ public class FwParserAstNodeVisitor extends MtParserAstNodeVisitor {
     
     Headers headers = children.of(Headers.class).get();
     return ImmutableFlowBody.builder()
-        .inputs(ImmutableFlowInputs.builder()
-            .token(headers.getToken())
-            .values(headers.getValues().stream()
-                .filter(t -> t.getDirection() == DirectionType.IN).collect(Collectors.toList()))
-            .build())
-        
-        .outputs(ImmutableFlowOutputs.builder()
-            .token(token(ctx))
-            .values(headers.getValues().stream()
-                .filter(t -> t.getDirection() == DirectionType.OUT).collect(Collectors.toList()))
-            .build())
-        
+        .headers(headers)
         .token(token(ctx))
         .id(children.of(TypeName.class).get())
         .description(children.of(RedundentDescription.class).map(e -> e.getValue()).orElse(null))

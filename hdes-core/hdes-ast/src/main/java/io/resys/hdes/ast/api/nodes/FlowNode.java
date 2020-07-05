@@ -35,21 +35,9 @@ public interface FlowNode extends AstNode {
   
   @Value.Immutable
   interface FlowBody extends FlowNode, BodyNode {
-    String getDescription();
-    FlowInputs getInputs();
-    FlowOutputs getOutputs(); 
+    String getDescription(); 
     List<FlowTaskNode> getUnreachableTasks();
     Optional<FlowTaskNode> getTask();
-  }
-
-  @Value.Immutable
-  interface FlowInputs extends FlowNode {
-    List<TypeDefNode> getValues();
-  }
-  
-  @Value.Immutable
-  interface FlowOutputs extends FlowNode {
-    List<TypeDefNode> getValues();
   }
   
   @Value.Immutable

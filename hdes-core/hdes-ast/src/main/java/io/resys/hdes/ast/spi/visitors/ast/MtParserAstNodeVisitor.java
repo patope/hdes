@@ -59,7 +59,6 @@ import io.resys.hdes.ast.HdesParser.ShowMessageContext;
 import io.resys.hdes.ast.HdesParser.TypeDefContext;
 import io.resys.hdes.ast.api.AstNodeException;
 import io.resys.hdes.ast.api.nodes.AstNode;
-import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
 import io.resys.hdes.ast.api.nodes.AstNode.Headers;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
@@ -76,7 +75,6 @@ import io.resys.hdes.ast.api.nodes.ImmutableManualTaskActions;
 import io.resys.hdes.ast.api.nodes.ImmutableManualTaskBody;
 import io.resys.hdes.ast.api.nodes.ImmutableManualTaskDropdowns;
 import io.resys.hdes.ast.api.nodes.ImmutableManualTaskForm;
-import io.resys.hdes.ast.api.nodes.ImmutableManualTaskInputs;
 import io.resys.hdes.ast.api.nodes.ImmutableThenActionShowField;
 import io.resys.hdes.ast.api.nodes.ImmutableThenActionShowGroup;
 import io.resys.hdes.ast.api.nodes.ImmutableThenActionShowMsg;
@@ -179,11 +177,7 @@ public class MtParserAstNodeVisitor extends DtParserAstNodeVisitor {
         .form(nodes.of(ManualTaskForm.class).get())
         .dropdowns(nodes.of(ManualTaskDropdowns.class).get())
         .actions(nodes.of(ManualTaskActions.class).get())
-        .inputs(ImmutableManualTaskInputs.builder()
-            .token(token(ctx))
-            .values(headers.getValues().stream()
-                .filter(t -> t.getDirection() == DirectionType.IN).collect(Collectors.toList()))
-            .build())
+        .headers(headers)
         .build();
   }
 

@@ -29,6 +29,7 @@ public interface AstNode {
   
   interface BodyNode extends AstNode {
     TypeName getId();
+    Headers getHeaders();
   }
   
   @Value.Immutable

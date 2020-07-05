@@ -283,4 +283,9 @@ public class JavaNamingContext implements NamingContext {
           Optional.ofNullable(decisionTables).orElse("dt"));
     }
   }
+
+  @Override
+  public AstEnvir ast() {
+    return envir;
+  }
 }

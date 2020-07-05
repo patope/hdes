@@ -34,7 +34,6 @@ public interface DecisionTableNode extends AstNode {
   interface DecisionTableBody extends DecisionTableNode, BodyNode {
     Optional<String> getDescription();
     HitPolicy getHitPolicy();
-    Headers getHeaders();
   }
  
   @Value.Immutable

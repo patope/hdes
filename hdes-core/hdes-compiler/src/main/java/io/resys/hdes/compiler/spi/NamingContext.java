@@ -26,6 +26,7 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
+import io.resys.hdes.ast.api.AstEnvir;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
@@ -33,6 +34,7 @@ import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
 
 public interface NamingContext {
   
+  AstEnvir ast();
   FlNamingContext fl();
   DtNamingContext dt();
   
