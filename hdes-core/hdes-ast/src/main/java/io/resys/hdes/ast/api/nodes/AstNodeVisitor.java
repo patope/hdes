@@ -158,12 +158,12 @@ public interface AstNodeVisitor<T, R> {
     T visitOutputs(List<TypeDefNode> node);
     T visitTask(FlowTaskNode node);
     
-    T visitTaskPointer(FlowTaskPointer node);
-    T visitWhenThenPointer(WhenThenPointer node);
-    T visitThenPointer(ThenPointer node);
-    T visitEndPointer(EndPointer node);
-    T visitLoop(FlowLoop node);
+    T visitTaskPointer(FlowTaskNode parent, FlowTaskPointer node);
+    T visitWhenThenPointer(FlowTaskNode parent, WhenThenPointer node);
+    T visitThenPointer(FlowTaskNode parent, ThenPointer node);
+    T visitEndPointer(FlowTaskNode parent, EndPointer node);
     
+    T visitLoop(FlowLoop node);
     T visitWhenThen(WhenThen node);
     T visitWhen(ExpressionBody node);
     T visitMapping(FlowTaskNode node);

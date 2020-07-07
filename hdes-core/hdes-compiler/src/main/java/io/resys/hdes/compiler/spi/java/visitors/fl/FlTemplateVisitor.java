@@ -77,12 +77,12 @@ public class FlTemplateVisitor<T, R> implements FlowAstNodeVisitor<T, R> {
   }
 
   @Override
-  public T visitWhenThenPointer(WhenThenPointer node) {
+  public T visitWhenThenPointer(FlowTaskNode parent, WhenThenPointer node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public T visitThenPointer(ThenPointer node) {
+  public T visitThenPointer(FlowTaskNode parent, ThenPointer node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
@@ -107,12 +107,12 @@ public class FlTemplateVisitor<T, R> implements FlowAstNodeVisitor<T, R> {
   }
 
   @Override
-  public T visitTaskPointer(FlowTaskPointer node) {
+  public T visitTaskPointer(FlowTaskNode parent, FlowTaskPointer node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public T visitEndPointer(EndPointer node) {
+  public T visitEndPointer(FlowTaskNode parent, EndPointer node) {
     throw new IllegalArgumentException("Not implemented");
   }
 

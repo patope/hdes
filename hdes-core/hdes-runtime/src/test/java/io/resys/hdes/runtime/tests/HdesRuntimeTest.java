@@ -64,7 +64,7 @@ public class HdesRuntimeTest {
     data.put("value0", 11);
     data.put("value1", 2);
     
-    HdesExecutable.Output<DecisionTableMeta, ? extends OutputValue> output = runDT("ExpressionDT", src, data);
+    HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> output = runDT("ExpressionDT", src, data);
     Assertions.assertEquals(output.getMeta().getValues().size(), 1);
     Assertions.assertEquals(output.getMeta().getValues().get(0).getIndex(), 0);
   }
@@ -89,7 +89,7 @@ public class HdesRuntimeTest {
     data.put("name", "sam");
     data.put("lastName", "blah");
     
-    HdesExecutable.Output<DecisionTableMeta, ? extends OutputValue> output = runDT("SimpleHitPolicyFirstDt", src, data);
+    HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> output = runDT("SimpleHitPolicyFirstDt", src, data);
     Assertions.assertEquals(output.getMeta().getValues().size(), 1);
     Assertions.assertEquals(output.getMeta().getValues().get(0).getIndex(), 0);
   }
@@ -112,7 +112,7 @@ public class HdesRuntimeTest {
     data.put("name", "sam");
     data.put("lastName", "blah");
     
-    HdesExecutable.Output<DecisionTableMeta, ? extends OutputValue> output = runDT("SimpleHitPolicyMatrixDt", src, data);
+    HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> output = runDT("SimpleHitPolicyMatrixDt", src, data);
     
     Assertions.assertEquals(2, output.getMeta().getValues().size());
     Assertions.assertEquals("SimpleHitPolicyMatrixDtOut{lastName=30, name=60}", output.getValue().toString());
@@ -121,7 +121,7 @@ public class HdesRuntimeTest {
   }
   
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  private static HdesExecutable.Output<DecisionTableMeta, ? extends OutputValue> runDT(
+  private static HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> runDT(
       String name, 
       String src, 
       Map<String, Serializable> data) {
@@ -131,7 +131,7 @@ public class HdesRuntimeTest {
       RuntimeTask task = runtime.get(name);
       HdesExecutable.InputValue input = objectMapper.convertValue(data, task.getInput());
       DecisionTable dt = (DecisionTable) task.getValue();
-      HdesExecutable.Output<DecisionTableMeta, ? extends OutputValue> output = dt.apply(input);
+      HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> output = dt.apply(input);
       
       return output;
     } catch(ClassNotFoundException e) {

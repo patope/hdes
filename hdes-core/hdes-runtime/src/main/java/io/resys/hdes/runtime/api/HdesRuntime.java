@@ -46,6 +46,6 @@ public interface HdesRuntime {
     String getName();
     HdesExecutable getValue();
     Class<? extends HdesExecutable.InputValue> getInput();
-    Class<? extends HdesExecutable.Output> getOutput();
+    Class<? extends HdesExecutable.Execution> getOutput();
   }
 }

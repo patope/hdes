@@ -36,11 +36,11 @@ import io.resys.hdes.compiler.spi.NamingContext;
 import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
 import io.resys.hdes.executor.api.DecisionTableMeta;
 import io.resys.hdes.executor.api.FlowMeta;
+import io.resys.hdes.executor.api.HdesExecutable.Execution;
 import io.resys.hdes.executor.api.HdesExecutable.ExecutionStatus;
-import io.resys.hdes.executor.api.HdesExecutable.Output;
 import io.resys.hdes.executor.api.HdesWhen;
 import io.resys.hdes.executor.api.ImmutableDecisionTableMeta;
-import io.resys.hdes.executor.api.ImmutableOutput;
+import io.resys.hdes.executor.api.ImmutableExecution;
 
 public class FlImplementationVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> {
   private final NamingContext naming;
@@ -52,10 +52,10 @@ public class FlImplementationVisitor extends FlTemplateVisitor<FlJavaSpec, TypeS
 
   @Override
   public TypeSpec visitBody(FlowBody body) {
-    ClassName outputName = naming.fl().output(body);
+    ClassName outputName = naming.fl().outputValue(body);
     ClassName immutableOutputName = JavaSpecUtil.immutable(outputName);
     ParameterizedTypeName returnType = ParameterizedTypeName
-        .get(ClassName.get(Output.class), ClassName.get(FlowMeta.class), outputName);
+        .get(ClassName.get(Execution.class), ClassName.get(FlowMeta.class), outputName);
     
     CodeBlock.Builder statements = CodeBlock.builder()
       .addStatement("long start = System.currentTimeMillis()")
@@ -73,13 +73,13 @@ public class FlImplementationVisitor extends FlTemplateVisitor<FlJavaSpec, TypeS
       .add("\r\n  ").addStatement(".tasks(tasks.build()).build()", body.getId().getValue(), ExecutionStatus.class)
 
       .add("\r\n")
-      .addStatement("$T.Builder<$T, $T> builder = $T.builder()", ImmutableOutput.class, FlowMeta.class, outputName, ImmutableOutput.class)
+      .addStatement("$T.Builder<$T, $T> builder = $T.builder()", ImmutableExecution.class, FlowMeta.class, outputName, ImmutableExecution.class)
       .addStatement("return builder.meta(meta).value(result.build()).build()")
       ;
     
     return TypeSpec.classBuilder(naming.fl().impl(body))
         .addModifiers(Modifier.PUBLIC)
-        .addSuperinterface(naming.fl().interfaze(body))
+        .addSuperinterface(naming.fl().api(body))
         .addAnnotation(AnnotationSpec.builder(javax.annotation.processing.Generated.class).addMember("value", "$S", FlImplementationVisitor.class.getCanonicalName()).build())
         .addMethod(MethodSpec.constructorBuilder()
             .addModifiers(Modifier.PUBLIC)
@@ -89,7 +89,7 @@ public class FlImplementationVisitor extends FlTemplateVisitor<FlJavaSpec, TypeS
         .addField(FieldSpec.builder(HdesWhen.class, "when", Modifier.PRIVATE, Modifier.FINAL).build())
         .addMethod(MethodSpec.methodBuilder("apply")
             .addModifiers(Modifier.PUBLIC)
-            .addParameter(ParameterSpec.builder(naming.fl().input(body), "input").build())
+            .addParameter(ParameterSpec.builder(naming.fl().inputValue(body), "input").build())
             .returns(returnType)
             .addCode(statements.build())
             .build())

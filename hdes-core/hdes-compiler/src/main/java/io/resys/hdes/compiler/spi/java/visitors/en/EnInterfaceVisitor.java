@@ -2,23 +2,9 @@ package io.resys.hdes.compiler.spi.java.visitors.en;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-
-import javax.lang.model.element.Modifier;
-
-import org.immutables.value.Value.Immutable;
-
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.ParameterizedTypeName;
-import com.squareup.javapoet.TypeSpec;
 
 import io.resys.hdes.ast.api.nodes.AstNode;
-import io.resys.hdes.ast.api.nodes.AstNode.ArrayTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
-import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.ExpressionAstNodeVisitor;
@@ -39,39 +25,30 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.PostIncrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnaryOperation;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnRefSpec;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.TypeNameResolver;
-import io.resys.hdes.compiler.spi.java.visitors.fl.FlJavaSpec.FlHeaderSpec;
-import io.resys.hdes.compiler.spi.java.visitors.fl.FlJavaSpec.FlTypesSpec;
-import io.resys.hdes.compiler.spi.java.visitors.fl.ImmutableFlHeaderSpec;
-import io.resys.hdes.compiler.spi.java.visitors.fl.ImmutableFlTypesSpec;
-import io.resys.hdes.executor.api.HdesExecutable;
 
-public class EnInterfaceVisitor extends EnTemplateVisitor implements ExpressionAstNodeVisitor<EnRefSpec, TypeSpec> {
+public class EnInterfaceVisitor extends EnTemplateVisitor<List<TypeDefNode>> implements ExpressionAstNodeVisitor<EnRefSpec, List<TypeDefNode>> {
   
   private final TypeNameResolver resolver;
-  private final ScalarTypeDefNode output;
   
-  public EnInterfaceVisitor(TypeNameResolver resolver, ScalarTypeDefNode output) {
+  public EnInterfaceVisitor(TypeNameResolver resolver) {
     super();
     this.resolver = resolver;
-    this.output = output;
   }
 
   @Override
-  public TypeSpec visitExpressionBody(ExpressionBody node) {
-    EnRefSpec refSpec = visit(node.getValue());
-    
-    for(AstNode ref : refSpec.getValues()) {
+  public List<TypeDefNode> visitExpressionBody(ExpressionBody node) {
+    List<TypeDefNode> result = new ArrayList<>();
+    for(AstNode ref : visit(node.getValue()).getValues()) {
       if(ref instanceof TypeName) {
         TypeDefNode def = resolver.accept((TypeName) ref); 
-        
+        result.add(def);
       } else {
         throw new HdesCompilerException(HdesCompilerException.builder().unknownExpressionParameter(ref));
       }
     }
-    return null;
+    return result;
   }
   
   @Override
@@ -220,108 +197,5 @@ public class EnInterfaceVisitor extends EnTemplateVisitor implements ExpressionA
       return visitMultiplicativeOperation((MultiplicativeOperation) node);
     }
     throw new HdesCompilerException(HdesCompilerException.builder().unknownDTExpressionNode(node));
-  }
-  
-
-  @Override
-  public FlTypesSpec visitInputs(List<TypeDefNode> node) {
-    TypeSpec.Builder inputBuilder = TypeSpec
-        .interfaceBuilder(naming.fl().input(body))
-        .addSuperinterface(HdesExecutable.InputValue.class)
-        .addAnnotation(Immutable.class)
-        .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
-    List<TypeSpec> nested = new ArrayList<>();
-    for (TypeDefNode input : node) {
-      FlHeaderSpec spec = visitTypeDef(input);
-      nested.addAll(spec.getChildren());
-      inputBuilder.addMethod(spec.getValue());
-    }
-    return ImmutableFlTypesSpec.builder()
-        .addValues(inputBuilder.build())
-        .addAllValues(nested)
-        .build();
-  }
-
-  @Override
-  public FlTypesSpec visitOutputs(List<TypeDefNode> node) {
-    TypeSpec.Builder outputBuilder = TypeSpec
-        .interfaceBuilder(naming.fl().output(body))
-        .addSuperinterface(HdesExecutable.OutputValue.class)
-        .addAnnotation(Immutable.class)
-        .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
-    List<TypeSpec> nested = new ArrayList<>();
-    for (TypeDefNode output : node) {
-      FlHeaderSpec spec = visitTypeDef(output);
-      nested.addAll(spec.getChildren());
-      outputBuilder.addMethod(spec.getValue());
-    }
-    return ImmutableFlTypesSpec.builder()
-        .addValues(outputBuilder.build())
-        .addAllValues(nested)
-        .build();
-  }
-
-  private FlHeaderSpec visitTypeDef(TypeDefNode node) {
-    if (node instanceof ScalarTypeDefNode) {
-      return visitScalarDef((ScalarTypeDefNode) node);
-    } else if (node instanceof ArrayTypeDefNode) {
-      return visitArrayDef((ArrayTypeDefNode) node);
-    } else if (node instanceof ObjectTypeDefNode) {
-      return visitObjectDef((ObjectTypeDefNode) node);
-    }
-    throw new HdesCompilerException(HdesCompilerException.builder().unknownFlInputRule(node));
-  }
-
-  @Override
-  public FlHeaderSpec visitScalarDef(ScalarTypeDefNode node) {
-    Class<?> returnType = JavaSpecUtil.type(node.getType());
-    MethodSpec method = MethodSpec.methodBuilder(JavaSpecUtil.getMethodName(node.getName()))
-        .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-        .returns(node.getRequired() ? ClassName.get(returnType) : ParameterizedTypeName.get(Optional.class, returnType))
-        .build();
-    return ImmutableFlHeaderSpec.builder().value(method).build();
-  }
-
-  @Override
-  public FlHeaderSpec visitArrayDef(ArrayTypeDefNode node) {
-    FlHeaderSpec childSpec = visitTypeDef(node.getValue());
-    com.squareup.javapoet.TypeName arrayType;
-    if (node.getValue().getRequired()) {
-      arrayType = childSpec.getValue().returnType;
-    } else {
-      arrayType = ((ParameterizedTypeName) childSpec.getValue().returnType).typeArguments.get(0);
-    }
-    return ImmutableFlHeaderSpec.builder()
-        .value(childSpec.getValue().toBuilder()
-            .returns(ParameterizedTypeName.get(ClassName.get(List.class), arrayType))
-            .build())
-        .children(childSpec.getChildren())
-        .build();
-  }
-
-  @Override
-  public FlHeaderSpec visitObjectDef(ObjectTypeDefNode node) {
-    ClassName typeName = node.getDirection() == DirectionType.IN ? naming.fl().input(body, node) : naming.fl().output(body, node);
-    TypeSpec.Builder objectBuilder = TypeSpec
-        .interfaceBuilder(typeName)
-        .addSuperinterface(node.getDirection() == DirectionType.IN ? HdesExecutable.InputValue.class : HdesExecutable.OutputValue.class)
-        .addAnnotation(Immutable.class)
-        .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
-    List<TypeSpec> nested = new ArrayList<>();
-    for (TypeDefNode input : node.getValues()) {
-      FlHeaderSpec spec = visitTypeDef(input);
-      nested.addAll(spec.getChildren());
-      objectBuilder.addMethod(spec.getValue());
-    }
-    TypeSpec objectType = objectBuilder.build();
-    nested.add(objectType);
-    return ImmutableFlHeaderSpec.builder()
-        .children(nested)
-        .value(
-            MethodSpec.methodBuilder(JavaSpecUtil.getMethodName(node.getName()))
-                .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                .returns(node.getRequired() ? typeName : ParameterizedTypeName.get(ClassName.get(Optional.class), typeName))
-                .build())
-        .build();
   }
 }

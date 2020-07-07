@@ -73,10 +73,10 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
         AnnotationSpec.builder(javax.annotation.processing.Generated.class)
         .addMember("value", "$S", DtImplementationVisitor.class.getCanonicalName()).build());
     
-    TypeSpec result = TypeSpec.interfaceBuilder(naming.dt().interfaze(node))
+    TypeSpec result = TypeSpec.interfaceBuilder(naming.dt().api(node))
         .addModifiers(Modifier.PUBLIC)
         .addAnnotations(annotations)
-        .addSuperinterface(naming.dt().superinterface(node))
+        .addSuperinterface(naming.dt().executable(node))
         .addTypes(visitHeaders(node.getHeaders()).getValues()).build();
     return result;
   }
@@ -93,10 +93,10 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
           .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
     };
         
-    TypeSpec.Builder inputBuilder = from.apply(naming.dt().input(body))
+    TypeSpec.Builder inputBuilder = from.apply(naming.dt().inputValue(body))
         .addSuperinterface(HdesExecutable.InputValue.class);
     
-    TypeSpec.Builder outputBuilder = from.apply(naming.dt().outputEntry(body))
+    TypeSpec.Builder outputBuilder = from.apply(naming.dt().outputValueFlux(body))
         .addSuperinterface(HdesExecutable.OutputValue.class);
     
     
@@ -118,8 +118,8 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
     
     boolean isCollection = body.getHitPolicy() instanceof HitPolicyAll;
     if (isCollection) {
-      ParameterizedTypeName returnType = ParameterizedTypeName.get(ClassName.get(Collection.class), naming.dt().outputEntry(body));
-      TypeSpec collectionOutput = from.apply(naming.dt().output(body))
+      ParameterizedTypeName returnType = ParameterizedTypeName.get(ClassName.get(Collection.class), naming.dt().outputValueFlux(body));
+      TypeSpec collectionOutput = from.apply(naming.dt().outputValueMono(body))
         .addSuperinterface(HdesExecutable.OutputValue.class)
         .addMethod(MethodSpec.methodBuilder(JavaSpecUtil.getMethodName("values"))
           .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)

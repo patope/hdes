@@ -44,6 +44,11 @@ public class FlTypeNameResolver implements TypeNameResolver {
     if(typeDef.isEmpty() && body.getTask().isPresent()) {
       typeDef = getTypeDefNode(body.getTask().get(), pathName);
     }
+    
+    if(typeDef.isPresent()) {
+      return typeDef.get();
+    }
+    
     throw new HdesCompilerException(HdesCompilerException.builder().unknownExpressionParameter(typeName));
   }
 

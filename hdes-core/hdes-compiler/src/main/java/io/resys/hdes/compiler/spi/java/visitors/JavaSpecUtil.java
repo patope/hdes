@@ -1,5 +1,8 @@
 package io.resys.hdes.compiler.spi.java.visitors;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+
 /*-
  * #%L
  * hdes-compiler
@@ -26,10 +29,29 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.TypeSpec;
 
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
+import io.resys.hdes.compiler.api.HdesCompiler.TypeName;
+import io.resys.hdes.compiler.api.ImmutableTypeName;
 
 public class JavaSpecUtil {
+  
+  public static String toJavaFile(TypeSpec spec, String pkg) {
+    try {
+      StringBuilder appendable = new StringBuilder();
+      JavaFile file = JavaFile.builder(pkg, spec).build();
+      file.writeTo(appendable);
+      return appendable.toString();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e.getMessage(), e);
+    }
+  }
+
+  public static TypeName toTypeName(ClassName name) {
+    return ImmutableTypeName.builder().name(name.simpleName()).pkg(name.packageName()).build();
+  }
   
   public static ClassName immutable(ClassName src) {
     String pkg = src.packageName();

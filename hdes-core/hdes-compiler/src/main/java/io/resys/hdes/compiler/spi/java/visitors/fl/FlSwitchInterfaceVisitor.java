@@ -1,11 +1,8 @@
 package io.resys.hdes.compiler.spi.java.visitors.fl;
 
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /*-
  * #%L
@@ -40,95 +37,96 @@ import com.squareup.javapoet.TypeSpec;
 import io.resys.hdes.ast.api.nodes.AstNode.ArrayTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskPointer;
-import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
 import io.resys.hdes.ast.api.nodes.FlowNode.ThenPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.spi.NamingContext;
-import io.resys.hdes.compiler.spi.NamingContext.TaskRefNaming;
 import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
+import io.resys.hdes.compiler.spi.java.visitors.en.EnInterfaceVisitor;
 import io.resys.hdes.compiler.spi.java.visitors.fl.FlJavaSpec.FlHeaderSpec;
-import io.resys.hdes.compiler.spi.java.visitors.fl.FlJavaSpec.FlMethodSpec;
 import io.resys.hdes.compiler.spi.java.visitors.fl.FlJavaSpec.FlTypesSpec;
 import io.resys.hdes.executor.api.HdesExecutable;
 
-public class FlInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> {
+public class FlSwitchInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, List<TypeSpec>> {
   private final NamingContext naming;
+  private FlTypeNameResolver typeNames;
   private FlowBody body;
 
-  public FlInterfaceVisitor(NamingContext naming) {
+  public FlSwitchInterfaceVisitor(NamingContext naming) {
     super();
     this.naming = naming;
   }
 
   @Override
-  public TypeSpec visitBody(FlowBody node) {
+  public List<TypeSpec> visitBody(FlowBody node) {
     this.body = node;
-    TypeSpec.Builder stateBuilder = TypeSpec
-        .interfaceBuilder(naming.fl().state(node))
-        .addAnnotation(Immutable.class)
-        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-        .addSuperinterface(Serializable.class)
-        .addMethods(node.getTask().map(t -> visitTask(t).getValue()).orElse(Collections.emptyList()));
-    TypeSpec.Builder flowBuilder = TypeSpec.interfaceBuilder(naming.fl().api(node))
-        .addModifiers(Modifier.PUBLIC)
-        .addAnnotation(AnnotationSpec.builder(javax.annotation.processing.Generated.class).addMember("value", "$S", FlInterfaceVisitor.class.getCanonicalName()).build())
-        .addSuperinterface(naming.fl().executable(node))
-        .addTypes(visitInputs(node.getHeaders().getValues().stream().filter(t -> t.getDirection() == DirectionType.IN).collect(Collectors.toList())).getValues())
-        .addTypes(visitOutputs(node.getHeaders().getValues().stream().filter(t -> t.getDirection() == DirectionType.OUT).collect(Collectors.toList())).getValues())
-        .addType(stateBuilder.build());
-    return flowBuilder.build();
-  }
-
-  @Override
-  public FlMethodSpec visitTask(FlowTaskNode node) {
-    List<MethodSpec> value = new ArrayList<>();
-    // figure out ref
-    if (!node.getRef().isEmpty()) {
-      TaskRef ref = node.getRef().get();
-      TaskRefNaming type = naming.fl().ref(ref);
-      value.add(MethodSpec.methodBuilder(JavaSpecUtil.getMethodName(node.getId()))
-          .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-          .returns(node.getLoop().isPresent() ? ParameterizedTypeName.get(ClassName.get(List.class), type.getReturnType()) : type.getReturnType())
-          .build());
+    this.typeNames = new FlTypeNameResolver(node, naming.ast());
+    
+    List<TypeSpec> values = new ArrayList<>();
+    if(node.getTask().isPresent()) {
+      FlTypesSpec types = visitTask(node.getTask().get());
+      values.addAll(types.getValues());
     }
-    FlMethodSpec children = visitTaskPointer(node, node.getNext());
-    value.addAll(children.getValue());
-    return ImmutableFlMethodSpec.builder().addAllValue(value).build();
+    return values;
   }
 
   @Override
-  public FlMethodSpec visitTaskPointer(FlowTaskNode parent, FlowTaskPointer node) {
+  public FlTypesSpec visitTask(FlowTaskNode node) {
+    return ImmutableFlTypesSpec.builder()
+        .values(visitTaskPointer(node, node.getNext()).getValues())
+        .build();
+  }
+
+  @Override
+  public FlTypesSpec visitTaskPointer(FlowTaskNode parent, FlowTaskPointer node) {
     if (node instanceof ThenPointer) {
       ThenPointer then = (ThenPointer) node;
       return visitTask(then.getTask().get());
-    } else if (node instanceof WhenThenPointer) {
-      List<MethodSpec> values = new ArrayList<>();
-      WhenThenPointer whenThen = (WhenThenPointer) node;
-      for (WhenThen c : whenThen.getValues()) {
-        values.addAll(visitTaskPointer(parent, c.getThen()).getValue());
+    } else if (node instanceof WhenThenPointer) { 
+     
+      List<TypeSpec> values = new ArrayList<>();
+      List<TypeDefNode> types = new ArrayList<>();
+      
+      for (WhenThen c : ((WhenThenPointer) node).getValues()) {
+        
+        // Collect types used
+        if(c.getWhen().isPresent()) {
+          types.addAll(new EnInterfaceVisitor(this.typeNames).visitExpressionBody(c.getWhen().get()));
+        }
+        
+        // Collect all children
+        values.addAll(visitTaskPointer(parent, c.getThen()).getValues());
       }
-      return ImmutableFlMethodSpec.builder().value(values).build();
+      
+      TypeSpec.Builder builder = TypeSpec.interfaceBuilder(naming.sw().api(body, parent))
+          .addModifiers(Modifier.PUBLIC)
+          .addAnnotation(AnnotationSpec.builder(javax.annotation.processing.Generated.class).addMember("value", "$S", FlSwitchInterfaceVisitor.class.getCanonicalName()).build())
+          .addSuperinterface(naming.sw().executable(body, parent))
+          .addTypes(visitInputs(types, parent).getValues())
+          .addTypes(visitOutputs(parent).getValues());
+      
+      values.add(builder.build());
+      return ImmutableFlTypesSpec.builder().values(values).build();
     }
-    return ImmutableFlMethodSpec.builder().build();
+    return ImmutableFlTypesSpec.builder().build();
   }
 
-  @Override
-  public FlTypesSpec visitInputs(List<TypeDefNode> node) {
+  private FlTypesSpec visitInputs(List<TypeDefNode> node, FlowTaskNode parent) {
     TypeSpec.Builder inputBuilder = TypeSpec
-        .interfaceBuilder(naming.fl().inputValue(body))
+        .interfaceBuilder(naming.sw().inputValue(body, parent))
         .addSuperinterface(HdesExecutable.InputValue.class)
         .addAnnotation(Immutable.class)
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
     List<TypeSpec> nested = new ArrayList<>();
     for (TypeDefNode input : node) {
-      FlHeaderSpec spec = visitTypeDef(input);
+      FlHeaderSpec spec = visitTypeDef(input, parent);
       nested.addAll(spec.getChildren());
       inputBuilder.addMethod(spec.getValue());
     }
@@ -137,39 +135,37 @@ public class FlInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> 
         .addAllValues(nested)
         .build();
   }
-
-  @Override
-  public FlTypesSpec visitOutputs(List<TypeDefNode> node) {
+  
+  public FlTypesSpec visitOutputs(FlowTaskNode parent) {
     TypeSpec.Builder outputBuilder = TypeSpec
-        .interfaceBuilder(naming.fl().outputValue(body))
+        .interfaceBuilder(naming.sw().outputValue(body, parent))
         .addSuperinterface(HdesExecutable.OutputValue.class)
         .addAnnotation(Immutable.class)
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
-    List<TypeSpec> nested = new ArrayList<>();
-    for (TypeDefNode output : node) {
-      FlHeaderSpec spec = visitTypeDef(output);
-      nested.addAll(spec.getChildren());
-      outputBuilder.addMethod(spec.getValue());
-    }
+    
+    Class<?> returnType = JavaSpecUtil.type(ScalarType.STRING);
+    MethodSpec method = MethodSpec.methodBuilder(JavaSpecUtil.getMethodName("gate"))
+        .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+        .returns(ClassName.get(returnType))
+        .build();
     return ImmutableFlTypesSpec.builder()
-        .addValues(outputBuilder.build())
-        .addAllValues(nested)
+        .addValues(outputBuilder.addMethod(method).build())
         .build();
   }
 
-  private FlHeaderSpec visitTypeDef(TypeDefNode node) {
+  private FlHeaderSpec visitTypeDef(TypeDefNode node, FlowTaskNode parent) {
     if (node instanceof ScalarTypeDefNode) {
-      return visitScalarDef((ScalarTypeDefNode) node);
+      return visitScalarDef((ScalarTypeDefNode) node, parent);
     } else if (node instanceof ArrayTypeDefNode) {
-      return visitArrayDef((ArrayTypeDefNode) node);
+      return visitArrayDef((ArrayTypeDefNode) node, parent);
     } else if (node instanceof ObjectTypeDefNode) {
-      return visitObjectDef((ObjectTypeDefNode) node);
+      return visitObjectDef((ObjectTypeDefNode) node, parent);
     }
     throw new HdesCompilerException(HdesCompilerException.builder().unknownFlInputRule(node));
   }
 
-  @Override
-  public FlHeaderSpec visitScalarDef(ScalarTypeDefNode node) {
+
+  private FlHeaderSpec visitScalarDef(ScalarTypeDefNode node, FlowTaskNode parent) {
     Class<?> returnType = JavaSpecUtil.type(node.getType());
     MethodSpec method = MethodSpec.methodBuilder(JavaSpecUtil.getMethodName(node.getName()))
         .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -178,16 +174,12 @@ public class FlInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> 
     return ImmutableFlHeaderSpec.builder().value(method).build();
   }
 
-  @Override
-  public FlHeaderSpec visitArrayDef(ArrayTypeDefNode node) {
-    FlHeaderSpec childSpec = visitTypeDef(node.getValue());
+  private FlHeaderSpec visitArrayDef(ArrayTypeDefNode node, FlowTaskNode parent) {
+    FlHeaderSpec childSpec = visitTypeDef(node.getValue(), parent);
     com.squareup.javapoet.TypeName arrayType;
-    
     if (node.getValue().getRequired()) {
       arrayType = childSpec.getValue().returnType;
     } else {
-      
-      // unwrap Optional<>
       arrayType = ((ParameterizedTypeName) childSpec.getValue().returnType).typeArguments.get(0);
     }
     return ImmutableFlHeaderSpec.builder()
@@ -198,9 +190,8 @@ public class FlInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> 
         .build();
   }
 
-  @Override
-  public FlHeaderSpec visitObjectDef(ObjectTypeDefNode node) {
-    ClassName typeName = node.getDirection() == DirectionType.IN ? naming.fl().inputValue(body, node) : naming.fl().outputValue(body, node);
+  private FlHeaderSpec visitObjectDef(ObjectTypeDefNode node, FlowTaskNode parent) {
+    ClassName typeName = naming.sw().inputValue(body, parent, node);
     TypeSpec.Builder objectBuilder = TypeSpec
         .interfaceBuilder(typeName)
         .addSuperinterface(node.getDirection() == DirectionType.IN ? HdesExecutable.InputValue.class : HdesExecutable.OutputValue.class)
@@ -208,7 +199,7 @@ public class FlInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> 
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
     List<TypeSpec> nested = new ArrayList<>();
     for (TypeDefNode input : node.getValues()) {
-      FlHeaderSpec spec = visitTypeDef(input);
+      FlHeaderSpec spec = visitTypeDef(input, parent);
       nested.addAll(spec.getChildren());
       objectBuilder.addMethod(spec.getValue());
     }

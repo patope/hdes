@@ -30,6 +30,7 @@ import io.resys.hdes.ast.api.AstEnvir;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
+import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
 
 public interface NamingContext {
@@ -37,26 +38,49 @@ public interface NamingContext {
   AstEnvir ast();
   FlNamingContext fl();
   DtNamingContext dt();
+  SwitchNamingContext sw();
+  
+  interface SwitchNamingContext {
+    String pkg(FlowBody body);
+    ClassName api(FlowBody node, FlowTaskNode pointer);
+    ParameterizedTypeName executable(FlowBody node, FlowTaskNode pointer);
+    ClassName inputValue(FlowBody node, FlowTaskNode pointer);
+    ClassName inputValue(FlowBody node, FlowTaskNode pointer, ObjectTypeDefNode object);
+    ClassName outputValue(FlowBody node, FlowTaskNode pointer);
+  }
   
   interface DtNamingContext {
     String pkg(DecisionTableBody body);
-    ClassName interfaze(DecisionTableBody node);
-    TypeName superinterface(DecisionTableBody node);
+    
+    ClassName api(DecisionTableBody node);
     ClassName impl(DecisionTableBody node);
+    TypeName executable(DecisionTableBody node);
     
-    ClassName input(DecisionTableBody node);
-   // ClassName inputSuperinterface(DecisionTableBody node);
+    ParameterizedTypeName execution(DecisionTableBody node);
     
-    ParameterizedTypeName returnType(DecisionTableBody node);
-    ClassName output(DecisionTableBody node);
-    ClassName outputEntry(DecisionTableBody node);
+    ClassName inputValue(DecisionTableBody node);
+    ClassName outputValueMono(DecisionTableBody node);
+    ClassName outputValueFlux(DecisionTableBody node);
+    
+    //ClassName inputSuperinterface(DecisionTableBody node);
     //ClassName outputSuperinterface(DecisionTableBody node);
   }
   
   interface FlNamingContext {
     String pkg(FlowBody body);
     
+    ClassName api(FlowBody node);
+    ClassName impl(FlowBody node);
+    ClassName state(FlowBody body);
+    
     TaskRefNaming ref(TaskRef ref);
+    TypeName executable(FlowBody node);
+    
+    ClassName inputValue(FlowBody node);
+    ClassName inputValue(FlowBody node, ObjectTypeDefNode object);
+    
+    ClassName outputValue(FlowBody node);
+    ClassName outputValue(FlowBody node, ObjectTypeDefNode object);
     
     
     /*
@@ -66,19 +90,6 @@ public interface NamingContext {
     String refMethod(TaskRef ref);
     ClassName taskState(FlowBody body, FlowTaskNode task);
     */
-    
-    
-    ClassName interfaze(FlowBody node);
-    TypeName superinterface(FlowBody node); 
-    ClassName state(FlowBody body);
-    
-    ClassName impl(FlowBody node);
-    
-    ClassName input(FlowBody node);
-    ClassName input(FlowBody node, ObjectTypeDefNode object);
-    
-    ClassName output(FlowBody node);
-    ClassName output(FlowBody node, ObjectTypeDefNode object);
   }
   
   @Value.Immutable

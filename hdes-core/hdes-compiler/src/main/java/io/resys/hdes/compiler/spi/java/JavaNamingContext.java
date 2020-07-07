@@ -31,6 +31,7 @@ import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyAll;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
+import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompilerException;
@@ -39,8 +40,9 @@ import io.resys.hdes.compiler.spi.NamingContext;
 import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
 import io.resys.hdes.executor.api.DecisionTableMeta;
 import io.resys.hdes.executor.api.HdesExecutable.DecisionTable;
+import io.resys.hdes.executor.api.HdesExecutable.Execution;
 import io.resys.hdes.executor.api.HdesExecutable.Flow;
-import io.resys.hdes.executor.api.HdesExecutable.Output;
+import io.resys.hdes.executor.api.HdesExecutable.Switch;
 
 public class JavaNamingContext implements NamingContext {
   
@@ -50,6 +52,7 @@ public class JavaNamingContext implements NamingContext {
   private final String dt;
   private final JavaFlNamingContext flNaming;
   private final JavaDtNamingContext dtNaming;
+  private final SwitchNamingContext swNaming;
 
   public JavaNamingContext(AstEnvir envir, String root, String fl, String dt) {
     super();
@@ -59,6 +62,7 @@ public class JavaNamingContext implements NamingContext {
     this.dt = root + "." + dt;
     this.flNaming = new JavaFlNamingContext(this);
     this.dtNaming = new JavaDtNamingContext(this);
+    this.swNaming = new JavaSwitchNamingContext(this);
   }
   
   @Override
@@ -69,6 +73,55 @@ public class JavaNamingContext implements NamingContext {
   @Override
   public JavaDtNamingContext dt() {
     return dtNaming;
+  }
+  
+  @Override
+  public AstEnvir ast() {
+    return envir;
+  }
+
+  @Override
+  public SwitchNamingContext sw() {
+    return swNaming;
+  }
+  
+  public static class JavaSwitchNamingContext implements SwitchNamingContext {
+    private final JavaNamingContext parent;
+
+    public JavaSwitchNamingContext(JavaNamingContext parent) {
+      super();
+      this.parent = parent;
+    }
+
+    @Override
+    public String pkg(FlowBody body) {
+      return parent.fl().pkg(body);
+    }
+
+    @Override
+    public ClassName api(FlowBody node, FlowTaskNode pointer) {
+      return ClassName.get(pkg(node), node.getId().getValue() + pointer.getId());
+    }
+
+    @Override
+    public ParameterizedTypeName executable(FlowBody node, FlowTaskNode pointer) {
+      TypeName returnType = outputValue(node, pointer);
+      return ParameterizedTypeName.get(ClassName.get(Switch.class), inputValue(node, pointer), returnType);
+    }
+
+    @Override
+    public ClassName inputValue(FlowBody node, FlowTaskNode pointer) {
+      return ClassName.get(pkg(node) + "." + node.getId().getValue() + pointer.getId(), pointer.getId() + "In");
+    }
+    @Override
+    public ClassName outputValue(FlowBody node, FlowTaskNode pointer) {
+      return ClassName.get(pkg(node) + "." + node.getId().getValue() + pointer.getId(), pointer.getId() + "Out");
+    }
+
+    @Override
+    public ClassName inputValue(FlowBody node, FlowTaskNode pointer, ObjectTypeDefNode object) {
+      return ClassName.get(pkg(node) + "." + node.getId().getValue() + pointer.getId(), node.getId() + object.getName() + "In");
+    }
   }
 
   public static class JavaDtNamingContext implements DtNamingContext {
@@ -85,9 +138,9 @@ public class JavaNamingContext implements NamingContext {
     }
 
     @Override
-    public TypeName superinterface(DecisionTableBody node) {
-      TypeName returnType = output(node);
-      return ParameterizedTypeName.get(ClassName.get(DecisionTable.class), input(node), returnType);
+    public TypeName executable(DecisionTableBody node) {
+      TypeName returnType = outputValueMono(node);
+      return ParameterizedTypeName.get(ClassName.get(DecisionTable.class), inputValue(node), returnType);
     }
 
     @Override
@@ -96,17 +149,17 @@ public class JavaNamingContext implements NamingContext {
     }
 
     @Override
-    public ClassName input(DecisionTableBody node) {
+    public ClassName inputValue(DecisionTableBody node) {
       return input(node.getId().getValue());
     }
 
     @Override
-    public ClassName output(DecisionTableBody node) {
+    public ClassName outputValueMono(DecisionTableBody node) {
       return output(node.getId().getValue());
     }
 
     @Override
-    public ClassName interfaze(DecisionTableBody node) {
+    public ClassName api(DecisionTableBody node) {
       return interfaze(node.getId().getValue());
     }
     
@@ -121,18 +174,18 @@ public class JavaNamingContext implements NamingContext {
     }
 
     @Override
-    public ClassName outputEntry(DecisionTableBody node) {
+    public ClassName outputValueFlux(DecisionTableBody node) {
       if (node.getHitPolicy() instanceof HitPolicyAll) {
         return ClassName.get(parent.dt + "." + node.getId().getValue(), node.getId().getValue() + "OutputEntry");        
       }
-      return output(node);
+      return outputValueMono(node);
     }
 
     @Override
-    public ParameterizedTypeName returnType(DecisionTableBody body) {
-      ClassName outputName = output(body);
+    public ParameterizedTypeName execution(DecisionTableBody body) {
+      ClassName outputName = outputValueMono(body);
       ParameterizedTypeName returnType = ParameterizedTypeName
-          .get(ClassName.get(Output.class), ClassName.get(DecisionTableMeta.class), outputName);
+          .get(ClassName.get(Execution.class), ClassName.get(DecisionTableMeta.class), outputName);
       return returnType;
     } 
   }
@@ -147,11 +200,11 @@ public class JavaNamingContext implements NamingContext {
 
     @Override
     public String pkg(FlowBody node) {
-      return parent.fl;
+      return parent.fl + "." + node.getId().getValue().toLowerCase();
     }
 
     @Override
-    public ClassName interfaze(FlowBody node) {
+    public ClassName api(FlowBody node) {
       return ClassName.get(parent.fl, node.getId().getValue());
     }
 
@@ -166,28 +219,28 @@ public class JavaNamingContext implements NamingContext {
     }
 
     @Override
-    public ClassName input(FlowBody node) {
-      return ClassName.get(interfaze(node).canonicalName(), node.getId().getValue() + "In");
+    public ClassName inputValue(FlowBody node) {
+      return ClassName.get(api(node).canonicalName(), node.getId().getValue() + "In");
     }
 
     @Override
-    public ClassName output(FlowBody node) {
-      return ClassName.get(interfaze(node).canonicalName(), node.getId().getValue() + "Out");
+    public ClassName outputValue(FlowBody node) {
+      return ClassName.get(api(node).canonicalName(), node.getId().getValue() + "Out");
     }
 
     @Override
-    public TypeName superinterface(FlowBody node) {
-      return ParameterizedTypeName.get(ClassName.get(Flow.class), input(node), output(node));
+    public TypeName executable(FlowBody node) {
+      return ParameterizedTypeName.get(ClassName.get(Flow.class), inputValue(node), outputValue(node));
     }
 
     @Override
-    public ClassName input(FlowBody node, ObjectTypeDefNode object) {
-      return ClassName.get(interfaze(node).canonicalName(), node.getId().getValue() + JavaSpecUtil.capitalize(object.getName()) + "In");
+    public ClassName inputValue(FlowBody node, ObjectTypeDefNode object) {
+      return ClassName.get(api(node).simpleName(), node.getId().getValue() + JavaSpecUtil.capitalize(object.getName()) + "In");
     }
     
     @Override
-    public ClassName output(FlowBody node, ObjectTypeDefNode object) {
-      return ClassName.get(interfaze(node).canonicalName(), node.getId().getValue() + JavaSpecUtil.capitalize(object.getName()) + "Out");
+    public ClassName outputValue(FlowBody node, ObjectTypeDefNode object) {
+      return ClassName.get(api(node).simpleName(), node.getId().getValue() + JavaSpecUtil.capitalize(object.getName()) + "Out");
     }
 
     @Override
@@ -197,8 +250,8 @@ public class JavaNamingContext implements NamingContext {
         String typeName = node.getValue();
         DecisionTableBody body = (DecisionTableBody) parent.envir.getByAstId(typeName);
         return ImmutableTaskRefNaming.builder()
-            .type(parent.dt().interfaze(body))
-            .returnType(parent.dt().returnType(body))
+            .type(parent.dt().api(body))
+            .returnType(parent.dt().execution(body))
             .build(); 
           
       }
@@ -282,10 +335,5 @@ public class JavaNamingContext implements NamingContext {
           Optional.ofNullable(flows).orElse("fl"),
           Optional.ofNullable(decisionTables).orElse("dt"));
     }
-  }
-
-  @Override
-  public AstEnvir ast() {
-    return envir;
   }
 }

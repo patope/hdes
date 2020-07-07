@@ -31,21 +31,28 @@ public interface HdesExecutable<I extends HdesExecutable.InputValue, M extends H
   
   enum SourceType { FL, MT, DT, ST }
   enum ExecutionStatus { COMPLETED, WAITING, RUNNING, ERROR }
-  
+    
+  interface OutputValue extends Serializable {}
+  interface InputValue extends Serializable {}
+
   interface Meta extends Serializable {
     String getId();
     ExecutionStatus getStatus();
     long getStart();
     long getEnd();
     long getTime();
-    List<ExecutableError> getErrors();
+    List<ExecutionError> getErrors();
+  }
+
+  // Generic output to encapsulate function output value with metadata associated with it
+  @Value.Immutable
+  interface Execution<M extends Meta, V extends OutputValue> extends Serializable {
+    M getMeta();
+    V getValue();
   }
   
-  interface OutputValue extends Serializable {}
-  interface InputValue extends Serializable {}
-
   @Value.Immutable
-  interface ExecutableError {
+  interface ExecutionError {
     String getId();
     String getTrace();
     String getValue();
@@ -65,15 +72,9 @@ public interface HdesExecutable<I extends HdesExecutable.InputValue, M extends H
     int getColumn();
   }
   
-  // Generic output to encapsulate function output value with metadata associated with it
-  @Value.Immutable
-  interface Output<M extends Meta, V extends OutputValue> extends Serializable {
-    M getMeta();
-    V getValue();
-  }
   
   // Single command style method
-  Output<M, V> apply(I input);
+  Execution<M, V> apply(I input);
   
   // Source from what executable was created
   SourceType getSourceType();
@@ -82,7 +83,9 @@ public interface HdesExecutable<I extends HdesExecutable.InputValue, M extends H
   interface DecisionTable<I extends InputValue, V extends OutputValue> extends HdesExecutable<I, DecisionTableMeta, V> {}
   interface Flow<I extends InputValue, V extends OutputValue> extends HdesExecutable<I, FlowMeta, V> {}
   
-  interface ExpressionTask<I extends InputValue, M extends ExpressionTaskMeta, V extends OutputValue> extends HdesExecutable<I, M, V> {}
+  interface Switch<I extends InputValue, M extends SwitchMeta, V extends OutputValue> extends HdesExecutable<I, M, V> {}
+  interface Formula<I extends InputValue, M extends FormulaMeta, V extends OutputValue> extends HdesExecutable<I, M, V> {}
+  
   interface ManualTask<I extends InputValue, M extends Meta, V extends OutputValue> extends HdesExecutable<I, M, V> {}
   interface ServiceTask<I extends InputValue, M extends Meta, V extends OutputValue> extends HdesExecutable<I, M, V> {}
 

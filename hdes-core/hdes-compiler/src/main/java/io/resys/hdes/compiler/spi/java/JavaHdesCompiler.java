@@ -1,6 +1,8 @@
 package io.resys.hdes.compiler.spi.java;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /*-
  * #%L
@@ -23,20 +25,38 @@ import java.util.List;
  */
 
 import io.resys.hdes.ast.api.AstEnvir;
+import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
+import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.spi.ImmutableAstEnvir;
 import io.resys.hdes.compiler.api.HdesCompiler;
-import io.resys.hdes.compiler.spi.java.visitors.JavaAstEnvirVisitor;
+import io.resys.hdes.compiler.api.HdesCompilerException;
+import io.resys.hdes.compiler.spi.NamingContext;
+import io.resys.hdes.compiler.spi.java.visitors.dt.DtDeclarationFactory;
+import io.resys.hdes.compiler.spi.java.visitors.fl.FlDeclarationFactory;
 
 public class JavaHdesCompiler implements HdesCompiler {
-  
   @Override
   public Parser parser() {
     AstEnvir.Builder builder = ImmutableAstEnvir.builder();
     return new Parser() {
       @Override
       public List<Resource> build() {
-        return new JavaAstEnvirVisitor().visit(builder.build());
+        final AstEnvir envir = builder.build();
+        final NamingContext naming = JavaNamingContext.config().ast(envir).build();
+        final List<Resource> values = envir.getBody().values().stream()
+          .map(ast -> {
+            if (ast instanceof DecisionTableBody) {
+              return DtDeclarationFactory.create().body((DecisionTableBody) ast).envir(envir).naming(naming).build();
+            } else if (ast instanceof FlowBody) {
+              return FlDeclarationFactory.create().body((FlowBody) ast).envir(envir).naming(naming).build();
+            } else {
+              throw new HdesCompilerException(HdesCompilerException.builder().unknownAst(ast));
+            }
+          })
+          .collect(Collectors.toList());
+        return Collections.unmodifiableList(values);
       }
+
       @Override
       public Parser add(String filename, String src) {
         builder.add().externalId(filename).src(src);
@@ -44,11 +64,11 @@ public class JavaHdesCompiler implements HdesCompiler {
       }
     };
   }
-  
+
   public static Config config() {
     return new Config();
   }
-  
+
   public static class Config {
     public JavaHdesCompiler build() {
       return new JavaHdesCompiler();

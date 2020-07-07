@@ -1,7 +1,5 @@
 package io.resys.hdes.compiler.spi.java.visitors.en;
 
-import com.squareup.javapoet.TypeSpec;
-
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.ExpressionAstNodeVisitor;
@@ -23,7 +21,7 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnaryOperation;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnRefSpec;
 
-public class EnTemplateVisitor implements ExpressionAstNodeVisitor<EnRefSpec, TypeSpec> {
+public class EnTemplateVisitor<T> implements ExpressionAstNodeVisitor<EnRefSpec, T> {
   @Override
   public EnRefSpec visitTypeName(TypeName node) {
     throw new IllegalArgumentException("Not implemented");
@@ -35,7 +33,7 @@ public class EnTemplateVisitor implements ExpressionAstNodeVisitor<EnRefSpec, Ty
   }
 
   @Override
-  public TypeSpec visitExpressionBody(ExpressionBody node) {
+  public T visitExpressionBody(ExpressionBody node) {
     throw new IllegalArgumentException("Not implemented");
   }
 

@@ -78,9 +78,9 @@ import io.resys.hdes.executor.api.HdesExecutable.SourceType;
 import io.resys.hdes.executor.api.HdesWhen;
 import io.resys.hdes.executor.api.ImmutableDecisionTableMeta;
 import io.resys.hdes.executor.api.ImmutableDecisionTableMetaEntry;
+import io.resys.hdes.executor.api.ImmutableExecution;
 import io.resys.hdes.executor.api.ImmutableMetaStamp;
 import io.resys.hdes.executor.api.ImmutableMetaToken;
-import io.resys.hdes.executor.api.ImmutableOutput;
 import io.resys.hdes.executor.spi.exceptions.DecisionTableHitPolicyFirstException;
 
 public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> {
@@ -99,7 +99,7 @@ public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> 
     
     return TypeSpec.classBuilder(naming.dt().impl(node))
         .addModifiers(Modifier.PUBLIC)
-        .addSuperinterface(naming.dt().interfaze(node))
+        .addSuperinterface(naming.dt().api(node))
         .addJavadoc(node.getDescription().orElse(""))
         .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "$S", "unused").build())
         .addAnnotation(AnnotationSpec.builder(javax.annotation.processing.Generated.class).addMember("value", "$S", DtInterfaceVisitor.class.getCanonicalName()).build())
@@ -122,7 +122,7 @@ public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> 
 
   @Override
   public DtMethodsSpec visitHitPolicyMatrix(HitPolicyMatrix node) {
-    ClassName outputName = naming.dt().output(body);
+    ClassName outputName = naming.dt().outputValueMono(body);
     ClassName immutableOutputName = JavaSpecUtil.immutable(outputName);
     
     CodeBlock.Builder statements = CodeBlock.builder()
@@ -145,7 +145,7 @@ public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> 
 
     statements
       .add("\r\n")
-      .addStatement("$T.Builder<$T, $T> builder = $T.builder()", ImmutableOutput.class, DecisionTableMeta.class, outputName, ImmutableOutput.class)
+      .addStatement("$T.Builder<$T, $T> builder = $T.builder()", ImmutableExecution.class, DecisionTableMeta.class, outputName, ImmutableExecution.class)
       .addStatement("return builder.meta(meta).value(result.build()).build()")
       .build();
         
@@ -154,8 +154,8 @@ public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> 
         MethodSpec.methodBuilder("apply")
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
-            .addParameter(ParameterSpec.builder(naming.dt().input(body), "input").build())
-            .returns(naming.dt().returnType(body))
+            .addParameter(ParameterSpec.builder(naming.dt().inputValue(body), "input").build())
+            .returns(naming.dt().execution(body))
             .addCode(statements.build())
             .build()
             
@@ -206,7 +206,7 @@ public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> 
   @Override
   public DtMethodsSpec visitHitPolicyAll(HitPolicyAll node) {
     CodeBlock.Builder statements = CodeBlock.builder()
-        .addStatement("$T<$T> result = new $T<>()", List.class, naming.dt().outputEntry(body), ArrayList.class)
+        .addStatement("$T<$T> result = new $T<>()", List.class, naming.dt().outputValueFlux(body), ArrayList.class)
         .addStatement("$T<Integer, $T> metaValues = new $T<>()", Map.class, DecisionTableMetaEntry.class, HashMap.class)
         .addStatement("int id = 0")
         .addStatement("long start = System.currentTimeMillis()");
@@ -245,7 +245,7 @@ public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> 
       
     }
     
-    ClassName outputName = naming.dt().output(body);
+    ClassName outputName = naming.dt().outputValueMono(body);
 
     statements
     .addStatement("long end = System.currentTimeMillis()")
@@ -257,7 +257,7 @@ public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> 
     
     statements
       .add("\r\n")
-      .addStatement("$T.Builder<$T, $T> builder = $T.builder()", ImmutableOutput.class, DecisionTableMeta.class, outputName, ImmutableOutput.class)
+      .addStatement("$T.Builder<$T, $T> builder = $T.builder()", ImmutableExecution.class, DecisionTableMeta.class, outputName, ImmutableExecution.class)
       .addStatement("return builder.meta(meta).value($L).build()", 
           CodeBlock.builder().add("$T.builder().values(result).build()", JavaSpecUtil.immutable(outputName)).build())
       .build();
@@ -266,8 +266,8 @@ public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> 
         MethodSpec.methodBuilder("apply")
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
-            .addParameter(ParameterSpec.builder(naming.dt().input(body), "input").build())
-            .returns(naming.dt().returnType(body))
+            .addParameter(ParameterSpec.builder(naming.dt().inputValue(body), "input").build())
+            .returns(naming.dt().execution(body))
             .addCode(statements.build())
             .build()).build();
   }
@@ -314,8 +314,8 @@ public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> 
         "No rules where match for DT: '" + body.getId().getValue() + "' with hit policy 'FIRST'!");
     
     
-    ClassName outputName = naming.dt().output(body);
-    ParameterizedTypeName returnType = naming.dt().returnType(body);
+    ClassName outputName = naming.dt().outputValueMono(body);
+    ParameterizedTypeName returnType = naming.dt().execution(body);
 
     return ImmutableDtMethodsSpec.builder().addValue(
 
@@ -335,7 +335,7 @@ public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> 
               .add("\r\n  ").add(".start(start).end(end).time(end - start)")
               .add("\r\n  ").addStatement(".values(metaValues).build()", body.getId().getValue(), ExecutionStatus.class)
               
-              .addStatement("$T.Builder<$T, $T> builder = $T.builder()", ImmutableOutput.class, DecisionTableMeta.class, outputName, ImmutableOutput.class)
+              .addStatement("$T.Builder<$T, $T> builder = $T.builder()", ImmutableExecution.class, DecisionTableMeta.class, outputName, ImmutableExecution.class)
               .addStatement("return builder.meta(meta).value(result).build()")
               .build())
           .build(),
@@ -343,7 +343,7 @@ public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> 
         MethodSpec.methodBuilder("apply")
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
-            .addParameter(ParameterSpec.builder(naming.dt().input(body), "input").build())
+            .addParameter(ParameterSpec.builder(naming.dt().inputValue(body), "input").build())
             .returns(returnType)
             .addCode(statements.build())
             .build()
@@ -354,7 +354,7 @@ public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> 
   @Override
   public DtCodeSpecPair visitRuleRow(RuleRow node) {
     CodeBlock.Builder key = CodeBlock.builder();
-    CodeBlock.Builder value = CodeBlock.builder().add("Immutable$T.builder()", naming.dt().outputEntry(body));
+    CodeBlock.Builder value = CodeBlock.builder().add("Immutable$T.builder()", naming.dt().outputValueFlux(body));
     boolean and = false;
     for (Rule rule : node.getRules()) {
       CodeBlock ruleCode = visitRule(rule).getValue();

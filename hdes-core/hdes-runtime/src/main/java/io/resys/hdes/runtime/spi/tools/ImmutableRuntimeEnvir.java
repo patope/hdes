@@ -34,7 +34,7 @@ import io.resys.hdes.compiler.api.HdesCompiler.Resource;
 import io.resys.hdes.compiler.api.HdesCompiler.TypeName;
 import io.resys.hdes.executor.api.HdesExecutable;
 import io.resys.hdes.executor.api.HdesExecutable.InputValue;
-import io.resys.hdes.executor.api.HdesExecutable.Output;
+import io.resys.hdes.executor.api.HdesExecutable.Execution;
 import io.resys.hdes.executor.api.HdesWhen;
 import io.resys.hdes.executor.spi.HdesWhenGen;
 import io.resys.hdes.runtime.api.HdesRuntime.RuntimeEnvir;
@@ -73,7 +73,7 @@ public class ImmutableRuntimeEnvir implements RuntimeEnvir {
       Resource resource = values.get(name);
       
       Class<? extends HdesExecutable.InputValue> input = (Class<? extends InputValue>) classLoader.findClass(resource.getInput().getPkg() + "$" + resource.getInput().getName());
-      Class<? extends HdesExecutable.Output> output = (Class<? extends Output>) classLoader.findClass(resource.getInput().getPkg() + "$" + resource.getOutput().getName());
+      Class<? extends HdesExecutable.Execution> output = (Class<? extends Execution>) classLoader.findClass(resource.getInput().getPkg() + "$" + resource.getOutput().getName());
       
       HdesWhen when = HdesWhenGen.get();
       HdesExecutable executable = (HdesExecutable) clazz.getConstructors()[0].newInstance(when);

@@ -97,6 +97,12 @@ public class HdesCompilerException extends RuntimeException {
           .append("  - ").append(ast).append("!")
           .toString();
     }
+    public String unknownEnInputRule(AstNode ast) {
+      return new StringBuilder()
+          .append("Unknown EPRESSION input rule AST: ").append(ast.getClass()).append(System.lineSeparator())
+          .append("  - ").append(ast).append("!")
+          .toString();
+    }
     public String unknownFlTaskRef(TaskRef ast) {
       return new StringBuilder()
           .append("Unknown FLOW task reference AST: ").append(ast.getValue()).append(System.lineSeparator())
