@@ -66,14 +66,6 @@ public class EnImplementationVisitor extends EnTemplateVisitor<EnCodeSpec, EnCod
         .build();
   }
 
-  /*
-  @Override
-  public EnCodeSpec visitMethodRefNode(MethodRefNode node) {
-    List<AstNode> values = new ArrayList<>();
-    node.getValues().forEach(v -> values.addAll(visit(v).getValues()));
-    return ImmutableEnCodeSpec.builder().addValues(node).build();
-  }*/
-  
   @Override
   public EnCodeSpec visitLiteral(Literal node) {
     CodeBlock.Builder builder = CodeBlock.builder();
@@ -134,6 +126,7 @@ public class EnImplementationVisitor extends EnTemplateVisitor<EnCodeSpec, EnCod
 
   @Override
   public EnCodeSpec visitPositiveUnaryOperation(PositiveUnaryOperation node) {
+    // TODO
     EnCodeSpec children = visit(node.getValue());
     return ImmutableEnCodeSpec.builder()
         .type(children.getType())
@@ -183,6 +176,13 @@ public class EnImplementationVisitor extends EnTemplateVisitor<EnCodeSpec, EnCod
         .build();
   }
 
+  /* TODO::
+  @Override
+  public EnCodeSpec visitMethodRefNode(MethodRefNode node) {
+    List<AstNode> values = new ArrayList<>();
+    node.getValues().forEach(v -> values.addAll(visit(v).getValues()));
+    return ImmutableEnCodeSpec.builder().addValues(node).build();
+  }*/
   
   
   @Override
