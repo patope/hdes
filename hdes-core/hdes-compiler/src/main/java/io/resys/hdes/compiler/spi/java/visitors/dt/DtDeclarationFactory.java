@@ -59,16 +59,16 @@ public class DtDeclarationFactory {
         .addTypes(ImmutableTypeName.builder().name(api.name).pkg(pkg).build())
         .addTypes(ImmutableTypeName.builder().name(impl.name).pkg(pkg).build())
         
-        .input(JavaSpecUtil.toTypeName(naming.dt().inputValue(body)))
-        .output(JavaSpecUtil.toTypeName(naming.dt().outputValueMono(body)))
+        .input(JavaSpecUtil.typeName(naming.dt().inputValue(body)))
+        .output(JavaSpecUtil.typeName(naming.dt().outputValueMono(body)))
         
         .addDeclarations(ImmutableTypeDeclaration.builder()
             .type(ImmutableTypeName.builder().name(api.name).pkg(pkg).build())
-            .isExecutable(false).value(JavaSpecUtil.toJavaFile(api, pkg)).build())
+            .isExecutable(false).value(JavaSpecUtil.javaFile(api, pkg)).build())
         
         .addDeclarations(ImmutableTypeDeclaration.builder()
             .type(ImmutableTypeName.builder().name(impl.name).pkg(pkg).build())
-            .isExecutable(true).value(JavaSpecUtil.toJavaFile(impl, pkg)).build())
+            .isExecutable(true).value(JavaSpecUtil.javaFile(impl, pkg)).build())
         
         .build();
   }

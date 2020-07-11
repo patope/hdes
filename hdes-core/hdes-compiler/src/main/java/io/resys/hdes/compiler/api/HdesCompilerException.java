@@ -1,6 +1,8 @@
 package io.resys.hdes.compiler.api;
 
 import io.resys.hdes.ast.api.nodes.AstNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskPointer;
@@ -136,6 +138,65 @@ public class HdesCompilerException extends RuntimeException {
     public String unknownExpressionParameter(AstNode ast) {
       return new StringBuilder()
           .append("Unknown EXPRESSION parameter AST: ").append(ast.getClass()).append(System.lineSeparator())
+          .append("  - ").append(ast).append("!")
+          .toString();
+    }
+    public String unknownLiteral(AstNode ast) {
+      return new StringBuilder()
+          .append("Unknown LITERAL expression AST: ").append(ast.getClass()).append(System.lineSeparator())
+          .append("  - ").append(ast).append("!")
+          .toString();
+    }
+    public String incompatibleType(AstNode ast, ScalarType expected, ScalarType was) {
+      return new StringBuilder()
+          .append("Incompatible type used in expression!").append(System.lineSeparator())
+          .append("Expected type: ").append(expected).append(" but was: ").append(was).append("!").append(System.lineSeparator())
+          .append(" AST: ").append(ast.getClass()).append(System.lineSeparator())
+          .append("  - ").append(ast).append("!")
+          .toString();
+    }
+    
+    public String incompatibleType(AstNode ast, ScalarType[] expected, ScalarType was) {
+      return new StringBuilder()
+          .append("Incompatible type used in expression!").append(System.lineSeparator())
+          .append("Expected type one of: ").append(expected).append(" but was: ").append(was).append("!").append(System.lineSeparator())
+          .append(" AST: ").append(ast.getClass()).append(System.lineSeparator())
+          .append("  - ").append(ast).append("!")
+          .toString();
+    }
+
+    public String incompatibleReturnType(AstNode ast, ScalarType was1, ScalarType was2) {
+      return new StringBuilder()
+          .append("Incompatible type used in expression!").append(System.lineSeparator())
+          .append("Expected same type for both expressions but was: ").append(was1).append(was2).append("!").append(System.lineSeparator())
+          .append(" AST: ").append(ast.getClass()).append(System.lineSeparator())
+          .append("  - ").append(ast).append("!")
+          .toString();
+    }
+    
+    public String incompatibleConversion(AstNode ast, ScalarType was1, ScalarType was2) {
+      return new StringBuilder()
+          .append("Incompatible type used in expression!").append(System.lineSeparator())
+          .append("Operation is incompatible between these two types: ").append(was1).append(" <-> ").append(was2).append("!").append(System.lineSeparator())
+          .append(" AST: ").append(ast.getClass()).append(System.lineSeparator())
+          .append("  - ").append(ast).append("!")
+          .toString();
+    }
+    
+    public String incompatibleScalarType(AstNode ast, TypeDefNode was) {
+      return new StringBuilder()
+          .append("Incompatible type used in expression!").append(System.lineSeparator())
+          .append("Expected type on of: ").append(ScalarType.values()).append(" but was: ").append(was).append("!").append(System.lineSeparator())
+          .append(" AST: ").append(ast.getClass()).append(System.lineSeparator())
+          .append("  - ").append(ast).append("!")
+          .toString();
+    }
+    public String betweenOperationNotSupportedForType(AstNode ast, ScalarType was) {
+      return new StringBuilder()
+          .append("Incompatible type used in BETWEEN expression!").append(System.lineSeparator())
+          .append("Expected type on of: ").append(new ScalarType[] {ScalarType.DATE_TIME, ScalarType.DATE, ScalarType.TIME, ScalarType.INTEGER, ScalarType.DECIMAL})
+          .append(" but was: ").append(was).append("!").append(System.lineSeparator())
+          .append(" AST: ").append(ast.getClass()).append(System.lineSeparator())
           .append("  - ").append(ast).append("!")
           .toString();
     }

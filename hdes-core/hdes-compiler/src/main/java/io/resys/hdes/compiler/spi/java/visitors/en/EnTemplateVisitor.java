@@ -19,16 +19,15 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.PostDecrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PostIncrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnaryOperation;
-import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnRefSpec;
 
-public class EnTemplateVisitor<T> implements ExpressionAstNodeVisitor<EnRefSpec, T> {
+public class EnTemplateVisitor<R, T> implements ExpressionAstNodeVisitor<R, T> {
   @Override
-  public EnRefSpec visitTypeName(TypeName node) {
+  public R visitTypeName(TypeName node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnRefSpec visitLiteral(Literal node) {
+  public R visitLiteral(Literal node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
@@ -38,77 +37,77 @@ public class EnTemplateVisitor<T> implements ExpressionAstNodeVisitor<EnRefSpec,
   }
 
   @Override
-  public EnRefSpec visitNotUnaryOperation(NotUnaryOperation node) {
+  public R visitNotUnaryOperation(NotUnaryOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnRefSpec visitNegateUnaryOperation(NegateUnaryOperation node) {
+  public R visitNegateUnaryOperation(NegateUnaryOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnRefSpec visitPositiveUnaryOperation(PositiveUnaryOperation node) {
+  public R visitPositiveUnaryOperation(PositiveUnaryOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnRefSpec visitPreIncrementUnaryOperation(PreIncrementUnaryOperation node) {
+  public R visitPreIncrementUnaryOperation(PreIncrementUnaryOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnRefSpec visitPreDecrementUnaryOperation(PreDecrementUnaryOperation node) {
+  public R visitPreDecrementUnaryOperation(PreDecrementUnaryOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnRefSpec visitPostIncrementUnaryOperation(PostIncrementUnaryOperation node) {
+  public R visitPostIncrementUnaryOperation(PostIncrementUnaryOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnRefSpec visitPostDecrementUnaryOperation(PostDecrementUnaryOperation node) {
+  public R visitPostDecrementUnaryOperation(PostDecrementUnaryOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnRefSpec visitMethodRefNode(MethodRefNode node) {
+  public R visitMethodRefNode(MethodRefNode node) {
     throw new IllegalArgumentException("Not implemented");
   }
   
   @Override
-  public EnRefSpec visitEqualityOperation(EqualityOperation node) {
+  public R visitEqualityOperation(EqualityOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnRefSpec visitAndOperation(AndOperation node) {
+  public R visitAndOperation(AndOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnRefSpec visitOrOperation(OrOperation node) {
+  public R visitOrOperation(OrOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnRefSpec visitConditionalExpression(ConditionalExpression node) {
+  public R visitConditionalExpression(ConditionalExpression node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnRefSpec visitBetweenExpression(BetweenExpression node) {
+  public R visitBetweenExpression(BetweenExpression node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnRefSpec visitAdditiveOperation(AdditiveOperation node) {
+  public R visitAdditiveOperation(AdditiveOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnRefSpec visitMultiplicativeOperation(MultiplicativeOperation node) {
+  public R visitMultiplicativeOperation(MultiplicativeOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 }

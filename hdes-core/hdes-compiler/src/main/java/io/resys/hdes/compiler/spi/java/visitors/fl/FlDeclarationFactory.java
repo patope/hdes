@@ -47,7 +47,7 @@ public class FlDeclarationFactory {
 
     TypeSpec api = new FlInterfaceVisitor(naming).visitBody(body);
     TypeSpec impl = new FlImplementationVisitor(naming).visitBody(body);
-    List<TypeSpec> switches = new FlSwitchInterfaceVisitor(naming).visitBody(body);
+    List<TypeSpec> switches = new FlSwitchVisitor(naming).visitBody(body);
     
 
     String pkg = naming.fl().pkg(body); 
@@ -58,21 +58,21 @@ public class FlDeclarationFactory {
         .source(body.getToken().getText())
         .ast(body)
         
-        .input(JavaSpecUtil.toTypeName(naming.fl().inputValue(body)))
-        .output(JavaSpecUtil.toTypeName(naming.fl().outputValue(body)))
+        .input(JavaSpecUtil.typeName(naming.fl().inputValue(body)))
+        .output(JavaSpecUtil.typeName(naming.fl().outputValue(body)))
 
         .addAllDeclarations(switches.stream().map(s -> ImmutableTypeDeclaration.builder()
             .type(ImmutableTypeName.builder().name(s.name).pkg(pkg).build())
-            .isExecutable(false).value(JavaSpecUtil.toJavaFile(s, pkg)).build())
+            .isExecutable(false).value(JavaSpecUtil.javaFile(s, pkg)).build())
             .collect(Collectors.toList()))
         
         .addDeclarations(ImmutableTypeDeclaration.builder()
             .type(ImmutableTypeName.builder().name(api.name).pkg(pkg).build())
-            .isExecutable(false).value(JavaSpecUtil.toJavaFile(api, pkg)).build())
+            .isExecutable(false).value(JavaSpecUtil.javaFile(api, pkg)).build())
         
         .addDeclarations(ImmutableTypeDeclaration.builder()
             .type(ImmutableTypeName.builder().name(impl.name).pkg(pkg).build())
-            .isExecutable(true).value(JavaSpecUtil.toJavaFile(impl, pkg)).build())
+            .isExecutable(true).value(JavaSpecUtil.javaFile(impl, pkg)).build())
 
         .build();
   }

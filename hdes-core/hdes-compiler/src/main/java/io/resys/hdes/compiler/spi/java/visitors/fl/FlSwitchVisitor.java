@@ -37,9 +37,9 @@ import com.squareup.javapoet.TypeSpec;
 import io.resys.hdes.ast.api.nodes.AstNode.ArrayTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
+import io.resys.hdes.ast.api.nodes.FlowNode.EndPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskPointer;
@@ -49,17 +49,19 @@ import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.spi.NamingContext;
 import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
+import io.resys.hdes.compiler.spi.java.visitors.en.EnImplementationVisitor;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnInterfaceVisitor;
+import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnCodeSpec;
 import io.resys.hdes.compiler.spi.java.visitors.fl.FlJavaSpec.FlHeaderSpec;
 import io.resys.hdes.compiler.spi.java.visitors.fl.FlJavaSpec.FlTypesSpec;
 import io.resys.hdes.executor.api.HdesExecutable;
 
-public class FlSwitchInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, List<TypeSpec>> {
+public class FlSwitchVisitor extends FlTemplateVisitor<FlJavaSpec, List<TypeSpec>> {
   private final NamingContext naming;
   private FlTypeNameResolver typeNames;
   private FlowBody body;
 
-  public FlSwitchInterfaceVisitor(NamingContext naming) {
+  public FlSwitchVisitor(NamingContext naming) {
     super();
     this.naming = naming;
   }
@@ -92,27 +94,40 @@ public class FlSwitchInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, List
     } else if (node instanceof WhenThenPointer) { 
      
       List<TypeSpec> values = new ArrayList<>();
-      List<TypeDefNode> types = new ArrayList<>();
+      List<TypeDefNode> switchTypes = new ArrayList<>();
       
+      ClassName gateTypeName = naming.sw().gate(body, parent);
+      
+      TypeSpec.Builder gateEnum = TypeSpec.enumBuilder(gateTypeName);
       for (WhenThen c : ((WhenThenPointer) node).getValues()) {
+        gateEnum.addEnumConstant(getName(c.getThen()));
         
         // Collect types used
         if(c.getWhen().isPresent()) {
-          types.addAll(new EnInterfaceVisitor(this.typeNames).visitExpressionBody(c.getWhen().get()));
+          switchTypes.addAll(new EnInterfaceVisitor(this.typeNames).visitExpressionBody(c.getWhen().get()));
+          
+          // Expression Body - boolean conditions
+          EnCodeSpec gateBody = new EnImplementationVisitor(this.typeNames).visitExpressionBody(c.getWhen().get());
+          System.out.println(gateBody);
         }
         
         // Collect all children
         values.addAll(visitTaskPointer(parent, c.getThen()).getValues());
       }
+
       
-      TypeSpec.Builder builder = TypeSpec.interfaceBuilder(naming.sw().api(body, parent))
-          .addModifiers(Modifier.PUBLIC)
-          .addAnnotation(AnnotationSpec.builder(javax.annotation.processing.Generated.class).addMember("value", "$S", FlSwitchInterfaceVisitor.class.getCanonicalName()).build())
-          .addSuperinterface(naming.sw().executable(body, parent))
-          .addTypes(visitInputs(types, parent).getValues())
-          .addTypes(visitOutputs(parent).getValues());
+      TypeSpec switchApi = TypeSpec.interfaceBuilder(naming.sw().api(body, parent))
+        .addModifiers(Modifier.PUBLIC)
+        .addAnnotation(AnnotationSpec.builder(javax.annotation.processing.Generated.class)
+            .addMember("value", "$S", FlSwitchVisitor.class.getCanonicalName())
+            .build())
+        .addSuperinterface(naming.sw().executable(body, parent))
+        .addType(gateEnum.addModifiers(Modifier.PUBLIC, Modifier.STATIC).build())
+        .addTypes(visitInputs(switchTypes, parent).getValues())
+        .addTypes(visitOutputs(parent).getValues())
+        .build();
       
-      values.add(builder.build());
+      values.add(switchApi);
       return ImmutableFlTypesSpec.builder().values(values).build();
     }
     return ImmutableFlTypesSpec.builder().build();
@@ -143,10 +158,9 @@ public class FlSwitchInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, List
         .addAnnotation(Immutable.class)
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
     
-    Class<?> returnType = JavaSpecUtil.type(ScalarType.STRING);
-    MethodSpec method = MethodSpec.methodBuilder(JavaSpecUtil.getMethodName("gate"))
+    MethodSpec method = MethodSpec.methodBuilder(JavaSpecUtil.methodName("gate"))
         .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-        .returns(ClassName.get(returnType))
+        .returns(naming.sw().gate(body, parent))
         .build();
     return ImmutableFlTypesSpec.builder()
         .addValues(outputBuilder.addMethod(method).build())
@@ -167,7 +181,7 @@ public class FlSwitchInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, List
 
   private FlHeaderSpec visitScalarDef(ScalarTypeDefNode node, FlowTaskNode parent) {
     Class<?> returnType = JavaSpecUtil.type(node.getType());
-    MethodSpec method = MethodSpec.methodBuilder(JavaSpecUtil.getMethodName(node.getName()))
+    MethodSpec method = MethodSpec.methodBuilder(JavaSpecUtil.methodName(node.getName()))
         .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
         .returns(node.getRequired() ? ClassName.get(returnType) : ParameterizedTypeName.get(Optional.class, returnType))
         .build();
@@ -208,10 +222,20 @@ public class FlSwitchInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, List
     return ImmutableFlHeaderSpec.builder()
         .children(nested)
         .value(
-            MethodSpec.methodBuilder(JavaSpecUtil.getMethodName(node.getName()))
+            MethodSpec.methodBuilder(JavaSpecUtil.methodName(node.getName()))
                 .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
                 .returns(node.getRequired() ? typeName : ParameterizedTypeName.get(ClassName.get(Optional.class), typeName))
                 .build())
         .build();
+  }
+  
+  public static String getName(FlowTaskPointer pointer) {
+    if(pointer instanceof ThenPointer) {
+      return ((ThenPointer) pointer).getName();
+    } else if(pointer instanceof EndPointer) {
+      return ((EndPointer) pointer).getName();
+    }
+    return "Nested";
+    
   }
 }

@@ -28,7 +28,7 @@ import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnRefSpec;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.TypeNameResolver;
 
-public class EnInterfaceVisitor extends EnTemplateVisitor<List<TypeDefNode>> implements ExpressionAstNodeVisitor<EnRefSpec, List<TypeDefNode>> {
+public class EnInterfaceVisitor extends EnTemplateVisitor<EnRefSpec, List<TypeDefNode>> implements ExpressionAstNodeVisitor<EnRefSpec, List<TypeDefNode>> {
   
   private final TypeNameResolver resolver;
   

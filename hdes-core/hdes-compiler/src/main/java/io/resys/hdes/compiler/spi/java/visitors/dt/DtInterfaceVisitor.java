@@ -510,7 +510,7 @@ public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> 
   
   private DtCodeSpec visitInputRule(Rule node, ScalarTypeDefNode header) {
     RuleValue value = node.getValue();
-    String getMethod = JavaSpecUtil.getMethodName(header.getName());
+    String getMethod = JavaSpecUtil.methodName(header.getName());
     if (value instanceof LiteralValue) {
       Literal literal = ((LiteralValue) value).getValue();
       CodeBlock literalCode = visitLiteral(literal).getValue();

@@ -76,6 +76,7 @@ public class FlInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> 
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
         .addSuperinterface(Serializable.class)
         .addMethods(node.getTask().map(t -> visitTask(t).getValue()).orElse(Collections.emptyList()));
+    
     TypeSpec.Builder flowBuilder = TypeSpec.interfaceBuilder(naming.fl().api(node))
         .addModifiers(Modifier.PUBLIC)
         .addAnnotation(AnnotationSpec.builder(javax.annotation.processing.Generated.class).addMember("value", "$S", FlInterfaceVisitor.class.getCanonicalName()).build())
@@ -93,7 +94,7 @@ public class FlInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> 
     if (!node.getRef().isEmpty()) {
       TaskRef ref = node.getRef().get();
       TaskRefNaming type = naming.fl().ref(ref);
-      value.add(MethodSpec.methodBuilder(JavaSpecUtil.getMethodName(node.getId()))
+      value.add(MethodSpec.methodBuilder(JavaSpecUtil.methodName(node.getId()))
           .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
           .returns(node.getLoop().isPresent() ? ParameterizedTypeName.get(ClassName.get(List.class), type.getReturnType()) : type.getReturnType())
           .build());
@@ -111,6 +112,13 @@ public class FlInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> 
     } else if (node instanceof WhenThenPointer) {
       List<MethodSpec> values = new ArrayList<>();
       WhenThenPointer whenThen = (WhenThenPointer) node;
+      
+      ClassName type = naming.sw().api(body, parent);
+      values.add(MethodSpec.methodBuilder(JavaSpecUtil.methodName(type.simpleName()))
+          .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+          .returns(type)
+          .build());
+      
       for (WhenThen c : whenThen.getValues()) {
         values.addAll(visitTaskPointer(parent, c.getThen()).getValue());
       }
@@ -171,7 +179,7 @@ public class FlInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> 
   @Override
   public FlHeaderSpec visitScalarDef(ScalarTypeDefNode node) {
     Class<?> returnType = JavaSpecUtil.type(node.getType());
-    MethodSpec method = MethodSpec.methodBuilder(JavaSpecUtil.getMethodName(node.getName()))
+    MethodSpec method = MethodSpec.methodBuilder(JavaSpecUtil.methodName(node.getName()))
         .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
         .returns(node.getRequired() ? ClassName.get(returnType) : ParameterizedTypeName.get(Optional.class, returnType))
         .build();
@@ -217,7 +225,7 @@ public class FlInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> 
     return ImmutableFlHeaderSpec.builder()
         .children(nested)
         .value(
-            MethodSpec.methodBuilder(JavaSpecUtil.getMethodName(node.getName()))
+            MethodSpec.methodBuilder(JavaSpecUtil.methodName(node.getName()))
                 .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
                 .returns(node.getRequired() ? typeName : ParameterizedTypeName.get(ClassName.get(Optional.class), typeName))
                 .build())

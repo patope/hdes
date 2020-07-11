@@ -44,6 +44,8 @@ public interface NamingContext {
     String pkg(FlowBody body);
     ClassName api(FlowBody node, FlowTaskNode pointer);
     ParameterizedTypeName executable(FlowBody node, FlowTaskNode pointer);
+    
+    ClassName gate(FlowBody node, FlowTaskNode pointer);
     ClassName inputValue(FlowBody node, FlowTaskNode pointer);
     ClassName inputValue(FlowBody node, FlowTaskNode pointer, ObjectTypeDefNode object);
     ClassName outputValue(FlowBody node, FlowTaskNode pointer);

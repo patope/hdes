@@ -38,7 +38,7 @@ import io.resys.hdes.compiler.api.ImmutableTypeName;
 
 public class JavaSpecUtil {
   
-  public static String toJavaFile(TypeSpec spec, String pkg) {
+  public static String javaFile(TypeSpec spec, String pkg) {
     try {
       StringBuilder appendable = new StringBuilder();
       JavaFile file = JavaFile.builder(pkg, spec).build();
@@ -49,7 +49,7 @@ public class JavaSpecUtil {
     }
   }
 
-  public static TypeName toTypeName(ClassName name) {
+  public static TypeName typeName(ClassName name) {
     return ImmutableTypeName.builder().name(name.simpleName()).pkg(name.packageName()).build();
   }
   
@@ -64,7 +64,8 @@ public class JavaSpecUtil {
     return ClassName.get(type.packageName(), type.simpleName() + ".Builder");
   }  
   
-  public static String getMethodCall(String name) {
+  public static String methodCall(String name) {
+    //turns given ref into "get + (N)ame + ()"
     String[] src = name.split("\\.");
     StringBuilder result = new StringBuilder();
     for(String target : src) {
@@ -76,16 +77,11 @@ public class JavaSpecUtil {
     return result.toString();
   }
   
-  public static String getMethodName(String name) {
+  public static String methodName(String name) {
+    //turns given ref into "get + (N)ame"
     return new StringBuilder()
         .append("get")
         .append(capitalize(name))
-        .toString();
-  }
- 
-  public static String method(String name) {
-    return new StringBuilder()
-        .append(decapitalize(name))
         .toString();
   }
 

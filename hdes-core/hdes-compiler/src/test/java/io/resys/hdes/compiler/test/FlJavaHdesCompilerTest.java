@@ -32,22 +32,25 @@ import io.resys.hdes.compiler.api.HdesCompiler.Resource;
 import io.resys.hdes.compiler.spi.java.JavaHdesCompiler;
 
 public class FlJavaHdesCompilerTest {
+  
   private final HdesCompiler compiler = JavaHdesCompiler.config().build();
 
   @Test
   public void simpleFlow() {
     List<Resource> code = compiler.parser()
-        .add("SimpleFlow.hdes", file("SimpleFlow.hdes"))
-        .add("SimpleHitPolicyFirstDt.hdes", file("SimpleHitPolicyFirstDt.hdes"))
-        .build();
+      .add("SimpleFlow.hdes", file("SimpleFlow.hdes"))
+      .add("SimpleHitPolicyFirstDt.hdes", file("SimpleHitPolicyFirstDt.hdes"))
+      .build();
+
     print(code);
   }
 
   @Test
   public void arrayFlow() {
     List<Resource> code = compiler.parser()
-        .add("ArrayFlow.hdes", file("ArrayFlow.hdes"))
-        .build();
+      .add("ArrayFlow.hdes", file("ArrayFlow.hdes"))
+      .build();
+
     print(code);
   }
 

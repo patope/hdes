@@ -121,7 +121,7 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
       ParameterizedTypeName returnType = ParameterizedTypeName.get(ClassName.get(Collection.class), naming.dt().outputValueFlux(body));
       TypeSpec collectionOutput = from.apply(naming.dt().outputValueMono(body))
         .addSuperinterface(HdesExecutable.OutputValue.class)
-        .addMethod(MethodSpec.methodBuilder(JavaSpecUtil.getMethodName("values"))
+        .addMethod(MethodSpec.methodBuilder(JavaSpecUtil.methodName("values"))
           .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
           .returns(returnType)
           .build()).build();
@@ -134,7 +134,7 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
   @Override
   public DtMethodSpec visitHeader(TypeDefNode node) {
     ScalarTypeDefNode scalar = (ScalarTypeDefNode) node;
-    MethodSpec method = MethodSpec.methodBuilder(JavaSpecUtil.getMethodName(node.getName()))
+    MethodSpec method = MethodSpec.methodBuilder(JavaSpecUtil.methodName(node.getName()))
         .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
         .returns(JavaSpecUtil.type(scalar.getType()))
         .build();

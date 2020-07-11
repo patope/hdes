@@ -92,23 +92,24 @@ public class JavaNamingContext implements NamingContext {
       super();
       this.parent = parent;
     }
-
     @Override
     public String pkg(FlowBody body) {
       return parent.fl().pkg(body);
     }
-
+    @Override
+    public ClassName gate(FlowBody node, FlowTaskNode pointer) {
+      ClassName api = api(node, pointer);
+      return ClassName.get(api.packageName() + "." + api.simpleName(), "Gate");
+    }
     @Override
     public ClassName api(FlowBody node, FlowTaskNode pointer) {
-      return ClassName.get(pkg(node), node.getId().getValue() + pointer.getId());
+      return ClassName.get(pkg(node), node.getId().getValue() + pointer.getId() + "Switch");
     }
-
     @Override
     public ParameterizedTypeName executable(FlowBody node, FlowTaskNode pointer) {
       TypeName returnType = outputValue(node, pointer);
       return ParameterizedTypeName.get(ClassName.get(Switch.class), inputValue(node, pointer), returnType);
     }
-
     @Override
     public ClassName inputValue(FlowBody node, FlowTaskNode pointer) {
       return ClassName.get(pkg(node) + "." + node.getId().getValue() + pointer.getId(), pointer.getId() + "In");
@@ -117,7 +118,6 @@ public class JavaNamingContext implements NamingContext {
     public ClassName outputValue(FlowBody node, FlowTaskNode pointer) {
       return ClassName.get(pkg(node) + "." + node.getId().getValue() + pointer.getId(), pointer.getId() + "Out");
     }
-
     @Override
     public ClassName inputValue(FlowBody node, FlowTaskNode pointer, ObjectTypeDefNode object) {
       return ClassName.get(pkg(node) + "." + node.getId().getValue() + pointer.getId(), node.getId() + object.getName() + "In");
