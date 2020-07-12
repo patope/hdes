@@ -49,19 +49,19 @@ import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyFirst;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyMatrix;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.MatrixRow;
 import io.resys.hdes.ast.api.nodes.ImmutableScalarTypeDefNode;
-import io.resys.hdes.compiler.spi.NamingContext;
 import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtMethodSpec;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtMethodsSpec;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtTypesSpec;
+import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.HdesExecutable;
 
 public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> {
 
-  private final NamingContext naming;
+  private final Namings naming;
   private DecisionTableBody body;
 
-  public DtImplementationVisitor(NamingContext naming) {
+  public DtImplementationVisitor(Namings naming) {
     super();
     this.naming = naming;
   }

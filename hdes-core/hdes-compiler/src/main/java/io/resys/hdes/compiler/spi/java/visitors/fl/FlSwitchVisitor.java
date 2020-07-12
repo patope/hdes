@@ -47,21 +47,21 @@ import io.resys.hdes.ast.api.nodes.FlowNode.ThenPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.NamingContext;
 import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnImplementationVisitor;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnInterfaceVisitor;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnCodeSpec;
 import io.resys.hdes.compiler.spi.java.visitors.fl.FlJavaSpec.FlHeaderSpec;
 import io.resys.hdes.compiler.spi.java.visitors.fl.FlJavaSpec.FlTypesSpec;
+import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.HdesExecutable;
 
 public class FlSwitchVisitor extends FlTemplateVisitor<FlJavaSpec, List<TypeSpec>> {
-  private final NamingContext naming;
+  private final Namings naming;
   private FlTypeNameResolver typeNames;
   private FlowBody body;
 
-  public FlSwitchVisitor(NamingContext naming) {
+  public FlSwitchVisitor(Namings naming) {
     super();
     this.naming = naming;
   }

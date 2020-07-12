@@ -52,79 +52,83 @@ public interface EnJavaSpec {
     private final static Function<ScalarType, Boolean> temporalType = (t) -> t == ScalarType.DATE || t == ScalarType.DATE_TIME || t == ScalarType.TIME;
     
     private AstNode src;
-    private EnCodeSpec left;
-    private EnCodeSpec right;
+    private EnCodeSpec value1;
+    private EnCodeSpec value2;
     
     public TypeConverter src(AstNode src) {
       this.src = src;
       return this;
     }
     
-    public TypeConverter value1(EnCodeSpec left) {
-      this.left = left;
+    public TypeConverter value1(EnCodeSpec value1) {
+      this.value1 = value1;
       return this;
     }
     
-    public TypeConverter value2(EnCodeSpec right) {
-      this.right = right;
+    public TypeConverter value2(EnCodeSpec value2) {
+      this.value2 = value2;
       return this;      
     }
     
     public EnConvertionSpec build() {
       Assertions.notNull(src, () -> "src side cant be null!");
-      Assertions.notNull(left, () -> "left side cant be null!");
-      Assertions.notNull(right, () -> "left side cant be null!");
+      Assertions.notNull(value1, () -> "left side cant be null!");
+      Assertions.notNull(value2, () -> "left side cant be null!");
       
       // Everything matches both are same
-      if(left.getType() == right.getType()) {
+      if(value1.getType() == value2.getType()) {
         return ImmutableEnConvertionSpec.builder()
-            .type(left.getType())
-            .left(left.getValue())
-            .right(right.getValue())
+            .type(value1.getType())
+            .value1(value1.getValue())
+            .value2(value2.getValue())
             .build();
       }
       
       // numerical conversion, integer to big decimal
-      if(isDecimalConvert(left.getType(), right.getType())) {
-        CodeBlock left;
-        CodeBlock right;
+      if(isDecimalConvert(value1.getType(), value2.getType())) {
+        CodeBlock value1;
+        CodeBlock value2;
         
-        if(this.left.getType() == ScalarType.INTEGER) {
-          left = CodeBlock.builder().add("new $T(", BigDecimal.class).add(this.left.getValue()).add(")").build();
-          right = this.right.getValue();
+        if(this.value1.getType() == ScalarType.INTEGER) {
+          value1 = CodeBlock.builder().add("new $T(", BigDecimal.class).add(this.value1.getValue()).add(")").build();
+          value2 = this.value2.getValue();
         } else {
-          left = this.left.getValue();
-          right = CodeBlock.builder().add("new $T(", BigDecimal.class).add(this.right.getValue()).add(")").build();
+          value1 = this.value1.getValue();
+          value2 = CodeBlock.builder().add("new $T(", BigDecimal.class).add(this.value2.getValue()).add(")").build();
         }
 
         return ImmutableEnConvertionSpec.builder()
             .type(ScalarType.DECIMAL)
-            .left(left)
-            .right(right)
+            .value1(value1)
+            .value2(value2)
             .build();
       }
       
       // string to date time, date, time
-      if(isTemporalConvert(left.getType(), right.getType())) {
-        CodeBlock left;
-        CodeBlock right;
-        
-        if(this.left.getType() == ScalarType.STRING) {
-          left = CodeBlock.builder().add("$T.parse(", JavaSpecUtil.type(this.right.getType())).add(this.left.getValue()).add(")").build();
-          right = this.right.getValue();
+      if(isTemporalConvert(value1.getType(), value2.getType())) {
+        CodeBlock value1;
+        CodeBlock value2;
+        ScalarType type;
+        if(this.value1.getType() == ScalarType.STRING) {
+          Class<?> temporalType = JavaSpecUtil.type(this.value2.getType());
+          value1 = CodeBlock.builder().add("$T.parse($L)", temporalType, this.value1.getValue()).build();
+          value2 = this.value2.getValue();
+          type = this.value2.getType();
         } else {
-          left = this.left.getValue();
-          right = CodeBlock.builder().add("$T.parse(", JavaSpecUtil.type(this.left.getType())).add(this.right.getValue()).add(")").build();
+          Class<?> temporalType = JavaSpecUtil.type(this.value1.getType());
+          value1 = this.value1.getValue();
+          value2 = CodeBlock.builder().add("$T.parse($L)", temporalType, this.value2.getValue()).build();
+          type = this.value1.getType();
         }
 
         return ImmutableEnConvertionSpec.builder()
-            .type(ScalarType.DECIMAL)
-            .left(left)
-            .right(right)
+            .type(type)
+            .value1(value1)
+            .value2(value2)
             .build();
       }
      
-      throw new HdesCompilerException(HdesCompilerException.builder().incompatibleConversion(src, left.getType(), right.getType()));
+      throw new HdesCompilerException(HdesCompilerException.builder().incompatibleConversion(src, value1.getType(), value2.getType()));
     }
     
     

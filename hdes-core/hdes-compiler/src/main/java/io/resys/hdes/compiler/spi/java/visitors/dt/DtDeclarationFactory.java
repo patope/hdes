@@ -11,14 +11,14 @@ import io.resys.hdes.compiler.api.HdesCompiler.Resource;
 import io.resys.hdes.compiler.api.ImmutableResource;
 import io.resys.hdes.compiler.api.ImmutableTypeDeclaration;
 import io.resys.hdes.compiler.api.ImmutableTypeName;
-import io.resys.hdes.compiler.spi.NamingContext;
 import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
+import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.HdesExecutable;
 
 public class DtDeclarationFactory {
   private DecisionTableBody body;
   private AstEnvir envir;
-  private NamingContext naming;
+  private Namings naming;
 
   public static DtDeclarationFactory create() {
     return new DtDeclarationFactory();
@@ -34,7 +34,7 @@ public class DtDeclarationFactory {
     return this;
   }
 
-  public DtDeclarationFactory naming(NamingContext naming) {
+  public DtDeclarationFactory naming(Namings naming) {
     this.naming = naming;
     return this;
   }

@@ -12,14 +12,14 @@ import io.resys.hdes.compiler.api.HdesCompiler.Resource;
 import io.resys.hdes.compiler.api.ImmutableResource;
 import io.resys.hdes.compiler.api.ImmutableTypeDeclaration;
 import io.resys.hdes.compiler.api.ImmutableTypeName;
-import io.resys.hdes.compiler.spi.NamingContext;
 import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
+import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.HdesExecutable;
 
 public class FlDeclarationFactory {
   private FlowBody body;
   private AstEnvir envir;
-  private NamingContext naming;
+  private Namings naming;
 
   public static FlDeclarationFactory create() {
     return new FlDeclarationFactory();
@@ -35,7 +35,7 @@ public class FlDeclarationFactory {
     return this;
   }
 
-  public FlDeclarationFactory naming(NamingContext naming) {
+  public FlDeclarationFactory naming(Namings naming) {
     this.naming = naming;
     return this;
   }

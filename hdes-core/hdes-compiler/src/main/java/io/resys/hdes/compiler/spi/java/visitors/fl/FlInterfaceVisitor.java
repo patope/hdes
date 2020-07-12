@@ -50,19 +50,19 @@ import io.resys.hdes.ast.api.nodes.FlowNode.ThenPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.NamingContext;
-import io.resys.hdes.compiler.spi.NamingContext.TaskRefNaming;
 import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.java.visitors.fl.FlJavaSpec.FlHeaderSpec;
 import io.resys.hdes.compiler.spi.java.visitors.fl.FlJavaSpec.FlMethodSpec;
 import io.resys.hdes.compiler.spi.java.visitors.fl.FlJavaSpec.FlTypesSpec;
+import io.resys.hdes.compiler.spi.naming.Namings;
+import io.resys.hdes.compiler.spi.naming.Namings.TaskRefNaming;
 import io.resys.hdes.executor.api.HdesExecutable;
 
 public class FlInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> {
-  private final NamingContext naming;
+  private final Namings naming;
   private FlowBody body;
 
-  public FlInterfaceVisitor(NamingContext naming) {
+  public FlInterfaceVisitor(Namings naming) {
     super();
     this.naming = naming;
   }

@@ -30,9 +30,10 @@ import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.spi.ImmutableAstEnvir;
 import io.resys.hdes.compiler.api.HdesCompiler;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.NamingContext;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtDeclarationFactory;
 import io.resys.hdes.compiler.spi.java.visitors.fl.FlDeclarationFactory;
+import io.resys.hdes.compiler.spi.naming.JavaNaming;
+import io.resys.hdes.compiler.spi.naming.Namings;
 
 public class JavaHdesCompiler implements HdesCompiler {
   @Override
@@ -42,7 +43,7 @@ public class JavaHdesCompiler implements HdesCompiler {
       @Override
       public List<Resource> build() {
         final AstEnvir envir = builder.build();
-        final NamingContext naming = JavaNamingContext.config().ast(envir).build();
+        final Namings naming = JavaNaming.config().ast(envir).build();
         final List<Resource> values = envir.getBody().values().stream()
           .map(ast -> {
             if (ast instanceof DecisionTableBody) {

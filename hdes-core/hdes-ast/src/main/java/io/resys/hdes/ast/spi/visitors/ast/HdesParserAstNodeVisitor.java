@@ -2,6 +2,7 @@ package io.resys.hdes.ast.spi.visitors.ast;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -12,6 +13,7 @@ import io.resys.hdes.ast.HdesParser.ArrayTypeContext;
 import io.resys.hdes.ast.HdesParser.DebugValueContext;
 import io.resys.hdes.ast.HdesParser.DescriptionContext;
 import io.resys.hdes.ast.HdesParser.DirectionTypeContext;
+import io.resys.hdes.ast.HdesParser.FormulaContext;
 import io.resys.hdes.ast.HdesParser.HdesBodyContext;
 import io.resys.hdes.ast.HdesParser.HeadersContext;
 import io.resys.hdes.ast.HdesParser.LiteralContext;
@@ -52,6 +54,7 @@ import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.ImmutableArrayTypeDefNode;
 import io.resys.hdes.ast.api.nodes.ImmutableHeaders;
 import io.resys.hdes.ast.api.nodes.ImmutableObjectTypeDefNode;
@@ -76,6 +79,10 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
   @Value.Immutable
   public interface RedundentDebugValue extends ManualTaskNode {
     String getValue();
+  }
+  @Value.Immutable
+  public interface RedundentFormula extends AstNode {
+    ExpressionBody getValue();
   }
   @Value.Immutable
   public interface RedundentDirection extends AstNode {
@@ -172,7 +179,15 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
         .type(nodes.of(RedundentScalarType.class).get().getValue())
         .direction(nodes.of(RedundentDirection.class).get().getValue())
         .debugValue(nodes.of(RedundentDebugValue.class).map(e -> e.getValue()))
+        .formula(nodes.of(RedundentFormula.class).map(e -> e.getValue()))
         .build();
+  }
+  
+  @Override
+  public RedundentFormula visitFormula(FormulaContext ctx) {
+    Nodes nodes = nodes(ctx);
+    Optional<ExpressionBody> exp = nodes.of(ExpressionBody.class);
+    return ImmutableRedundentFormula.builder().value(exp.get()).build();
   }
   
   @Override

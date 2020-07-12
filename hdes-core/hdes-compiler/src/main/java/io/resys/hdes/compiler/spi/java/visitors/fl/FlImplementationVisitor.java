@@ -32,8 +32,8 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
-import io.resys.hdes.compiler.spi.NamingContext;
 import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
+import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.DecisionTableMeta;
 import io.resys.hdes.executor.api.FlowMeta;
 import io.resys.hdes.executor.api.HdesExecutable.Execution;
@@ -43,9 +43,9 @@ import io.resys.hdes.executor.api.ImmutableDecisionTableMeta;
 import io.resys.hdes.executor.api.ImmutableExecution;
 
 public class FlImplementationVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> {
-  private final NamingContext naming;
+  private final Namings naming;
 
-  public FlImplementationVisitor(NamingContext naming) {
+  public FlImplementationVisitor(Namings naming) {
     super();
     this.naming = naming;
   }

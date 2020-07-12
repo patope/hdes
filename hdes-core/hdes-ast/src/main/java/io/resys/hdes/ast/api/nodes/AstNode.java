@@ -24,6 +24,8 @@ import java.util.Optional;
 
 import org.immutables.value.Value;
 
+import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
+
 public interface AstNode {
   Token getToken();
   
@@ -119,6 +121,7 @@ public interface AstNode {
   @Value.Immutable
   interface ScalarTypeDefNode extends TypeDefNode {
     Optional<String> getDebugValue();
+    Optional<ExpressionBody> getFormula();
     ScalarType getType();
   }
   

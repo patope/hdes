@@ -1,4 +1,4 @@
-package io.resys.hdes.compiler.spi;
+package io.resys.hdes.compiler.spi.naming;
 
 import org.immutables.value.Value;
 
@@ -27,20 +27,32 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
 import io.resys.hdes.ast.api.AstEnvir;
+import io.resys.hdes.ast.api.nodes.AstNode.BodyNode;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
 
-public interface NamingContext {
+public interface Namings {
   
   AstEnvir ast();
-  FlNamingContext fl();
-  DtNamingContext dt();
-  SwitchNamingContext sw();
+  FlNaming fl();
+  DtNaming dt();
+  SwitchNaming sw();
+  FormulaNaming fr();
   
-  interface SwitchNamingContext {
+  interface FormulaNaming {
+    String pkg(BodyNode body);
+    ClassName api(BodyNode node, ScalarTypeDefNode pointer);
+    ParameterizedTypeName executable(BodyNode node, ScalarTypeDefNode pointer);
+    
+    ClassName inputValue(BodyNode node, ScalarTypeDefNode pointer);
+    ClassName outputValue(BodyNode node, ScalarTypeDefNode pointer);
+  }
+  
+  interface SwitchNaming {
     String pkg(FlowBody body);
     ClassName api(FlowBody node, FlowTaskNode pointer);
     ParameterizedTypeName executable(FlowBody node, FlowTaskNode pointer);
@@ -51,7 +63,7 @@ public interface NamingContext {
     ClassName outputValue(FlowBody node, FlowTaskNode pointer);
   }
   
-  interface DtNamingContext {
+  interface DtNaming {
     String pkg(DecisionTableBody body);
     
     ClassName api(DecisionTableBody node);
@@ -68,7 +80,7 @@ public interface NamingContext {
     //ClassName outputSuperinterface(DecisionTableBody node);
   }
   
-  interface FlNamingContext {
+  interface FlNaming {
     String pkg(FlowBody body);
     
     ClassName api(FlowBody node);

@@ -65,11 +65,11 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.BetweenExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.NotUnaryOperation;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.NamingContext;
 import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtCodeSpec;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtCodeSpecPair;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtMethodsSpec;
+import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.DecisionTableMeta;
 import io.resys.hdes.executor.api.DecisionTableMeta.DecisionTableMetaEntry;
 import io.resys.hdes.executor.api.HdesExecutable.ExecutionStatus;
@@ -85,10 +85,10 @@ import io.resys.hdes.executor.spi.exceptions.DecisionTableHitPolicyFirstExceptio
 
 public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> {
   private final static String HEADER_REF = "//header ref to be replaces";
-  private final NamingContext naming;
+  private final Namings naming;
   private DecisionTableBody body;
 
-  public DtInterfaceVisitor(NamingContext naming) {
+  public DtInterfaceVisitor(Namings naming) {
     super();
     this.naming = naming;
   }
