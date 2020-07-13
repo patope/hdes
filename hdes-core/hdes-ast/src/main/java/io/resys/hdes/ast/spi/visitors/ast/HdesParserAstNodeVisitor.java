@@ -187,7 +187,7 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
   public RedundentFormula visitFormula(FormulaContext ctx) {
     Nodes nodes = nodes(ctx);
     Optional<ExpressionBody> exp = nodes.of(ExpressionBody.class);
-    return ImmutableRedundentFormula.builder().value(exp.get()).build();
+    return ImmutableRedundentFormula.builder().token(token(ctx)).value(exp.get()).build();
   }
   
   @Override

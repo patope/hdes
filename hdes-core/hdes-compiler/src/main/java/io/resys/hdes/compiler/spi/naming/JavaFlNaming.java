@@ -13,6 +13,8 @@ import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings.FlNaming;
 import io.resys.hdes.compiler.spi.naming.Namings.TaskRefNaming;
+import io.resys.hdes.executor.api.FlowMeta;
+import io.resys.hdes.executor.api.HdesExecutable.Execution;
 import io.resys.hdes.executor.api.HdesExecutable.Flow;
 
 public class JavaFlNaming implements FlNaming {
@@ -62,6 +64,14 @@ public class JavaFlNaming implements FlNaming {
     return ParameterizedTypeName.get(ClassName.get(Flow.class), inputValue(node), outputValue(node));
   }
 
+  @Override
+  public ParameterizedTypeName execution(FlowBody body) {
+    ClassName outputName = outputValue(body);
+    ParameterizedTypeName returnType = ParameterizedTypeName
+        .get(ClassName.get(Execution.class), ClassName.get(FlowMeta.class), outputName);
+    return returnType;
+  } 
+  
   @Override
   public ClassName inputValue(FlowBody node, ObjectTypeDefNode object) {
     return ClassName.get(api(node).simpleName(), node.getId().getValue() + JavaSpecUtil.capitalize(object.getName()) + "In");

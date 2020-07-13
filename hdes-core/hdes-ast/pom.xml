@@ -23,7 +23,7 @@
           <sourceDirectory>${basedir}/src/main/antlr4</sourceDirectory>
           <libDirectory>${basedir}/src/main/antlr4/imports</libDirectory>
           <outputDirectory>${project.build.directory}/generated-sources/antlr4</outputDirectory>
-          
+
           <arguments>
             <argument>-package</argument>
             <argument>io.resys.hdes.ast</argument>
@@ -36,6 +36,10 @@
   </build>
 
   <dependencies>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.antlr</groupId>
       <artifactId>antlr4-runtime</artifactId>

@@ -15,6 +15,7 @@ import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.ExpressionAstNodeVisitor;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveOperation;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveType;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.AndOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.BetweenExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ConditionalExpression;
@@ -22,6 +23,7 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodRefNode;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MultiplicativeOperation;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.MultiplicativeType;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.NegateUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.NotUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.OrOperation;
@@ -110,30 +112,37 @@ public class EnImplementationVisitor extends EnTemplateVisitor<EnCodeSpec, EnCod
 
   @Override
   public EnCodeSpec visitNegateUnaryOperation(NegateUnaryOperation node) {
-    EnCodeSpec children = visit(node.getValue());
+    EnCodeSpec spec = visit(node.getValue());
+
+    CodeBlock.Builder value = CodeBlock.builder();
+    if(spec.getType() == ScalarType.DECIMAL) {
+      value.add("$L.negate()", spec.getValue());
+    } else if(spec.getType() == ScalarType.INTEGER) {      
+      value.add("-$L", spec.getValue());
+    } else {
+      throw new HdesCompilerException(HdesCompilerException.builder().incompatibleTypesInNegateUnaryOperation(node, spec.getType())); 
+    }
     
-    /* TODO
-    ScalarType type = children.getType(); 
-    if(type == ScalarType.) {
-      throw new HdesCompilerException(HdesCompilerException.builder().incompatibleType(node, ScalarType.BOOLEAN, children.getType()));
-    }*/
-    
-    return ImmutableEnCodeSpec.builder()
-        .type(children.getType())
-        .value(CodeBlock.builder().add("-").add(children.getValue()).build())
-        .build();
+    return ImmutableEnCodeSpec.builder().value(value.build()).type(spec.getType()).build();
   }
 
   @Override
   public EnCodeSpec visitPositiveUnaryOperation(PositiveUnaryOperation node) {
-    // TODO
-    EnCodeSpec children = visit(node.getValue());
-    return ImmutableEnCodeSpec.builder()
-        .type(children.getType())
-        .value(CodeBlock.builder().add("+").add(children.getValue()).build())
-        .build();
+    EnCodeSpec spec = visit(node.getValue());
+
+    CodeBlock.Builder value = CodeBlock.builder();
+    if(spec.getType() == ScalarType.DECIMAL) {
+      value.add("$L.plus()", spec.getValue());
+    } else if(spec.getType() == ScalarType.INTEGER) {      
+      value.add("+$L", spec.getValue());
+    } else {
+      throw new HdesCompilerException(HdesCompilerException.builder().incompatibleTypesInPlusUnaryOperation(node, spec.getType())); 
+    }
+    
+    return ImmutableEnCodeSpec.builder().value(value.build()).type(spec.getType()).build();
   }
 
+  /*
   @Override
   public EnCodeSpec visitPreIncrementUnaryOperation(PreIncrementUnaryOperation node) {
     // TODO
@@ -159,31 +168,80 @@ public class EnImplementationVisitor extends EnTemplateVisitor<EnCodeSpec, EnCod
   }
 
   @Override
-  public EnCodeSpec visitAdditiveOperation(AdditiveOperation node) {
-    // TODO
-    return ImmutableEnCodeSpec.builder()
-        .addAllValues(visit(node.getLeft()).getValues())
-        .addAllValues(visit(node.getRight()).getValues())
-        .build();
-  }
-
-  @Override
-  public EnCodeSpec visitMultiplicativeOperation(MultiplicativeOperation node) {
-    // TODO
-    return ImmutableEnCodeSpec.builder()
-        .addAllValues(visit(node.getLeft()).getValues())
-        .addAllValues(visit(node.getRight()).getValues())
-        .build();
-  }
-
-  /* TODO::
-  @Override
   public EnCodeSpec visitMethodRefNode(MethodRefNode node) {
+  
+    TODO::
     List<AstNode> values = new ArrayList<>();
     node.getValues().forEach(v -> values.addAll(visit(v).getValues()));
     return ImmutableEnCodeSpec.builder().addValues(node).build();
   }*/
   
+  
+  @Override
+  public EnCodeSpec visitEqualityOperation(EqualityOperation node) {
+    // TODO
+    return ImmutableEnCodeSpec.builder()
+        .value(CodeBlock.builder()
+            
+            .build())
+        .build();
+  }
+  
+  
+  @Override
+  public EnCodeSpec visitMultiplicativeOperation(MultiplicativeOperation node) {
+    
+    EnCodeSpec left = visit(node.getLeft());
+    EnCodeSpec right = visit(node.getRight());
+    EnConvertionSpec spec = EnJavaSpec.converter().src(node).value1(left).value2(right).build();
+    
+    if(spec.getType() != ScalarType.INTEGER && spec.getType() != ScalarType.DECIMAL) {
+      throw new HdesCompilerException(HdesCompilerException.builder()
+          .incompatibleTypesInAdditiveOperation(node, left.getType(), right.getType()));
+    }
+
+    CodeBlock.Builder value = CodeBlock.builder();
+    if(spec.getType() == ScalarType.DECIMAL) {
+      value.add("$L.$L($L)", 
+          spec.getValue1(),
+          node.getType() == MultiplicativeType.MULTIPLY ? "multiply" : "divide",
+          spec.getValue2());
+    } else if(node.getType() == MultiplicativeType.MULTIPLY) {
+      value.add("$L * $L", spec.getValue1(), spec.getValue2());
+    } else {
+      value.add("new $T($L).divide(new $T($L)))", BigDecimal.class, spec.getValue1(), BigDecimal.class, spec.getValue2());      
+    }
+    
+    return ImmutableEnCodeSpec.builder().value(value.build()).type(spec.getType()).build();
+  }
+  
+  @Override
+  public EnCodeSpec visitAdditiveOperation(AdditiveOperation node) {
+    
+    EnCodeSpec left = visit(node.getLeft());
+    EnCodeSpec right = visit(node.getRight());
+    EnConvertionSpec spec = EnJavaSpec.converter().src(node).value1(left).value2(right).build();
+    
+    if(spec.getType() != ScalarType.INTEGER && spec.getType() != ScalarType.DECIMAL) {
+      throw new HdesCompilerException(HdesCompilerException.builder()
+          .incompatibleTypesInAdditiveOperation(node, left.getType(), right.getType()));
+    }
+
+    CodeBlock.Builder value = CodeBlock.builder();
+    if(spec.getType() == ScalarType.DECIMAL) {
+      value.add("$L.$L($L)", 
+          spec.getValue1(),
+          node.getType() == AdditiveType.ADD ? "add" : "subtract",
+          spec.getValue2());
+    } else {
+      value.add("$L $L $L", 
+          spec.getValue1(),
+          node.getType() == AdditiveType.ADD ? "+" : "-",
+          spec.getValue2());
+    }
+
+    return ImmutableEnCodeSpec.builder().value(value.build()).type(spec.getType()).build();
+  }
   
   @Override
   public EnCodeSpec visitAndOperation(AndOperation node) {
@@ -313,15 +371,6 @@ public class EnImplementationVisitor extends EnTemplateVisitor<EnCodeSpec, EnCod
         .build();
   }
 
-  @Override
-  public EnCodeSpec visitEqualityOperation(EqualityOperation node) {
-    return ImmutableEnCodeSpec.builder()
-        .value(CodeBlock.builder()
-            
-            .build())
-        .build();
-  }
-  
   private EnCodeSpec visit(AstNode node) {
     if (node instanceof TypeName) {
       return visitTypeName((TypeName) node);

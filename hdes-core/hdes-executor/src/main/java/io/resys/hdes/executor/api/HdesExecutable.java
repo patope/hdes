@@ -29,7 +29,7 @@ public interface HdesExecutable<I extends HdesExecutable.InputValue, M extends H
   
   // Core
   
-  enum SourceType { FL, MT, DT, ST }
+  enum SourceType { FL, MT, DT, ST, SW, FR }
   enum ExecutionStatus { COMPLETED, WAITING, RUNNING, ERROR }
     
   interface OutputValue extends Serializable {}

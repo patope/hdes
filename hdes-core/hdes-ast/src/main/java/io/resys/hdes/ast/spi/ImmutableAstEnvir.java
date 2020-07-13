@@ -217,6 +217,8 @@ public class ImmutableAstEnvir implements AstEnvir {
       try {
         result = (BodyNode) tree.accept(new HdesParserAstNodeVisitor(new TokenIdGenerator()));
       } catch(Exception e) {
+        errorListener().add(e);
+        
         Token exceptionToken = ImmutableToken.builder()
           .id(0)
           .startCol(0).startLine(0)

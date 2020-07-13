@@ -26,6 +26,7 @@ import java.util.List;
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import io.resys.hdes.ast.api.nodes.AstNode.ErrorNode;
 import io.resys.hdes.ast.api.nodes.ImmutableEmptyNode;
@@ -62,6 +63,19 @@ public class HdesAntlrErrorListener extends BaseErrorListener {
                 // TODO:: unknown
                 .endLine(0).endCol(0)
                 
+                .build())
+            .build())
+        .message(msg).build());
+  }
+  
+  public void add(Exception e) {
+    String msg = ExceptionUtils.getMessage(e) + "" + System.lineSeparator() + ExceptionUtils.getStackTrace(e);
+    this.errors.add(ImmutableErrorNode.builder()
+        .target(ImmutableEmptyNode.builder()
+            .token(ImmutableToken.builder()
+                .id(id++).text(msg)
+                .startLine(-1).startCol(-1)
+                .endLine(-1).endCol(-1)
                 .build())
             .build())
         .message(msg).build());

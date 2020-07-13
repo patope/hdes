@@ -1,5 +1,6 @@
 package io.resys.hdes.compiler.spi.java.visitors.dt;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 import com.squareup.javapoet.TypeSpec;
@@ -44,8 +45,9 @@ public class DtDeclarationFactory {
     Assertions.notNull(envir, () -> "envir can't be null");
     Assertions.notNull(body, () -> "body can't be null");
 
-    final TypeSpec api = new DtImplementationVisitor(naming).visitDecisionTableBody(body);
-    final TypeSpec impl = new DtInterfaceVisitor(naming).visitDecisionTableBody(body);
+    final TypeSpec api = new DtInterfaceVisitor(naming).visitDecisionTableBody(body);
+    final TypeSpec impl = new DtImplementationVisitor(naming).visitDecisionTableBody(body);
+    final List<TypeSpec> formulaApis = new DtFormulaVisitor(naming).visitDecisionTableBody(body);
     
     final var pkg = naming.dt().pkg(body);
     final var nestedPkg = pkg + "." + api.name;
@@ -61,6 +63,11 @@ public class DtDeclarationFactory {
         
         .input(JavaSpecUtil.typeName(naming.dt().inputValue(body)))
         .output(JavaSpecUtil.typeName(naming.dt().outputValueMono(body)))
+        
+        .addAllDeclarations(formulaApis.stream().map(s -> ImmutableTypeDeclaration.builder()
+            .type(ImmutableTypeName.builder().name(s.name).pkg(pkg).build())
+            .isExecutable(false).value(JavaSpecUtil.javaFile(s, pkg)).build())
+            .collect(Collectors.toList()))
         
         .addDeclarations(ImmutableTypeDeclaration.builder()
             .type(ImmutableTypeName.builder().name(api.name).pkg(pkg).build())

@@ -28,6 +28,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
+import javax.lang.model.element.Modifier;
+
+import org.immutables.value.Value.Immutable;
+
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
@@ -37,6 +42,16 @@ import io.resys.hdes.compiler.api.HdesCompiler.TypeName;
 import io.resys.hdes.compiler.api.ImmutableTypeName;
 
 public class JavaSpecUtil {
+  
+  public static TypeSpec.Builder immutableSpec(ClassName name) {
+    ClassName immutable = immutable(name);
+    return TypeSpec
+      .interfaceBuilder(name)
+      .addAnnotation(Immutable.class)
+      .addModifiers(Modifier.PUBLIC, Modifier.STATIC)    
+      .addAnnotation(AnnotationSpec.builder(ClassName.get("com.fasterxml.jackson.databind.annotation", "JsonSerialize")).addMember("as", "$T.class", immutable).build())
+      .addAnnotation(AnnotationSpec.builder(ClassName.get("com.fasterxml.jackson.databind.annotation", "JsonDeserialize")).addMember("as", "$T.class", immutable).build());    
+  }
   
   public static String javaFile(TypeSpec spec, String pkg) {
     try {

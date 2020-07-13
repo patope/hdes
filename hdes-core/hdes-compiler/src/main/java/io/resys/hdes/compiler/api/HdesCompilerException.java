@@ -200,5 +200,41 @@ public class HdesCompilerException extends RuntimeException {
           .append("  - ").append(ast).append("!")
           .toString();
     }
+    
+    public String incompatibleTypesInAdditiveOperation(AstNode ast, ScalarType ... was) {
+      return new StringBuilder()
+          .append("Incompatible type used in ADDITIVE expression!").append(System.lineSeparator())
+          .append("Expected types must be of types: ")
+            .append(ScalarType.INTEGER).append(" or ")
+            .append(ScalarType.DECIMAL)
+            .append(" but where: ").append(was).append("!").append(System.lineSeparator())
+          .append(" AST: ").append(ast.getClass()).append(System.lineSeparator())
+          .append("  - ").append(ast).append("!")
+          .toString();
+    }
+    
+    public String incompatibleTypesInPlusUnaryOperation(AstNode ast, ScalarType was) {
+      return new StringBuilder()
+          .append("Incompatible type used in PLUS UNARY expression!").append(System.lineSeparator())
+          .append("Expected types must be of types: ")
+            .append(ScalarType.INTEGER).append(" or ")
+            .append(ScalarType.DECIMAL)
+            .append(" but was: ").append(was).append("!").append(System.lineSeparator())
+          .append(" AST: ").append(ast.getClass()).append(System.lineSeparator())
+          .append("  - ").append(ast).append("!")
+          .toString();
+    }
+    
+    public String incompatibleTypesInNegateUnaryOperation(AstNode ast, ScalarType was) {
+      return new StringBuilder()
+          .append("Incompatible type used in MINUS UNARY expression!").append(System.lineSeparator())
+          .append("Expected types must be of types: ")
+            .append(ScalarType.INTEGER).append(" or ")
+            .append(ScalarType.DECIMAL)
+            .append(" but was: ").append(was).append("!").append(System.lineSeparator())
+          .append(" AST: ").append(ast.getClass()).append(System.lineSeparator())
+          .append("  - ").append(ast).append("!")
+          .toString();
+    }
   }
 }

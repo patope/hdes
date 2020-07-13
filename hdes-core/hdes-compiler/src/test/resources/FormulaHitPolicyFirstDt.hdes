@@ -1,0 +1,13 @@
+define decision-table: FormulaHitPolicyFirstDt
+headers: {
+  a INTEGER required IN,
+  b INTEGER required IN,
+  c DECIMAL required IN,
+  sum DECIMAL optional IN formula: a + b + c,
+  
+  value INTEGER required OUT
+  
+  
+} FIRST: {
+  { ?, ?, ?, ?,   20 }
+}

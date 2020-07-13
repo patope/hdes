@@ -46,6 +46,7 @@ public class JavaHdesCompiler implements HdesCompiler {
         final Namings naming = JavaNaming.config().ast(envir).build();
         final List<Resource> values = envir.getBody().values().stream()
           .map(ast -> {
+            
             if (ast instanceof DecisionTableBody) {
               return DtDeclarationFactory.create().body((DecisionTableBody) ast).envir(envir).naming(naming).build();
             } else if (ast instanceof FlowBody) {
@@ -53,6 +54,7 @@ public class JavaHdesCompiler implements HdesCompiler {
             } else {
               throw new HdesCompilerException(HdesCompilerException.builder().unknownAst(ast));
             }
+            
           })
           .collect(Collectors.toList());
         return Collections.unmodifiableList(values);

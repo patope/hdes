@@ -52,6 +52,14 @@ public class DtHdesCompilerTest {
   }
   
   @Test
+  public void formulaHitPolicyFirstDt() {
+    List<Resource> code = compiler.parser()
+        .add("FormulaHitPolicyFirstDt.hdes", file("FormulaHitPolicyFirstDt.hdes"))
+    .build();
+    print(code);
+  }
+  
+  @Test
   public void simpleHitPolicyFirstDt() {
     List<Resource> code = compiler.parser()
         .add("SimpleHitPolicyFirstDt.hdes", file("SimpleHitPolicyFirstDt.hdes"))

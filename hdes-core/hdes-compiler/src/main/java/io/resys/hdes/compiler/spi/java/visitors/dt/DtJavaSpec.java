@@ -29,6 +29,13 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
 public interface DtJavaSpec {
+  
+  @Value.Immutable
+  public interface DtHeaderSpec extends DtJavaSpec {
+    MethodSpec getValue();
+    List<TypeSpec> getChildren();
+  }
+  
   @Value.Immutable
   public interface DtMethodSpec extends DtJavaSpec {
     MethodSpec getValue();

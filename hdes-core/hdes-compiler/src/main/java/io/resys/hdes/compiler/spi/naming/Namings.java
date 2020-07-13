@@ -46,7 +46,9 @@ public interface Namings {
   interface FormulaNaming {
     String pkg(BodyNode body);
     ClassName api(BodyNode node, ScalarTypeDefNode pointer);
+    ClassName impl(BodyNode node, ScalarTypeDefNode pointer);
     ParameterizedTypeName executable(BodyNode node, ScalarTypeDefNode pointer);
+    ParameterizedTypeName execution(BodyNode node, ScalarTypeDefNode pointer);
     
     ClassName inputValue(BodyNode node, ScalarTypeDefNode pointer);
     ClassName outputValue(BodyNode node, ScalarTypeDefNode pointer);
@@ -88,6 +90,7 @@ public interface Namings {
     ClassName state(FlowBody body);
     
     TaskRefNaming ref(TaskRef ref);
+    ParameterizedTypeName execution(FlowBody body);
     TypeName executable(FlowBody node);
     
     ClassName inputValue(FlowBody node);
