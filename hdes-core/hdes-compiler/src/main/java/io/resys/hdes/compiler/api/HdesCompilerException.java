@@ -4,6 +4,7 @@ import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
@@ -232,6 +233,14 @@ public class HdesCompilerException extends RuntimeException {
             .append(ScalarType.INTEGER).append(" or ")
             .append(ScalarType.DECIMAL)
             .append(" but was: ").append(was).append("!").append(System.lineSeparator())
+          .append(" AST: ").append(ast.getClass()).append(System.lineSeparator())
+          .append("  - ").append(ast).append("!")
+          .toString();
+    }
+    public String incompatibleTypesInEqualityOperation(EqualityOperation ast) {
+      return new StringBuilder()
+          .append("Incompatible type used in EQUALITY expression!").append(System.lineSeparator())
+          .append("Equality operation: ").append(ast.getType()).append(" can't be performed!").append(System.lineSeparator())
           .append(" AST: ").append(ast.getClass()).append(System.lineSeparator())
           .append("  - ").append(ast).append("!")
           .toString();

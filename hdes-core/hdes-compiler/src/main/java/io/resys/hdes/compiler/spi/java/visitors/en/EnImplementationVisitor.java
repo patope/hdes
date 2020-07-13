@@ -20,6 +20,7 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.AndOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.BetweenExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ConditionalExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityType;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodRefNode;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MultiplicativeOperation;
@@ -176,17 +177,70 @@ public class EnImplementationVisitor extends EnTemplateVisitor<EnCodeSpec, EnCod
     return ImmutableEnCodeSpec.builder().addValues(node).build();
   }*/
   
-  
   @Override
   public EnCodeSpec visitEqualityOperation(EqualityOperation node) {
-    // TODO
-    return ImmutableEnCodeSpec.builder()
-        .value(CodeBlock.builder()
-            
-            .build())
+
+    EnConvertionSpec betweenSpec = EnJavaSpec.converter()
+        .src(node)
+        .value1(visit(node.getLeft()))
+        .value2(visit(node.getRight()))
         .build();
-  }
+    ScalarType commonType = betweenSpec.getType();
+    CodeBlock left = betweenSpec.getValue1();
+    CodeBlock right = betweenSpec.getValue2();
+    
+    CodeBlock.Builder body = CodeBlock.builder();
+    switch (commonType) {
+    case DECIMAL:
+      if(node.getType() == EqualityType.EQUAL) {
+        body.add("$L.compareTo($L) == 0", left, right);
+      } else if(node.getType() == EqualityType.LESS) {
+        body.add("$L.compareTo($L) < 0", left, right);  
+      } else if(node.getType() == EqualityType.LESS_THEN) {
+        body.add("$L.compareTo($L) <= 0", left, right);
+      } else if(node.getType() == EqualityType.GREATER) {
+        body.add("$L.compareTo($L) > 0", left, right);
+      } else if(node.getType() == EqualityType.GREATER_THEN) {
+        body.add("$L.compareTo($L) >= 0", left, right);
+      }
+      break;
+    case INTEGER:
+      if(node.getType() == EqualityType.EQUAL) {
+        body.add("Integer.compare($L, $L) == 0", left, right);
+      } else if(node.getType() == EqualityType.LESS) {
+        body.add("Integer.compare($L, $L) < 0", left, right);  
+      } else if(node.getType() == EqualityType.LESS_THEN) {
+        body.add("Integer.compare($L, $L) <= 0", left, right);
+      } else if(node.getType() == EqualityType.GREATER) {
+        body.add("Integer.compare($L, $L) > 0", left, right);
+      } else if(node.getType() == EqualityType.GREATER_THEN) {
+        body.add("Integer.compare($L, $L) >= 0", left, right);
+      }
+      break;
+    case DATE_TIME:
+    case DATE:
+    case TIME:
+      if(node.getType() == EqualityType.EQUAL) {
+        body.add("$L.isEqual($L)", left, right);
+      } else if(node.getType() == EqualityType.LESS) {
+        body.add("$L.isBefore($L)", left, right);  
+      } else if(node.getType() == EqualityType.LESS_THEN) {
+        body.add("($L.isBefore($L) || $L.isEqual($L))", left, right, left, right);
+      } else if(node.getType() == EqualityType.GREATER) {
+        body.add("$L.isAfter($L)", left, right);
+      } else if(node.getType() == EqualityType.GREATER_THEN) {
+        body.add("($L.isAfter($L) || $L.isEqual($L))", left, right, left, right);
+      }
+      break;
+    default:
+      throw new HdesCompilerException(HdesCompilerException.builder().betweenOperationNotSupportedForType(node, commonType));
+    }
+    return ImmutableEnCodeSpec.builder()
+        .value(body.build())
+        .type(commonType)
+        .build();
   
+  }
   
   @Override
   public EnCodeSpec visitMultiplicativeOperation(MultiplicativeOperation node) {
@@ -352,8 +406,8 @@ public class EnImplementationVisitor extends EnTemplateVisitor<EnCodeSpec, EnCod
     case DATE_TIME:
     case DATE:
     case TIME:
-      leftBuilder.add("($L.isBefore($L) || $L.equals($L))", left, value, left, value);
-      rightBuilder.add("($L.isAfter($L) || $L.equals($L))", right, value, right, value);
+      leftBuilder.add("($L.isBefore($L) || $L.isEqual($L))", left, value, left, value);
+      rightBuilder.add("($L.isAfter($L) || $L.isEqual($L))", right, value, right, value);
       break;
     default:
       throw new HdesCompilerException(HdesCompilerException.builder().betweenOperationNotSupportedForType(node, commonType));
