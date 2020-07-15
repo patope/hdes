@@ -129,6 +129,8 @@ public class HdesRuntimeTest {
         "  c DECIMAL required IN,\n" +
         "  total DECIMAL optional IN formula: a + b + c,\n" +
         "  score STRING required OUT\n" + 
+//        "  maxValueOnEachRow ARRAY required OUT formula: MATRIX.forEach(row -> max(row)) \n" + 
+//        "  score DECIMAL required OUT formula: sum(maxValueOnEachRow) \n" + 
         "} FIRST: {\n" + 
         "  { ?, ?, ?, > 100.0, 'high-risk'},\n" + 
         "  { ?, ?, ?, ?, 'low-risk'}\n" + 
