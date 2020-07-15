@@ -46,6 +46,12 @@ public interface DtJavaSpec {
   }
 
   @Value.Immutable
+  public interface DtFormulaSpec extends DtJavaSpec {
+    List<MethodSpec> getInputs();
+    List<MethodSpec> getOutputs();
+  }
+  
+  @Value.Immutable
   public interface DtTypesSpec extends DtJavaSpec {
     List<TypeSpec> getValues();
   }

@@ -82,9 +82,10 @@ public interface HdesExecutable<I extends HdesExecutable.InputValue, M extends H
   // Markers for sub types
   interface DecisionTable<I extends InputValue, V extends OutputValue> extends HdesExecutable<I, DecisionTableMeta, V> {}
   interface Flow<I extends InputValue, V extends OutputValue> extends HdesExecutable<I, FlowMeta, V> {}
+  interface Formula<I extends InputValue, V extends OutputValue> extends HdesExecutable<I, FormulaMeta, V> {}
   
   interface Switch<I extends InputValue, M extends SwitchMeta, V extends OutputValue> extends HdesExecutable<I, M, V> {}
-  interface Formula<I extends InputValue, M extends FormulaMeta, V extends OutputValue> extends HdesExecutable<I, M, V> {}
+
   
   interface ManualTask<I extends InputValue, M extends Meta, V extends OutputValue> extends HdesExecutable<I, M, V> {}
   interface ServiceTask<I extends InputValue, M extends Meta, V extends OutputValue> extends HdesExecutable<I, M, V> {}

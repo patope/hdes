@@ -8,7 +8,6 @@ headers: {
   
   value INTEGER required OUT
   
-  
 } FIRST: {
   { ?, ?, ?, ?,   20 }
 }

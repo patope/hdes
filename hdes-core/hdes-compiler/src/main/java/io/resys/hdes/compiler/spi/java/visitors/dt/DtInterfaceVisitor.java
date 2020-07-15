@@ -135,7 +135,7 @@ public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> 
     ScalarTypeDefNode scalar = (ScalarTypeDefNode) node;
     MethodSpec method = MethodSpec.methodBuilder(JavaSpecUtil.methodName(node.getName()))
         .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-        .returns(JavaSpecUtil.type(scalar.getType()))
+        .returns(scalar.getRequired() ? JavaSpecUtil.typeName(scalar.getType()) : JavaSpecUtil.optional(scalar.getType()))
         .build();
     return ImmutableDtMethodSpec.builder().value(method).build();
   }

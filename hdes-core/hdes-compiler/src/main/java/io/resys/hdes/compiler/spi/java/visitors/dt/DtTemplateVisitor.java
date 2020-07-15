@@ -172,4 +172,9 @@ public class DtTemplateVisitor<T, R> implements DtAstNodeVisitor<T, R> {
   public T visitMatrixRow(MatrixRow node) {
     throw new IllegalArgumentException("Not implemented");
   }
+
+  @Override
+  public T visitFormula(Headers node) {
+    throw new IllegalArgumentException("Not implemented");
+  }
 }

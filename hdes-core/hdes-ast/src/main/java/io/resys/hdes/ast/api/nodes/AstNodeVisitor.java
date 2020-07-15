@@ -136,6 +136,7 @@ public interface AstNodeVisitor<T, R> {
     T visitRuleRow(RuleRow node);
     T visitRule(Rule node);
     T visitMatrixRow(MatrixRow node);
+    T visitFormula(Headers node);
     
     T visitUndefinedValue(UndefinedValue node);
     T visitLiteralValue(LiteralValue node);

@@ -174,7 +174,7 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
     
     return ImmutableScalarTypeDefNode.builder()
         .token(token(ctx.getParent()))
-        .required(requirmentType.getSymbol().getType() == HdesParser.REQUIRED)
+        .required(requirmentType.getSymbol().getText().equalsIgnoreCase("required"))
         .name(getDefTypeName(ctx).getValue())
         .type(nodes.of(RedundentScalarType.class).get().getValue())
         .direction(nodes.of(RedundentDirection.class).get().getValue())

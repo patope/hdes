@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Optional;
 
 import javax.lang.model.element.Modifier;
 
@@ -35,6 +36,7 @@ import org.immutables.value.Value.Immutable;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
@@ -74,6 +76,14 @@ public class JavaSpecUtil {
     return ClassName.get(top, "Immutable" + src.simpleName());
   }
   
+  public static ParameterizedTypeName optional(ClassName src) {
+    return ParameterizedTypeName.get(ClassName.get(Optional.class), src);
+  }
+  
+  public static ParameterizedTypeName optional(ScalarType entry) {
+    return optional(ClassName.get(type(entry)));
+  }
+  
   public static ClassName immutableBuilder(ClassName src) {
     ClassName type = immutable(src);
     return ClassName.get(type.packageName(), type.simpleName() + ".Builder");
@@ -111,6 +121,10 @@ public class JavaSpecUtil {
         .append(name.substring(0, 1).toLowerCase())
         .append(name.length() == 1 ? "" : name.substring(1))
         .toString();
+  }
+  
+  public static ClassName typeName(ScalarType entry) {
+    return ClassName.get(type(entry));
   }
   
   public static Class<?> type(ScalarType entry) {

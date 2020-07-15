@@ -24,6 +24,7 @@ import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
+import io.resys.hdes.ast.api.nodes.ImmutableScalarTypeDefNode;
 import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtHeaderSpec;
@@ -80,6 +81,8 @@ public class DtFormulaVisitor extends DtTemplateVisitor<DtJavaSpec, List<TypeSpe
       return ImmutableDtTypesSpec.builder().build();
     }
     
+    ScalarTypeDefNode outputReturnType = ImmutableScalarTypeDefNode.builder().from(typeDef).required(Boolean.TRUE).build();
+    
     List<TypeDefNode> types = new EnInterfaceVisitor(this.typeNames).visitExpressionBody(typeDef.getFormula().get());
     ClassName outputType = naming.fr().outputValue(body, typeDef);
     
@@ -96,7 +99,7 @@ public class DtFormulaVisitor extends DtTemplateVisitor<DtJavaSpec, List<TypeSpe
         // output
         .addType(JavaSpecUtil.immutableSpec(outputType)
             .addSuperinterface(HdesExecutable.OutputValue.class)
-            .addMethod(visitTypeDef(typeDef, typeDef).getValue())
+            .addMethod(visitTypeDef(outputReturnType, outputReturnType).getValue())
             .build())
         .build();
     
@@ -176,13 +179,12 @@ public class DtFormulaVisitor extends DtTemplateVisitor<DtJavaSpec, List<TypeSpe
     throw new HdesCompilerException(HdesCompilerException.builder().unknownFlInputRule(node));
   }
 
-
   @Override
   public DtHeaderSpec visitScalarDef(ScalarTypeDefNode node) {
     Class<?> returnType = JavaSpecUtil.type(node.getType());
     MethodSpec method = MethodSpec.methodBuilder(JavaSpecUtil.methodName(node.getName()))
         .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-        .returns(node.getRequired() ? ClassName.get(returnType) : ParameterizedTypeName.get(Optional.class, returnType))
+        .returns( node.getRequired() ? ClassName.get(returnType) : ParameterizedTypeName.get(Optional.class, returnType))
         .build();
     return ImmutableDtHeaderSpec.builder().value(method).build();
   }

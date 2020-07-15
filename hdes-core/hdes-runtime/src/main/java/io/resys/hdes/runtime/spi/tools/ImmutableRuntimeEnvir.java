@@ -33,8 +33,8 @@ import org.slf4j.LoggerFactory;
 import io.resys.hdes.compiler.api.HdesCompiler.Resource;
 import io.resys.hdes.compiler.api.HdesCompiler.TypeName;
 import io.resys.hdes.executor.api.HdesExecutable;
-import io.resys.hdes.executor.api.HdesExecutable.InputValue;
 import io.resys.hdes.executor.api.HdesExecutable.Execution;
+import io.resys.hdes.executor.api.HdesExecutable.InputValue;
 import io.resys.hdes.executor.api.HdesWhen;
 import io.resys.hdes.executor.spi.HdesWhenGen;
 import io.resys.hdes.runtime.api.HdesRuntime.RuntimeEnvir;
@@ -119,13 +119,25 @@ public class ImmutableRuntimeEnvir implements RuntimeEnvir {
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
-      HdesJavaFileObject javaFileObject = cache.get(name);
-      
-      if (javaFileObject == null) {
-        return super.findClass(name);
+      try {
+        HdesJavaFileObject javaFileObject = cache.get(name);
+        
+        if (javaFileObject == null) {
+          return super.findClass(name);
+        }
+        byte[] bytes = javaFileObject.getBytes();
+        return defineClass(name, bytes, 0, bytes.length);
+      } catch (ClassNotFoundException e) {
+        StringBuilder msg = new StringBuilder()
+            .append("Failed to find class with name: ").append(name).append("!").append(System.lineSeparator())
+            .append("Known generated class names are: ");
+        
+        for(String gen : cache.keySet()) {
+          msg.append("  - ").append(gen).append(System.lineSeparator());
+        }
+        msg.append("Original exception message: ").append(e.getMessage());
+        throw new ClassNotFoundException(msg.toString(), e);
       }
-      byte[] bytes = javaFileObject.getBytes();
-      return defineClass(name, bytes, 0, bytes.length);
     }
   }
 }

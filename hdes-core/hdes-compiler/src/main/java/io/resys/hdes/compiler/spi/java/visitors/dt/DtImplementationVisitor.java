@@ -42,9 +42,11 @@ import com.squareup.javapoet.TypeSpec;
 
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
+import io.resys.hdes.ast.api.nodes.AstNode.Headers;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.ExpressionValue;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HeaderRefValue;
@@ -68,7 +70,9 @@ import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtCodeSpec;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtCodeSpecPair;
+import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtFormulaSpec;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtMethodsSpec;
+import io.resys.hdes.compiler.spi.java.visitors.en.EnInterfaceVisitor;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.DecisionTableMeta;
 import io.resys.hdes.executor.api.DecisionTableMeta.DecisionTableMetaEntry;
@@ -85,7 +89,11 @@ import io.resys.hdes.executor.spi.exceptions.DecisionTableHitPolicyFirstExceptio
 
 public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> {
   private final static String HEADER_REF = "//header ref to be replaces";
+  private final static String APPLY_INPUT_FORMULA = "applyInputFormula";
+  private final static String APPLY_OUTPUT_FORMULA = "applyOutputFormula";
+  
   private final Namings naming;
+  private DtTypeNameResolver typeNames;
   private DecisionTableBody body;
 
   public DtImplementationVisitor(Namings naming) {
@@ -96,27 +104,116 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
   @Override
   public TypeSpec visitDecisionTableBody(DecisionTableBody node) {
     this.body = node;
+    this.typeNames = new DtTypeNameResolver(node);
     
     return TypeSpec.classBuilder(naming.dt().impl(node))
         .addModifiers(Modifier.PUBLIC)
         .addSuperinterface(naming.dt().api(node))
         .addJavadoc(node.getDescription().orElse(""))
+        
         .addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "$S", "unused").build())
         .addAnnotation(AnnotationSpec.builder(javax.annotation.processing.Generated.class).addMember("value", "$S", DtImplementationVisitor.class.getCanonicalName()).build())
+        
+        .addField(FieldSpec.builder(HdesWhen.class, "when", Modifier.PRIVATE, Modifier.FINAL).build())
         .addMethod(MethodSpec.constructorBuilder()
             .addModifiers(Modifier.PUBLIC)
             .addParameter(ParameterSpec.builder(HdesWhen.class, "when").build())
             .addStatement("this.when = when")
             .build())
-        .addField(FieldSpec.builder(HdesWhen.class, "when", Modifier.PRIVATE, Modifier.FINAL).build())
-        .addMethods(visitHitPolicy(node.getHitPolicy()).getValue())
-        
         .addMethod(MethodSpec.methodBuilder("getSourceType")
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
             .returns(SourceType.class)
             .addStatement("return $T.DT", SourceType.class)
             .build())
+       
+        .addMethods(visitHitPolicy(node.getHitPolicy()).getValue())
+        
+        .build();
+  }
+  
+  @Override
+  public DtFormulaSpec visitFormula(Headers node) {
+    CodeBlock.Builder input = null;
+    CodeBlock.Builder output = null;
+    
+    ClassName inputTypeName = naming.dt().inputValue(body);
+    
+    for(TypeDefNode typeDef : node.getValues()) {
+      if(!(typeDef instanceof ScalarTypeDefNode)) {
+        continue;
+      }
+      ScalarTypeDefNode scalarDef = (ScalarTypeDefNode) typeDef;
+      if(scalarDef.getFormula().isEmpty()) {
+        continue;
+      }
+      
+      // Map inputs -> Immutable.Builder().val1(input.getCal1())...
+      CodeBlock.Builder inputValue = CodeBlock.builder()
+          .add("$T.builder()", JavaSpecUtil.immutable(naming.fr().inputValue(body, scalarDef)));
+      new EnInterfaceVisitor(this.typeNames).visitExpressionBody(scalarDef.getFormula().get())
+      .forEach(t -> inputValue
+          .add("\r\n")
+          .add("    .$L($L)", 
+              t.getName(), 
+              "src." + JavaSpecUtil.methodCall(t.getName()))
+      );
+      
+      // add inputs -> apply(builder.build())
+      ClassName impl = naming.fr().impl(body, scalarDef);
+      CodeBlock codeBlock = CodeBlock.builder()
+          .add("$T $L = new $T()", JavaSpecUtil.type(scalarDef.getType()), scalarDef.getName(), impl)
+          .add("\r\n")
+          .addStatement("  .apply($L).getValue().$L", inputValue.add("\r\n").add("  .build()").build(), JavaSpecUtil.methodCall(scalarDef.getName()))
+          
+          .addStatement("src = $T.builder().from(src).$L($L).build()", JavaSpecUtil.immutable(inputTypeName), scalarDef.getName(), scalarDef.getName())
+          
+          .build();
+      
+      if(typeDef.getDirection() == DirectionType.IN) {
+        if(input == null) {
+          input = CodeBlock.builder()
+              .addStatement("$T src = input", naming.dt().inputValue(body));
+        }
+        
+        input.add(codeBlock);
+        
+      } else {
+        if(output == null) {
+          output = CodeBlock.builder();
+        }
+        output.add(codeBlock);
+        
+      } 
+    }
+    
+    List<MethodSpec> inputs = new ArrayList<>();
+    if(input != null) {
+      inputs.add(MethodSpec
+          .methodBuilder(APPLY_INPUT_FORMULA)
+          .addModifiers(Modifier.PUBLIC)
+          .addCode(input.addStatement("return src").build())
+          .addParameter(inputTypeName, "input")
+          .returns(inputTypeName)
+          .build());
+    }
+    
+    List<MethodSpec> outputs = new ArrayList<>();
+    if(output != null) {
+      ClassName type = naming.dt().outputValueMono(body);
+      
+      inputs.add(MethodSpec
+          .methodBuilder(APPLY_OUTPUT_FORMULA)
+          .addModifiers(Modifier.PUBLIC)
+          .addCode(input.build())
+          .addParameter(type, "input")
+          .returns(type)
+          .build());
+    }
+    
+    return ImmutableDtFormulaSpec.builder()
+        .addAllInputs(inputs)
+        .addAllOutputs(outputs)
         .build();
   }
 
@@ -129,13 +226,26 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
         .addStatement("long start = System.currentTimeMillis()")
         .addStatement("int id = 0")
         .addStatement("$T.Builder result = $T.builder()", immutableOutputName, immutableOutputName)
-        .addStatement("$T<Integer, $T> metaValues = new $T<>()", Map.class, DecisionTableMetaEntry.class, HashMap.class);
+        .addStatement("$T<Integer, $T> metaValues = new $T<>()", Map.class, DecisionTableMetaEntry.class, HashMap.class);    
     
+    // Create formula on input
+    DtFormulaSpec formula = visitFormula(body.getHeaders());
+    if(!formula.getInputs().isEmpty()) {
+      statements.addStatement("input = $L(input)", APPLY_INPUT_FORMULA);
+    }
+    
+    // DT body
     for (MatrixRow matrixRow : node.getRows()) {
       DtCodeSpec spec = visitMatrixRow(matrixRow);
       statements.add(spec.getValue()).add("\r\n");
     }
     
+    // Formula on output
+    if(!formula.getOutputs().isEmpty()) {
+      statements.addStatement("result = $L(result)", APPLY_OUTPUT_FORMULA);
+    }
+    
+    // Output
     statements
       .addStatement("long end = System.currentTimeMillis()")
       .add("$T meta = $T.builder()", DecisionTableMeta.class, ImmutableDecisionTableMeta.class)
@@ -149,19 +259,197 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
       .addStatement("return builder.meta(meta).value(result.build()).build()")
       .build();
         
-    return ImmutableDtMethodsSpec.builder().addValue(
-        
-        MethodSpec.methodBuilder("apply")
+    return ImmutableDtMethodsSpec.builder()
+        .addAllValue(formula.getInputs())
+        .addAllValue(formula.getOutputs())
+        .addValue(
+          MethodSpec.methodBuilder("apply")
+              .addAnnotation(Override.class)
+              .addModifiers(Modifier.PUBLIC)
+              .addParameter(ParameterSpec.builder(naming.dt().inputValue(body), "input").build())
+              .returns(naming.dt().execution(body))
+              .addCode(statements.build())
+              .build()
+        ).build();
+  }
+  
+  @Override
+  public DtMethodsSpec visitHitPolicyAll(HitPolicyAll node) {
+    
+    CodeBlock.Builder statements = CodeBlock.builder()
+        .addStatement("$T<$T> result = new $T<>()", List.class, naming.dt().outputValueFlux(body), ArrayList.class)
+        .addStatement("$T<Integer, $T> metaValues = new $T<>()", Map.class, DecisionTableMetaEntry.class, HashMap.class)
+        .addStatement("int id = 0")
+        .addStatement("long start = System.currentTimeMillis()");
+    
+    DtFormulaSpec formula = visitFormula(body.getHeaders());
+    if(!formula.getInputs().isEmpty()) {
+      statements.addStatement("input = $L(input)", APPLY_INPUT_FORMULA);
+    }
+    
+    int rowIndex = 0;
+    for (RuleRow row : node.getRows()) {
+      DtCodeSpecPair pair = visitRuleRow(row);
+
+      statements.add("\r\n");
+      
+      // control start
+      if (!pair.getKey().isEmpty()) {
+        statements.beginControlFlow("if($L)", pair.getKey()).add("\r\n");
+      }
+      
+      // generate token
+      CodeBlock token = CodeBlock.builder().add("$T.builder()", ImmutableMetaToken.class)
+          .add("\r\n    .value($S)", row.getText().replaceAll("\\r|\\n", " ").replaceAll("\\s{2,}", " "))
+          .add("\r\n    .start($T.builder().line($L).column($L).build())", ImmutableMetaStamp.class, row.getToken().getStartLine(), row.getToken().getStartCol())
+          .add("\r\n    .end($T.builder().line($L).column($L).build())", ImmutableMetaStamp.class, row.getToken().getEndLine(), row.getToken().getEndCol())
+          .add("\r\n    .build()")
+          .build();
+      
+      statements
+      .add("metaValues.put(id, $T.builder()", ImmutableDecisionTableMetaEntry.class)
+      .add("\r\n  .id(id++)")
+      .add("\r\n  .index($L)", rowIndex++)
+      .add("\r\n  .token($L)", token)
+      .addStatement(".build())")
+      .addStatement("result.add($L)", pair.getValue());
+      
+      // Control end
+      if (!pair.getKey().isEmpty()) {
+        statements.endControlFlow();
+      } 
+    }
+    
+    ClassName outputName = naming.dt().outputValueMono(body);
+
+    if(!formula.getOutputs().isEmpty()) {
+      statements.addStatement("result = $L(result)", APPLY_OUTPUT_FORMULA);
+    }
+    
+    statements
+    .addStatement("long end = System.currentTimeMillis()")
+    .add("$T meta = $T.builder()", DecisionTableMeta.class, ImmutableDecisionTableMeta.class)
+    .add("\r\n  ").add(".id($S).status($T.COMPLETED) ", body.getId().getValue(), ExecutionStatus.class)
+    .add("\r\n  ").add(".start(start).end(end).time(end - start)")
+    .add("\r\n  ").addStatement(".values(metaValues).build()", body.getId().getValue(), ExecutionStatus.class);
+
+    statements
+      .add("\r\n")
+      .addStatement("$T.Builder<$T, $T> builder = $T.builder()", ImmutableExecution.class, DecisionTableMeta.class, outputName, ImmutableExecution.class)
+      .addStatement("return builder.meta(meta).value($L).build()", 
+          CodeBlock.builder().add("$T.builder().values(result).build()", JavaSpecUtil.immutable(outputName)).build())
+      .build();
+
+    return ImmutableDtMethodsSpec.builder()
+        .addAllValue(formula.getInputs())
+        .addAllValue(formula.getOutputs())
+        .addValue(
+          MethodSpec.methodBuilder("apply")
             .addAnnotation(Override.class)
             .addModifiers(Modifier.PUBLIC)
             .addParameter(ParameterSpec.builder(naming.dt().inputValue(body), "input").build())
             .returns(naming.dt().execution(body))
             .addCode(statements.build())
             .build()
+        ).build();
+  }
+  
+  @Override
+  public DtMethodsSpec visitHitPolicyFirst(HitPolicyFirst node) {
+    CodeBlock.Builder statements = CodeBlock.builder()
+        .addStatement("long start = System.currentTimeMillis()");
+    
+    DtFormulaSpec formula = visitFormula(body.getHeaders());
+    if(!formula.getInputs().isEmpty()) {
+      statements.addStatement("input = $L(input)", APPLY_INPUT_FORMULA);
+    }
+    
+    int rowIndex = 0;
+    boolean conditionEmpty = false;
+    for (RuleRow row : node.getRows()) {
+      DtCodeSpecPair pair = visitRuleRow(row);
+
+      statements.add("\r\n");
+      
+      // control start
+      if (!pair.getKey().isEmpty()) {
+        statements.beginControlFlow("if($L)", pair.getKey()).add("\r\n");
+      } else {
+        conditionEmpty = true;
+      }
+      
+      // generate token
+      statements.add("$T token = $T.builder()", MetaToken.class, ImmutableMetaToken.class)
+      .add("\r\n  .value($S)", row.getText().replaceAll("\\r|\\n", " ").replaceAll("\\s{2,}", " "))
+      .add("\r\n  .start($T.builder().line($L).column($L).build())", ImmutableMetaStamp.class, row.getToken().getStartLine(), row.getToken().getStartCol())
+      .add("\r\n  .end($T.builder().line($L).column($L).build())", ImmutableMetaStamp.class, row.getToken().getEndLine(), row.getToken().getEndCol())
+      .addStatement(".build()")
+      
+      .add("$T meta = $T.builder()", DecisionTableMetaEntry.class, ImmutableDecisionTableMetaEntry.class)
+      .add("\r\n  .id(0)")
+      .add("\r\n  .index($L)", rowIndex++)
+      .add("\r\n  .token(token)")
+      .addStatement(".build()")
+      
+      .addStatement("return createResult(start, meta, $L)", pair.getValue());
+      
+      // Control end
+      if (!pair.getKey().isEmpty()) {
+        statements.endControlFlow();
+      } 
+    }
+    
+    if(!formula.getOutputs().isEmpty()) {
+      statements.addStatement("result = $L(result)", APPLY_OUTPUT_FORMULA);
+    }
+    
+    
+    // first hit policy must always return something
+    if (!conditionEmpty) {
+      statements.addStatement("throw new $T($S)", DecisionTableHitPolicyFirstException.class, 
+        "No rules where match for DT: '" + body.getId().getValue() + "' with hit policy 'FIRST'!");
+    }
+    
+    ClassName outputName = naming.dt().outputValueMono(body);
+    ParameterizedTypeName returnType = naming.dt().execution(body);
+
+    return ImmutableDtMethodsSpec.builder()
+        .addAllValue(formula.getInputs())
+        .addAllValue(formula.getOutputs())
+        .addValue(
+          MethodSpec.methodBuilder("createResult")
+            .addModifiers(Modifier.PROTECTED)
+            .addParameter(ParameterSpec.builder(long.class, "start").build())
+            .addParameter(ParameterSpec.builder(DecisionTableMetaEntry.class, "metaEntry").build())
+            .addParameter(ParameterSpec.builder(outputName, "result").build())
+            .returns(returnType)
+            .addCode(CodeBlock.builder()
+                .addStatement("long end = System.currentTimeMillis()")
+                .addStatement("$T<Integer, $T> metaValues = new $T<>()", Map.class, DecisionTableMetaEntry.class, HashMap.class)
+                .addStatement("metaValues.put(0, metaEntry)")
+                
+                .add("$T meta = $T.builder()", DecisionTableMeta.class, ImmutableDecisionTableMeta.class)
+                .add("\r\n  ").add(".id($S).status($T.COMPLETED) ", body.getId().getValue(), ExecutionStatus.class)
+                .add("\r\n  ").add(".start(start).end(end).time(end - start)")
+                .add("\r\n  ").addStatement(".values(metaValues).build()", body.getId().getValue(), ExecutionStatus.class)
+                
+                .addStatement("$T.Builder<$T, $T> builder = $T.builder()", ImmutableExecution.class, DecisionTableMeta.class, outputName, ImmutableExecution.class)
+                .addStatement("return builder.meta(meta).value(result).build()")
+                .build())
+            .build(),
+          
+          MethodSpec.methodBuilder("apply")
+              .addAnnotation(Override.class)
+              .addModifiers(Modifier.PUBLIC)
+              .addParameter(ParameterSpec.builder(naming.dt().inputValue(body), "input").build())
+              .returns(returnType)
+              .addCode(statements.build())
+              .build()
             
         ).build();
   }
   
+
   @Override
   public DtCodeSpec visitMatrixRow(MatrixRow node) {
     HitPolicyMatrix matrix = (HitPolicyMatrix) body.getHitPolicy();
@@ -203,157 +491,6 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
         .build();
   }
   
-  @Override
-  public DtMethodsSpec visitHitPolicyAll(HitPolicyAll node) {
-    CodeBlock.Builder statements = CodeBlock.builder()
-        .addStatement("$T<$T> result = new $T<>()", List.class, naming.dt().outputValueFlux(body), ArrayList.class)
-        .addStatement("$T<Integer, $T> metaValues = new $T<>()", Map.class, DecisionTableMetaEntry.class, HashMap.class)
-        .addStatement("int id = 0")
-        .addStatement("long start = System.currentTimeMillis()");
-    
-    int rowIndex = 0;
-    for (RuleRow row : node.getRows()) {
-      DtCodeSpecPair pair = visitRuleRow(row);
-
-      statements.add("\r\n");
-      
-      // control start
-      if (!pair.getKey().isEmpty()) {
-        statements.beginControlFlow("if($L)", pair.getKey()).add("\r\n");
-      }
-      
-      // generate token
-      CodeBlock token = CodeBlock.builder().add("$T.builder()", ImmutableMetaToken.class)
-          .add("\r\n    .value($S)", row.getText().replaceAll("\\r|\\n", " ").replaceAll("\\s{2,}", " "))
-          .add("\r\n    .start($T.builder().line($L).column($L).build())", ImmutableMetaStamp.class, row.getToken().getStartLine(), row.getToken().getStartCol())
-          .add("\r\n    .end($T.builder().line($L).column($L).build())", ImmutableMetaStamp.class, row.getToken().getEndLine(), row.getToken().getEndCol())
-          .add("\r\n    .build()")
-          .build();
-      
-      statements
-      .add("metaValues.put(id, $T.builder()", ImmutableDecisionTableMetaEntry.class)
-      .add("\r\n  .id(id++)")
-      .add("\r\n  .index($L)", rowIndex++)
-      .add("\r\n  .token($L)", token)
-      .addStatement(".build())")
-      .addStatement("result.add($L)", pair.getValue());
-      
-      // Control end
-      if (!pair.getKey().isEmpty()) {
-        statements.endControlFlow();
-      }
-      
-    }
-    
-    ClassName outputName = naming.dt().outputValueMono(body);
-
-    statements
-    .addStatement("long end = System.currentTimeMillis()")
-    .add("$T meta = $T.builder()", DecisionTableMeta.class, ImmutableDecisionTableMeta.class)
-    .add("\r\n  ").add(".id($S).status($T.COMPLETED) ", body.getId().getValue(), ExecutionStatus.class)
-    .add("\r\n  ").add(".start(start).end(end).time(end - start)")
-    .add("\r\n  ").addStatement(".values(metaValues).build()", body.getId().getValue(), ExecutionStatus.class);
-
-    
-    statements
-      .add("\r\n")
-      .addStatement("$T.Builder<$T, $T> builder = $T.builder()", ImmutableExecution.class, DecisionTableMeta.class, outputName, ImmutableExecution.class)
-      .addStatement("return builder.meta(meta).value($L).build()", 
-          CodeBlock.builder().add("$T.builder().values(result).build()", JavaSpecUtil.immutable(outputName)).build())
-      .build();
-
-    return ImmutableDtMethodsSpec.builder().addValue(
-        MethodSpec.methodBuilder("apply")
-            .addAnnotation(Override.class)
-            .addModifiers(Modifier.PUBLIC)
-            .addParameter(ParameterSpec.builder(naming.dt().inputValue(body), "input").build())
-            .returns(naming.dt().execution(body))
-            .addCode(statements.build())
-            .build()).build();
-  }
-  
-  @Override
-  public DtMethodsSpec visitHitPolicyFirst(HitPolicyFirst node) {
-    CodeBlock.Builder statements = CodeBlock.builder()
-        .addStatement("long start = System.currentTimeMillis()");
-    
-    int rowIndex = 0;
-    boolean conditionEmpty = false;
-    for (RuleRow row : node.getRows()) {
-      DtCodeSpecPair pair = visitRuleRow(row);
-
-      statements.add("\r\n");
-      
-      // control start
-      if (!pair.getKey().isEmpty()) {
-        statements.beginControlFlow("if($L)", pair.getKey()).add("\r\n");
-      } else {
-        conditionEmpty = true;
-      }
-      
-      // generate token
-      statements.add("$T token = $T.builder()", MetaToken.class, ImmutableMetaToken.class)
-      .add("\r\n  .value($S)", row.getText().replaceAll("\\r|\\n", " ").replaceAll("\\s{2,}", " "))
-      .add("\r\n  .start($T.builder().line($L).column($L).build())", ImmutableMetaStamp.class, row.getToken().getStartLine(), row.getToken().getStartCol())
-      .add("\r\n  .end($T.builder().line($L).column($L).build())", ImmutableMetaStamp.class, row.getToken().getEndLine(), row.getToken().getEndCol())
-      .addStatement(".build()")
-      
-      .add("$T meta = $T.builder()", DecisionTableMetaEntry.class, ImmutableDecisionTableMetaEntry.class)
-      .add("\r\n  .id(0)")
-      .add("\r\n  .index($L)", rowIndex++)
-      .add("\r\n  .token(token)")
-      .addStatement(".build()")
-      
-      .addStatement("return createResult(start, meta, $L)", pair.getValue());
-      
-      // Control end
-      if (!pair.getKey().isEmpty()) {
-        statements.endControlFlow();
-      } 
-    }
-    
-    // first hit policy must always return something
-    if (!(rowIndex == 1 && conditionEmpty)) {
-      statements.addStatement("throw new $T($S)", DecisionTableHitPolicyFirstException.class, 
-        "No rules where match for DT: '" + body.getId().getValue() + "' with hit policy 'FIRST'!");
-    }
-    
-    ClassName outputName = naming.dt().outputValueMono(body);
-    ParameterizedTypeName returnType = naming.dt().execution(body);
-
-    return ImmutableDtMethodsSpec.builder().addValue(
-
-        MethodSpec.methodBuilder("createResult")
-          .addModifiers(Modifier.PROTECTED)
-          .addParameter(ParameterSpec.builder(long.class, "start").build())
-          .addParameter(ParameterSpec.builder(DecisionTableMetaEntry.class, "metaEntry").build())
-          .addParameter(ParameterSpec.builder(outputName, "result").build())
-          .returns(returnType)
-          .addCode(CodeBlock.builder()
-              .addStatement("long end = System.currentTimeMillis()")
-              .addStatement("$T<Integer, $T> metaValues = new $T<>()", Map.class, DecisionTableMetaEntry.class, HashMap.class)
-              .addStatement("metaValues.put(0, metaEntry)")
-              
-              .add("$T meta = $T.builder()", DecisionTableMeta.class, ImmutableDecisionTableMeta.class)
-              .add("\r\n  ").add(".id($S).status($T.COMPLETED) ", body.getId().getValue(), ExecutionStatus.class)
-              .add("\r\n  ").add(".start(start).end(end).time(end - start)")
-              .add("\r\n  ").addStatement(".values(metaValues).build()", body.getId().getValue(), ExecutionStatus.class)
-              
-              .addStatement("$T.Builder<$T, $T> builder = $T.builder()", ImmutableExecution.class, DecisionTableMeta.class, outputName, ImmutableExecution.class)
-              .addStatement("return builder.meta(meta).value(result).build()")
-              .build())
-          .build(),
-        
-        MethodSpec.methodBuilder("apply")
-            .addAnnotation(Override.class)
-            .addModifiers(Modifier.PUBLIC)
-            .addParameter(ParameterSpec.builder(naming.dt().inputValue(body), "input").build())
-            .returns(returnType)
-            .addCode(statements.build())
-            .build()
-            
-        ).build();
-  }
 
   @Override
   public DtCodeSpecPair visitRuleRow(RuleRow node) {
@@ -515,10 +652,18 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
   private DtCodeSpec visitInputRule(Rule node, ScalarTypeDefNode header) {
     RuleValue value = node.getValue();
     String getMethod = JavaSpecUtil.methodName(header.getName());
+    
+    // optional type
+    if(!header.getRequired()) {
+      getMethod = getMethod + "()" + ".get";
+    }
+    
     if (value instanceof LiteralValue) {
+      
       Literal literal = ((LiteralValue) value).getValue();
       CodeBlock literalCode = visitLiteral(literal).getValue();
       CodeBlock.Builder exp = CodeBlock.builder();
+      
       if (literal.getType() == ScalarType.DECIMAL) {
         exp.add("input.$L().compareTo($L) == 0", getMethod, literalCode);
       } else if (literal.getType() == ScalarType.DATE) {

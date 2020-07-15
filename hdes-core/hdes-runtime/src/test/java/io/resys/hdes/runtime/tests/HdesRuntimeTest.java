@@ -1,6 +1,7 @@
 package io.resys.hdes.runtime.tests;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.HashMap;
 
 /*-
@@ -116,9 +117,34 @@ public class HdesRuntimeTest {
     
     Assertions.assertEquals(2, output.getMeta().getValues().size());
     Assertions.assertEquals("SimpleHitPolicyMatrixDtOut{lastName=30, name=60}", output.getValue().toString());
-    
-    
   }
+  
+  
+  @Test 
+  public void dtHitPolicyFirstFormula() {
+    String src = "define decision-table: DtWithFormula\n" + 
+        "headers: {\n" + 
+        "  a INTEGER required IN,\n" + 
+        "  b INTEGER required IN,\n" +
+        "  c DECIMAL required IN,\n" +
+        "  total DECIMAL optional IN formula: a + b + c,\n" +
+        "  score STRING required OUT\n" + 
+        "} FIRST: {\n" + 
+        "  { ?, ?, ?, > 100.0, 'high-risk'},\n" + 
+        "  { ?, ?, ?, ?, 'low-risk'}\n" + 
+        "}";
+    
+    Map<String, Serializable> data = new HashMap<>();
+    data.put("a", 10);
+    data.put("b", 100);
+    data.put("c", new BigDecimal("10.78"));
+    
+    HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> output = runDT("DtWithFormula", src, data);
+    Assertions.assertEquals(output.getMeta().getValues().size(), 1);
+    Assertions.assertEquals(output.getMeta().getValues().get(0).getIndex(), 0);
+    Assertions.assertEquals("DtWithFormulaOut{score=high-risk}", output.getValue().toString());
+  }
+  
   
   @SuppressWarnings({ "rawtypes", "unchecked" })
   private static HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> runDT(
