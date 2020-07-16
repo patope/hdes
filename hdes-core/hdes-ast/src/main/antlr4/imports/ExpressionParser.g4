@@ -21,7 +21,12 @@ primary
 enBody: expression;
 
 // expressions
-expression: conditionalExpression | primary;
+expression: conditionalExpression | primary | lambdaExpression;
+
+// lambda
+lambdaExpression: lambdaParameters '->' lambdaBody;
+lambdaParameters: typeName | '(' typeName (',' typeName)* ')';
+lambdaBody: expression;
 
 conditionalExpression
   : conditionalOrExpression

@@ -54,6 +54,8 @@ TO: 'to';
 
 FORMULA: 'formula';
 
+LAMBDA: '->';
+
 // DT
 IN: 'IN';
 OUT: 'OUT';
