@@ -132,7 +132,7 @@ public class HdesRuntimeTest {
 //        "  maxValueOnEachRow ARRAY required OUT formula: MATRIX.forEach(row -> max(row)) \n" + 
 //        "  score DECIMAL required OUT formula: sum(maxValueOnEachRow) \n" + 
         "} FIRST: {\n" + 
-        "  { ?, ?, ?, > 100.0, 'high-risk'},\n" + 
+        "  { ?, ?, ?, > 100, 'high-risk'},\n" + 
         "  { ?, ?, ?, ?, 'low-risk'}\n" + 
         "}";
     

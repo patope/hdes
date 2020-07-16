@@ -95,6 +95,7 @@ public interface DecisionTableNode extends AstNode {
   
   @Value.Immutable
   interface HeaderRefValue extends DecisionTableNode {
+    Integer getIndex();
   }
   
   @Value.Immutable

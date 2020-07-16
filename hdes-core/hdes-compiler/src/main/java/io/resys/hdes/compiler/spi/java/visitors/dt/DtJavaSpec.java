@@ -28,6 +28,8 @@ import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
+
 public interface DtJavaSpec {
   
   @Value.Immutable
@@ -63,5 +65,6 @@ public interface DtJavaSpec {
   @Value.Immutable
   public interface DtCodeSpec extends DtJavaSpec {
     CodeBlock getValue();
+    ScalarType getType();
   }
 }

@@ -65,8 +65,18 @@ public interface EnJavaSpec {
       return this;
     }
     
+    public TypeConverter value1(CodeBlock value1, ScalarType type) {
+      this.value1 = ImmutableEnCodeSpec.builder().value(value1).type(type).build();;
+      return this;
+    }
+    
     public TypeConverter value2(EnCodeSpec value2) {
       this.value2 = value2;
+      return this;      
+    }
+    
+    public TypeConverter value2(CodeBlock value2, ScalarType type) {
+      this.value2 = ImmutableEnCodeSpec.builder().value(value2).type(type).build();
       return this;      
     }
     

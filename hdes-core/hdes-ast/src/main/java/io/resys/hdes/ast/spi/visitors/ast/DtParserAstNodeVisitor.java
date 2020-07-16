@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -226,16 +227,41 @@ public class DtParserAstNodeVisitor extends EnParserAstNodeVisitor {
       type = EqualityType.LESS_THEN;
     
     } else {
-      // TODO:: error handling
       throw new AstNodeException("Not implemented equality type: " + v + "!");
     }
     
+    // Retrieve parents
+    ParserRuleContext headers = ctx; 
+    ParserRuleContext ruleValue = null; 
+    while((headers = headers.getParent()) != null) {
+      if(headers instanceof RulesContext) {
+        break;
+      }
+      if(headers instanceof RuleValueContext) {
+        ruleValue = headers;
+      }
+    }
+    
+    int index = 0;
+    if(headers != null && ruleValue != null) {
+      for (int i = 0; i < headers.getChildCount(); i++) {
+        ParseTree c = headers.getChild(i);
+        if (c instanceof TerminalNode) {
+          continue;
+        }
+        if(c == ruleValue) {
+          break;
+        }
+        index++;
+      }
+    }
+
     AstNode.Token token = token(ctx);
     return ImmutableEqualityOperation.builder()
       .type(type)
       .token(token)
-      .left(ImmutableHeaderRefValue.builder().token(token).build())
-      .right(right)    
+      .left(ImmutableHeaderRefValue.builder().token(token).index(index).build())
+      .right(right)
       .build();
   }
 

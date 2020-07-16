@@ -73,6 +73,8 @@ import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtCodeSpecPair;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtFormulaSpec;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtMethodsSpec;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnInterfaceVisitor;
+import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec;
+import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnConvertionSpec;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.DecisionTableMeta;
 import io.resys.hdes.executor.api.DecisionTableMeta.DecisionTableMetaEntry;
@@ -465,7 +467,7 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
       Rule rule = matrix.getRules().get(index);
       
       DtCodeSpec valueToSet = visitLiteral(literal);
-      DtCodeSpec expression = visitInputRule(rule, header);
+      DtCodeSpec expression = visitMatrixRule(rule, header);
       var prefix = index > 0 ? "else " : "";
       result.beginControlFlow(prefix + "if($L)", expression.getValue());
       
@@ -522,17 +524,17 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
   public DtCodeSpec visitRule(Rule node) {
     RuleValue value = node.getValue();
     if (value instanceof UndefinedValue) {
-      return ImmutableDtCodeSpec.builder().value(CodeBlock.builder().build()).build();
+      return ImmutableDtCodeSpec.builder().type(ScalarType.BOOLEAN).value(CodeBlock.builder().build()).build();
     }
     ScalarTypeDefNode header = (ScalarTypeDefNode) body.getHeaders().getValues().get(node.getHeader());
     if (header.getDirection() == DirectionType.IN) {
-      return visitInputRule(node, header);
+      return visitMatrixRule(node, header);
     } else {
+      DtCodeSpec codeSpec = visitLiteral(((LiteralValue) value).getValue());
+      
       return ImmutableDtCodeSpec.builder()
-          .value(CodeBlock.builder()
-              .add(".").add(header.getName())
-              .add("($L)", visitLiteral(((LiteralValue) value).getValue()).getValue())
-              .build())
+          .value(CodeBlock.builder().add(".$L($L)", header.getName(), codeSpec.getValue()).build())
+          .type(codeSpec.getType())
           .build();
     }
   }
@@ -540,17 +542,24 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
   @Override
   public DtCodeSpec visitExpressionValue(ExpressionValue node) {
     DtCodeSpec child = visitExpressionRuleValue(node.getExpression());
-    return ImmutableDtCodeSpec.builder().value(
-        CodeBlock.builder()
-            .add(child.getValue())
-            .build())
+    return ImmutableDtCodeSpec.builder()
+        .value(CodeBlock.builder().add(child.getValue()).build())
+        .type(child.getType())
         .build();
   }
 
   @Override
   public DtCodeSpec visitEqualityOperation(EqualityOperation node) {
-    CodeBlock left = visitExpressionRuleValue(node.getLeft()).getValue();
-    CodeBlock right = visitExpressionRuleValue(node.getRight()).getValue();
+    DtCodeSpec value1 = visitExpressionRuleValue(node.getLeft());
+    DtCodeSpec value2 = visitExpressionRuleValue(node.getRight());
+    
+    EnConvertionSpec spec = EnJavaSpec.converter().src(node)
+        .value1(value1.getValue(), value1.getType())
+        .value2(value2.getValue(), value2.getType())
+        .build();
+    CodeBlock left = spec.getValue1();
+    CodeBlock right = spec.getValue2();
+    
     String operation;
     switch (node.getType()) {
     case EQUAL:
@@ -571,11 +580,12 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
     case LESS_THEN:
       operation = "$L.lte($L, $L)";
       break;
-    // TODO: error handling
     default:
       throw new HdesCompilerException(HdesCompilerException.builder().unknownDTExpressionOperation(node));
     }
-    return ImmutableDtCodeSpec.builder().value(CodeBlock.builder().add(operation, "when", left, right).build()).build();
+    return ImmutableDtCodeSpec.builder()
+        .type(ScalarType.BOOLEAN)
+        .value(CodeBlock.builder().add(operation, "when", left, right).build()).build();
   }
 
   @Override
@@ -587,18 +597,28 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
       }
       values.append(visitLiteral(literal).getValue().toString());
     }
-    return ImmutableDtCodeSpec.builder().value(CodeBlock.builder().add("when.asList($L).contains($L)", values.toString(), HEADER_REF).build()).build();
+    return ImmutableDtCodeSpec.builder()
+        .value(CodeBlock.builder().add("when.asList($L).contains($L)", values.toString(), HEADER_REF).build())
+        .type(ScalarType.BOOLEAN)
+        .build();
   }
 
   @Override
   public DtCodeSpec visitNotOperation(NotUnaryOperation node) {
     CodeBlock child = visitExpressionRuleValue(node.getValue()).getValue();
-    return ImmutableDtCodeSpec.builder().value(CodeBlock.builder().add("!").add(child).build()).build();
+    return ImmutableDtCodeSpec.builder()
+        .value(CodeBlock.builder().add("!").add(child).build())
+        .type(ScalarType.BOOLEAN)
+        .build();
   }
 
   @Override
   public DtCodeSpec visitHeaderRefValue(HeaderRefValue node) {
-    return ImmutableDtCodeSpec.builder().value(CodeBlock.builder().add(HEADER_REF).build()).build();
+    ScalarTypeDefNode header = (ScalarTypeDefNode) body.getHeaders().getValues().get(node.getIndex());
+    return ImmutableDtCodeSpec.builder()
+        .value(CodeBlock.builder().add(HEADER_REF).build())
+        .type(header.getType())
+        .build();
   }
 
   @Override
@@ -606,14 +626,20 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
     CodeBlock value = visitExpressionRuleValue(node.getValue()).getValue();
     CodeBlock left = visitExpressionRuleValue(node.getLeft()).getValue();
     CodeBlock right = visitExpressionRuleValue(node.getRight()).getValue();
-    return ImmutableDtCodeSpec.builder().value(CodeBlock.builder().add("when.between($L, $L, $L)", value, left, right).build()).build();
+    return ImmutableDtCodeSpec.builder()
+        .value(CodeBlock.builder().add("when.between($L, $L, $L)", value, left, right).build())
+        .type(ScalarType.BOOLEAN)
+        .build();
   }
 
   @Override
   public DtCodeSpec visitAndOperation(AndOperation node) {
     CodeBlock left = visitExpressionRuleValue(node.getLeft()).getValue();
     CodeBlock right = visitExpressionRuleValue(node.getRight()).getValue();
-    return ImmutableDtCodeSpec.builder().value(CodeBlock.builder().add(left).add("\r\n  && ").add(right).build()).build();
+    return ImmutableDtCodeSpec.builder()
+        .value(CodeBlock.builder().add(left).add("\r\n  && ").add(right).build())
+        .type(ScalarType.BOOLEAN)
+        .build();
   }
 
   @Override
@@ -632,7 +658,7 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
     } else {
       code.add(node.getValue());
     }
-    return ImmutableDtCodeSpec.builder().value(code.build()).build();
+    return ImmutableDtCodeSpec.builder().value(code.build()).type(node.getType()).build();
   }
   
   @Override
@@ -646,10 +672,10 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
     } else {
       throw new HdesCompilerException(HdesCompilerException.builder().unknownDTExpressionOperation(node));
     }
-    return ImmutableDtCodeSpec.builder().value(code.build()).build();
+    return ImmutableDtCodeSpec.builder().value(code.build()).type(node.getType()).build();
   }
   
-  private DtCodeSpec visitInputRule(Rule node, ScalarTypeDefNode header) {
+  private DtCodeSpec visitMatrixRule(Rule node, ScalarTypeDefNode header) {
     RuleValue value = node.getValue();
     String getMethod = JavaSpecUtil.methodName(header.getName());
     
@@ -678,12 +704,17 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
         exp.add("input.$L() == $L", getMethod, literalCode);
       }
       return ImmutableDtCodeSpec.builder().value(exp.build()).build();
+      
     } else if (value instanceof ExpressionValue) {
+      
       DtCodeSpec result = visitExpressionValue(((ExpressionValue) value));
       String inputName = CodeBlock.builder().add("input.$L()", getMethod).build().toString();
+      
       return ImmutableDtCodeSpec.builder()
           .value(CodeBlock.builder().add(result.getValue().toString().replaceAll(HEADER_REF, inputName)).build())
+          .type(result.getType())
           .build();
+      
     } else if(value instanceof UndefinedValue) {
       return ImmutableDtCodeSpec.builder()
           .value(CodeBlock.builder().add("true").build())
