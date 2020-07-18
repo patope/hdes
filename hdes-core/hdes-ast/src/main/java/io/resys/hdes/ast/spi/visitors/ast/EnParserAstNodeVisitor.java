@@ -144,7 +144,6 @@ public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
     return ImmutableExpressionBody.builder()
         .value(first(ctx))
         .token(token(ctx))
-        //.type(evalType)
         .build();
   }
 

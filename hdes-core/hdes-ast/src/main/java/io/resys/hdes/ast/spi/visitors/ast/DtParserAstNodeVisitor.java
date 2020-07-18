@@ -25,7 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -184,11 +184,12 @@ public class DtParserAstNodeVisitor extends EnParserAstNodeVisitor {
     
     ParseTree first = ctx.getChild(0);
     if (first instanceof TerminalNode &&
-        ((TerminalNode) first).getSymbol().getType() == HdesParser.BETWEEN) {      
+        ((TerminalNode) first).getSymbol().getType() == HdesParser.BETWEEN) {
+      int index = getHeaderIndex(ctx);
       AstNode.Token token = token(ctx);
       return ImmutableBetweenExpression.builder()
           .token(token)
-          .value(ImmutableHeaderRefValue.builder().token(token).build())
+          .value(ImmutableHeaderRefValue.builder().token(token).index(index).build())
           .left(ctx.getChild(1).accept(this)).right(ctx.getChild(3).accept(this))
           .build();
     }
@@ -230,32 +231,7 @@ public class DtParserAstNodeVisitor extends EnParserAstNodeVisitor {
       throw new AstNodeException("Not implemented equality type: " + v + "!");
     }
     
-    // Retrieve parents
-    ParserRuleContext headers = ctx; 
-    ParserRuleContext ruleValue = null; 
-    while((headers = headers.getParent()) != null) {
-      if(headers instanceof RulesContext) {
-        break;
-      }
-      if(headers instanceof RuleValueContext) {
-        ruleValue = headers;
-      }
-    }
-    
-    int index = 0;
-    if(headers != null && ruleValue != null) {
-      for (int i = 0; i < headers.getChildCount(); i++) {
-        ParseTree c = headers.getChild(i);
-        if (c instanceof TerminalNode) {
-          continue;
-        }
-        if(c == ruleValue) {
-          break;
-        }
-        index++;
-      }
-    }
-
+    int index = getHeaderIndex(ctx);
     AstNode.Token token = token(ctx);
     return ImmutableEqualityOperation.builder()
       .type(type)
@@ -414,5 +390,35 @@ public class DtParserAstNodeVisitor extends EnParserAstNodeVisitor {
         .token(token(ctx))
         .value(literal)
         .build();
+  }
+  
+  private int getHeaderIndex(RuleContext ctx) {
+    // Retrieve parents
+    RuleContext headers = ctx; 
+    RuleContext ruleValue = null; 
+    while((headers = headers.getParent()) != null) {
+      if(headers instanceof RulesContext) {
+        break;
+      }
+      if(headers instanceof RuleValueContext) {
+        ruleValue = headers;
+      }
+    }
+    
+    int index = 0;
+    if(headers != null && ruleValue != null) {
+      for (int i = 0; i < headers.getChildCount(); i++) {
+        ParseTree c = headers.getChild(i);
+        if (c instanceof TerminalNode) {
+          continue;
+        }
+        if(c == ruleValue) {
+          break;
+        }
+        index++;
+      }
+    }
+    
+    return index;
   }
 }

@@ -36,6 +36,14 @@ DEF_MT: 'manual-task';
 DEF_EN: 'expression';
 DEF_SE: 'service';
 
+BODY: 'BODY';
+
+IN: 'IN';
+OUT: 'OUT';
+DEBUG_VALUE: 'debug-value';
+REQUIRED: 'required';
+OPTIONAL: 'optional';
+
 INTEGER: 'INTEGER';
 DECIMAL: 'DECIMAL';
 DATE_TIME: 'DATE_TIME';
@@ -57,8 +65,6 @@ FORMULA: 'formula';
 LAMBDA: '->';
 
 // DT
-IN: 'IN';
-OUT: 'OUT';
 ALL: 'ALL';
 FIRST: 'FIRST';
 MATRIX: 'MATRIX';
@@ -87,9 +93,6 @@ DEFAULT_VALUE: 'default-value';
 
 // FLOW
 TASKS: 'tasks';
-DEBUG_VALUE: 'debug-value';
-REQUIRED: 'required';
-OPTIONAL: 'optional';
 USES: 'uses';
 WHEN: 'when';
 THEN: 'then';

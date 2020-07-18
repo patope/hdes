@@ -44,8 +44,8 @@ import io.resys.hdes.backend.api.ImmutableDefErrorToken;
 import io.resys.hdes.backend.api.ReaderException;
 import io.resys.hdes.compiler.api.HdesCompiler;
 import io.resys.hdes.compiler.api.HdesCompiler.Resource;
-import io.resys.hdes.compiler.api.HdesExecutable;
-import io.resys.hdes.compiler.api.HdesExecutable.DecisionTable;
+import io.resys.hdes.executor.api.HdesExecutable;
+import io.resys.hdes.executor.api.HdesExecutable.DecisionTable;
 import io.resys.hdes.runtime.api.HdesRuntime.RuntimeEnvir;
 import io.resys.hdes.runtime.api.HdesRuntime.RuntimeTask;
 import io.resys.hdes.runtime.spi.ImmutableHdesRuntime;
@@ -140,7 +140,7 @@ public class GenericDefDebugBuilder implements DefDebugBuilder {
       // DT only 
       HdesExecutable.InputValue dtInput = reader.build(input, task.getInput());
       HdesExecutable.DecisionTable dt = (DecisionTable) task.getValue();
-      HdesExecutable.Output dtOutput = dt.apply(dtInput);
+      HdesExecutable.Execution dtOutput = dt.apply(dtInput);
       
       return ImmutableDefDebug.builder().name(name).qualifier(tagOrBranch).resources(resources).output(dtOutput).build();
     } catch(ReaderException e) {

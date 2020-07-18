@@ -67,4 +67,9 @@ public interface DtJavaSpec {
     CodeBlock getValue();
     ScalarType getType();
   }
+  
+  @Value.Immutable
+  public interface DtCodeValueSpec extends DtJavaSpec {
+    CodeBlock getValue();
+  }
 }

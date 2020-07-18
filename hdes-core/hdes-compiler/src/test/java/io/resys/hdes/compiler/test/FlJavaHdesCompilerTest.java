@@ -45,7 +45,7 @@ public class FlJavaHdesCompilerTest {
     print(code);
   }
 
-  @Test
+//  @Test
   public void arrayFlow() {
     List<Resource> code = compiler.parser()
       .add("ArrayFlow.hdes", file("ArrayFlow.hdes"))

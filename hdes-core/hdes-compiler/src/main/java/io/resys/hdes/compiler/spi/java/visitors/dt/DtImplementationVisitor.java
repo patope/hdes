@@ -70,6 +70,7 @@ import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtCodeSpec;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtCodeSpecPair;
+import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtCodeValueSpec;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtFormulaSpec;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtMethodsSpec;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnInterfaceVisitor;
@@ -207,7 +208,7 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
       inputs.add(MethodSpec
           .methodBuilder(APPLY_OUTPUT_FORMULA)
           .addModifiers(Modifier.PUBLIC)
-          .addCode(input.build())
+          .addCode(output.build())
           .addParameter(type, "input")
           .returns(type)
           .build());
@@ -238,7 +239,7 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
     
     // DT body
     for (MatrixRow matrixRow : node.getRows()) {
-      DtCodeSpec spec = visitMatrixRow(matrixRow);
+      DtCodeValueSpec spec = visitMatrixRow(matrixRow);
       statements.add(spec.getValue()).add("\r\n");
     }
     
@@ -453,7 +454,7 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
   
 
   @Override
-  public DtCodeSpec visitMatrixRow(MatrixRow node) {
+  public DtCodeValueSpec visitMatrixRow(MatrixRow node) {
     HitPolicyMatrix matrix = (HitPolicyMatrix) body.getHitPolicy();
     
     CodeBlock.Builder result = CodeBlock.builder()
@@ -488,7 +489,7 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
       .endControlFlow();
       
     }
-    return ImmutableDtCodeSpec.builder()
+    return ImmutableDtCodeValueSpec.builder()
         .value(result.build())
         .build();
   }
@@ -703,7 +704,7 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
       } else {
         exp.add("input.$L() == $L", getMethod, literalCode);
       }
-      return ImmutableDtCodeSpec.builder().value(exp.build()).build();
+      return ImmutableDtCodeSpec.builder().type(literal.getType()).value(exp.build()).build();
       
     } else if (value instanceof ExpressionValue) {
       
@@ -718,6 +719,7 @@ public class DtImplementationVisitor extends DtTemplateVisitor<DtJavaSpec, TypeS
     } else if(value instanceof UndefinedValue) {
       return ImmutableDtCodeSpec.builder()
           .value(CodeBlock.builder().add("true").build())
+          .type(ScalarType.BOOLEAN)
           .build();
     }
     throw new HdesCompilerException(HdesCompilerException.builder().unknownDTInputRule(node));
