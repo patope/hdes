@@ -1,9 +1,9 @@
-define decision-table: Basic
+define decision-table:     Basic
 headers: {
-  name STRING required IN,
+      name STRING required     IN,
   lastName STRING required IN,
-  type INTEGER required IN,
-  value INTEGER required OUT 
+    type INTEGER required IN,
+  value INTEGER required     OUT
 } ALL: {
   { ?, ?, between 1 and 30, 20 },
   { not 'bob' or 'sam', 'woman', ?, 4570 }

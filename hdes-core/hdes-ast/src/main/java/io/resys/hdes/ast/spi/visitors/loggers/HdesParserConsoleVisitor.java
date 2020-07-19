@@ -22,87 +22,7 @@ package io.resys.hdes.ast.spi.visitors.loggers;
 
 import static io.resys.hdes.ast.spi.visitors.loggers.ParserContextLogger.log;
 
-import io.resys.hdes.ast.HdesParser.ActionBodyThenContext;
-import io.resys.hdes.ast.HdesParser.ActionBodyWhenContext;
-import io.resys.hdes.ast.HdesParser.ActionContext;
-import io.resys.hdes.ast.HdesParser.ActionTypeContext;
-import io.resys.hdes.ast.HdesParser.ActionsArgsContext;
-import io.resys.hdes.ast.HdesParser.ActionsContext;
-import io.resys.hdes.ast.HdesParser.AdditiveExpressionContext;
-import io.resys.hdes.ast.HdesParser.AllContext;
-import io.resys.hdes.ast.HdesParser.AndExpressionContext;
-import io.resys.hdes.ast.HdesParser.ArrayTypeContext;
-import io.resys.hdes.ast.HdesParser.ConditionalAndExpressionContext;
-import io.resys.hdes.ast.HdesParser.ConditionalExpressionContext;
-import io.resys.hdes.ast.HdesParser.ConditionalOrExpressionContext;
-import io.resys.hdes.ast.HdesParser.CssClassContext;
-import io.resys.hdes.ast.HdesParser.DebugValueContext;
-import io.resys.hdes.ast.HdesParser.DefaultValueContext;
-import io.resys.hdes.ast.HdesParser.DescriptionContext;
-import io.resys.hdes.ast.HdesParser.DirectionTypeContext;
-import io.resys.hdes.ast.HdesParser.DropdownArgContext;
-import io.resys.hdes.ast.HdesParser.DropdownArgsContext;
-import io.resys.hdes.ast.HdesParser.DropdownContext;
-import io.resys.hdes.ast.HdesParser.DropdownKeyAndValueContext;
-import io.resys.hdes.ast.HdesParser.DropdownKeysAndValuesContext;
-import io.resys.hdes.ast.HdesParser.DropdownTypeContext;
-import io.resys.hdes.ast.HdesParser.DropdownsContext;
-import io.resys.hdes.ast.HdesParser.DtBodyContext;
-import io.resys.hdes.ast.HdesParser.EnBodyContext;
-import io.resys.hdes.ast.HdesParser.EndMappingContext;
-import io.resys.hdes.ast.HdesParser.EqualityExpressionContext;
-import io.resys.hdes.ast.HdesParser.ExpressionContext;
-import io.resys.hdes.ast.HdesParser.FieldArgsContext;
-import io.resys.hdes.ast.HdesParser.FieldContext;
-import io.resys.hdes.ast.HdesParser.FieldsContext;
-import io.resys.hdes.ast.HdesParser.FirstContext;
-import io.resys.hdes.ast.HdesParser.FlBodyContext;
-import io.resys.hdes.ast.HdesParser.FormContext;
-import io.resys.hdes.ast.HdesParser.GroupArgsContext;
-import io.resys.hdes.ast.HdesParser.GroupContext;
-import io.resys.hdes.ast.HdesParser.GroupsContext;
-import io.resys.hdes.ast.HdesParser.HdesBodyContext;
-import io.resys.hdes.ast.HdesParser.HeadersContext;
-import io.resys.hdes.ast.HdesParser.HitPolicyContext;
-import io.resys.hdes.ast.HdesParser.LiteralContext;
-import io.resys.hdes.ast.HdesParser.MappingArgContext;
-import io.resys.hdes.ast.HdesParser.MappingArgsContext;
-import io.resys.hdes.ast.HdesParser.MappingContext;
-import io.resys.hdes.ast.HdesParser.MappingValueContext;
-import io.resys.hdes.ast.HdesParser.MatrixContext;
-import io.resys.hdes.ast.HdesParser.MethodArgsContext;
-import io.resys.hdes.ast.HdesParser.MethodInvocationContext;
-import io.resys.hdes.ast.HdesParser.MethodNameContext;
-import io.resys.hdes.ast.HdesParser.MtBodyContext;
-import io.resys.hdes.ast.HdesParser.MultiplicativeExpressionContext;
-import io.resys.hdes.ast.HdesParser.NextTaskContext;
-import io.resys.hdes.ast.HdesParser.ObjectTypeContext;
-import io.resys.hdes.ast.HdesParser.PostfixExpressionContext;
-import io.resys.hdes.ast.HdesParser.PreDecrementExpressionContext;
-import io.resys.hdes.ast.HdesParser.PreIncrementExpressionContext;
-import io.resys.hdes.ast.HdesParser.PrimaryContext;
-import io.resys.hdes.ast.HdesParser.RelationalExpressionContext;
-import io.resys.hdes.ast.HdesParser.RuleEqualityExpressionContext;
-import io.resys.hdes.ast.HdesParser.RuleMatchingExpressionContext;
-import io.resys.hdes.ast.HdesParser.RuleMatchingOrExpressionContext;
-import io.resys.hdes.ast.HdesParser.RuleRelationalExpressionContext;
-import io.resys.hdes.ast.HdesParser.RuleUndefinedValueContext;
-import io.resys.hdes.ast.HdesParser.RuleValueContext;
-import io.resys.hdes.ast.HdesParser.RulesContext;
-import io.resys.hdes.ast.HdesParser.RulesetContext;
-import io.resys.hdes.ast.HdesParser.RulesetsContext;
-import io.resys.hdes.ast.HdesParser.ScalarTypeContext;
-import io.resys.hdes.ast.HdesParser.SimpleTypeContext;
-import io.resys.hdes.ast.HdesParser.TaskArgsContext;
-import io.resys.hdes.ast.HdesParser.TaskRefContext;
-import io.resys.hdes.ast.HdesParser.TaskTypesContext;
-import io.resys.hdes.ast.HdesParser.TasksContext;
-import io.resys.hdes.ast.HdesParser.TypeDefArgsContext;
-import io.resys.hdes.ast.HdesParser.TypeDefContext;
-import io.resys.hdes.ast.HdesParser.TypeDefsContext;
-import io.resys.hdes.ast.HdesParser.TypeNameContext;
-import io.resys.hdes.ast.HdesParser.UnaryExpressionContext;
-import io.resys.hdes.ast.HdesParser.UnaryExpressionNotPlusMinusContext;
+import io.resys.hdes.ast.HdesParser.*;
 import io.resys.hdes.ast.HdesParserBaseVisitor;
 import io.resys.hdes.ast.api.nodes.AstNode;
 
@@ -114,6 +34,120 @@ public class HdesParserConsoleVisitor extends HdesParserBaseVisitor<AstNode> {
     return super.visitRuleValue(ctx);
   }
 
+  @Override
+  public AstNode visitMatrixHeaders(MatrixHeadersContext ctx) {
+    log(ctx);
+    return super.visitMatrixHeaders(ctx);
+  }
+
+  @Override
+  public AstNode visitMatrixRulesets(MatrixRulesetsContext ctx) {
+    log(ctx);
+    return super.visitMatrixRulesets(ctx);
+  }
+
+  @Override
+  public AstNode visitMatrixRuleset(MatrixRulesetContext ctx) {
+    log(ctx);
+    return super.visitMatrixRuleset(ctx);
+  }
+
+  @Override
+  public AstNode visitMatrixRules(MatrixRulesContext ctx) {
+    log(ctx);
+    return super.visitMatrixRules(ctx);
+  }
+
+  @Override
+  public AstNode visitMatrixRule(MatrixRuleContext ctx) {
+    log(ctx);
+    return super.visitMatrixRule(ctx);
+  }
+
+  @Override
+  public AstNode visitRuleUnaryExpression(RuleUnaryExpressionContext ctx) {
+    log(ctx);
+    return super.visitRuleUnaryExpression(ctx);
+  }
+
+  @Override
+  public AstNode visitFormula(FormulaContext ctx) {
+    log(ctx);
+    return super.visitFormula(ctx);
+  }
+
+  @Override
+  public AstNode visitMethodArg(MethodArgContext ctx) {
+    log(ctx);
+    return super.visitMethodArg(ctx);
+  }
+
+  @Override
+  public AstNode visitLambdaExpression(LambdaExpressionContext ctx) {
+    log(ctx);
+    return super.visitLambdaExpression(ctx);
+  }
+
+  @Override
+  public AstNode visitLambdaParameters(LambdaParametersContext ctx) {
+    log(ctx);
+    return super.visitLambdaParameters(ctx);
+  }
+
+  @Override
+  public AstNode visitLambdaBody(LambdaBodyContext ctx) {
+    log(ctx);
+    return super.visitLambdaBody(ctx);
+  }
+
+  @Override
+  public AstNode visitTaskPointer(TaskPointerContext ctx) {
+    log(ctx);
+    return super.visitTaskPointer(ctx);
+  }
+
+  @Override
+  public AstNode visitWhenThenPointerArgs(WhenThenPointerArgsContext ctx) {
+    log(ctx);
+    return super.visitWhenThenPointerArgs(ctx);
+  }
+
+  @Override
+  public AstNode visitWhenThenPointer(WhenThenPointerContext ctx) {
+    log(ctx);
+    return super.visitWhenThenPointer(ctx);
+  }
+
+  @Override
+  public AstNode visitThenPointer(ThenPointerContext ctx) {
+    log(ctx);
+    return super.visitThenPointer(ctx);
+  }
+
+  @Override
+  public AstNode visitFromPointer(FromPointerContext ctx) {
+    log(ctx);
+    return super.visitFromPointer(ctx);
+  }
+
+  @Override
+  public AstNode visitFrom(FromContext ctx) {
+    log(ctx);
+    return super.visitFrom(ctx);
+  }
+
+  @Override
+  public AstNode visitShowGroupOrField(ShowGroupOrFieldContext ctx) {
+    log(ctx);
+    return super.visitShowGroupOrField(ctx);
+  }
+
+  @Override
+  public AstNode visitShowMessage(ShowMessageContext ctx) {
+    log(ctx);
+    return super.visitShowMessage(ctx);
+  }
+  
   @Override
   public AstNode visitRuleMatchingExpression(RuleMatchingExpressionContext ctx) {
     log(ctx);

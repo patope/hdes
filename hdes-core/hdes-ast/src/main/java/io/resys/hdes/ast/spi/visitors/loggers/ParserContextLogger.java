@@ -32,8 +32,8 @@ public class ParserContextLogger {
       step.append("  ");
     }
     
-    System.out.println(step + "visiting: " + context.getClass().getSimpleName() 
-        + ": " + context.getText()
-        );
+    System.out.println(step + context.getText());
+    
+    
   }
 }
