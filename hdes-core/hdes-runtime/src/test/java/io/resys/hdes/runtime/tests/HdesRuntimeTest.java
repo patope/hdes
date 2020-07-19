@@ -129,8 +129,6 @@ public class HdesRuntimeTest {
         "  c DECIMAL required IN,\n" +
         "  total DECIMAL optional IN formula: a + b + c,\n" +
         "  score STRING required OUT\n" + 
-//        "  maxValueOnEachRow ARRAY required OUT formula: MATRIX.forEach(row -> max(row)) \n" + 
-//        "  score DECIMAL required OUT formula: sum(maxValueOnEachRow) \n" + 
         "} FIRST: {\n" + 
         "  { ?, ?, ?, > 100, 'high-risk'},\n" + 
         "  { ?, ?, ?, ?, 'low-risk'}\n" + 
@@ -146,6 +144,35 @@ public class HdesRuntimeTest {
     Assertions.assertEquals(output.getMeta().getValues().get(0).getIndex(), 0);
     Assertions.assertEquals("DtWithFormulaOut{score=high-risk}", output.getValue().toString());
   }
+  
+  @Test 
+  public void dtHitPolicyMatrixLambdas() {
+    String src = "define decision-table: MatrixDT\n" + 
+        "\n" + 
+        "headers: {\n" + 
+        "  name     STRING required IN,\n" + 
+        "  lastName STRING required IN,\n" +  
+        "  total    INTEGER required OUT formula: sum(hit), // total score of hit columns\n" + 
+        "  avg      INTEGER required OUT formula: avg(hit), // avg score hit columns\n" + 
+        "  max      INTEGER required OUT formula: sum(static.map(row -> max(row))) // sum max possible score of defined fields\n" + 
+        "\n" + 
+        "} MATRIX from STRING to INTEGER: {\n" + 
+        "          { 'BOB', 'SAM', ? },\n" + 
+        "lastName: {  10,    20,   30 },\n" + 
+        "name:     {  20,    50,   60 }\n" + 
+        "}";
+    
+    Map<String, Serializable> data = new HashMap<>();
+    data.put("a", 10);
+    data.put("b", 100);
+    data.put("c", new BigDecimal("10.78"));
+    
+    HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> output = runDT("DtWithFormula", src, data);
+    Assertions.assertEquals(output.getMeta().getValues().size(), 1);
+    Assertions.assertEquals(output.getMeta().getValues().get(0).getIndex(), 0);
+    Assertions.assertEquals("DtWithFormulaOut{score=high-risk}", output.getValue().toString());
+  }
+  
   
   
   @SuppressWarnings({ "rawtypes", "unchecked" })

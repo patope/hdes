@@ -42,20 +42,25 @@ public interface ExpressionNode extends AstNode {
       return value;
     }
   }
-
-  interface UnaryOperation extends ExpressionNode {
-    AstNode getValue();
-  }
+  
 
   @Value.Immutable
   interface ExpressionBody extends ExpressionNode {
     AstNode getValue();
-    // ScalarType getType();
+  }
+  
+  @Value.Immutable
+  interface LambdaExpression extends ExpressionNode {
+    List<TypeName> getParams();
+    AstNode getBody();
   }
 
   /*
    * Unary operation
    */
+  interface UnaryOperation extends ExpressionNode {
+    AstNode getValue();
+  }
   @Value.Immutable
   interface NotUnaryOperation extends UnaryOperation { }
 

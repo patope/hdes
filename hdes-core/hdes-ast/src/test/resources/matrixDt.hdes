@@ -4,9 +4,9 @@ headers: {
   name     STRING required IN,
   lastName STRING required IN,
   value    INTEGER required OUT,
-  total    INTEGER required OUT formula: sum(body), // total score of hit columns
-  avg      INTEGER required OUT formula: avg(body), // avg score hit columns
-  max      INTEGER required OUT formula: sum(body.map(row -> max(row))) // max possible score of defined fields
+  total    INTEGER required OUT formula: sum(hit), // total score of hit columns
+  avg      INTEGER required OUT formula: avg(hit), // avg score hit columns
+  max      INTEGER required OUT formula: sum(static.map(row -> max(row))) // sum max possible score of defined fields
 
 } MATRIX from STRING to INTEGER: {
 /* first row is expressions */ { 'BOB', 'SAM', ? },

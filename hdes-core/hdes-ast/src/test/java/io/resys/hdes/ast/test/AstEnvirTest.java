@@ -34,9 +34,9 @@ public class AstEnvirTest {
   public void simpleFlow() {
     ImmutableAstEnvir.builder()
     .add().src(file("basicDt.hdes"))
-   // .add().src(file("basicFl.hdes"))
-   // .add().src(file("basicMt.hdes"))
-   // .add().src(file("matrixDt.hdes"))
+    .add().src(file("basicFl.hdes"))
+    .add().src(file("basicMt.hdes"))
+    .add().src(file("matrixDt.hdes"))
     .build();
   }
 

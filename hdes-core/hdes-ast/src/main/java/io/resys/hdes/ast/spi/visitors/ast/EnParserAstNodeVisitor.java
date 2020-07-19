@@ -37,6 +37,9 @@ import io.resys.hdes.ast.HdesParser.ConditionalOrExpressionContext;
 import io.resys.hdes.ast.HdesParser.EnBodyContext;
 import io.resys.hdes.ast.HdesParser.EqualityExpressionContext;
 import io.resys.hdes.ast.HdesParser.ExpressionContext;
+import io.resys.hdes.ast.HdesParser.LambdaBodyContext;
+import io.resys.hdes.ast.HdesParser.LambdaExpressionContext;
+import io.resys.hdes.ast.HdesParser.LambdaParametersContext;
 import io.resys.hdes.ast.HdesParser.MethodArgsContext;
 import io.resys.hdes.ast.HdesParser.MethodInvocationContext;
 import io.resys.hdes.ast.HdesParser.MethodNameContext;
@@ -57,6 +60,7 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveType;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityType;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.LambdaExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodRefNode;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MultiplicativeType;
 import io.resys.hdes.ast.api.nodes.ImmutableAdditiveOperation;
@@ -65,6 +69,7 @@ import io.resys.hdes.ast.api.nodes.ImmutableBetweenExpression;
 import io.resys.hdes.ast.api.nodes.ImmutableConditionalExpression;
 import io.resys.hdes.ast.api.nodes.ImmutableEqualityOperation;
 import io.resys.hdes.ast.api.nodes.ImmutableExpressionBody;
+import io.resys.hdes.ast.api.nodes.ImmutableLambdaExpression;
 import io.resys.hdes.ast.api.nodes.ImmutableMethodRefNode;
 import io.resys.hdes.ast.api.nodes.ImmutableMultiplicativeOperation;
 import io.resys.hdes.ast.api.nodes.ImmutableNegateUnaryOperation;
@@ -92,6 +97,16 @@ public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
   @Value.Immutable
   public interface RedundentArgs extends ExpressionNode {
     List<AstNode> getValues();
+  }
+  
+  @Value.Immutable
+  public interface RedundentLambdaParams extends ExpressionNode {
+    List<TypeName> getValues();
+  }
+
+  @Value.Immutable
+  public interface RedundentLambdaBody extends ExpressionNode {
+    AstNode getValue();
   }
   
   public EnParserAstNodeVisitor(TokenIdGenerator tokenIdGenerator) {
@@ -125,6 +140,35 @@ public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
         .build();
   }
 
+  @Override
+  public LambdaExpression visitLambdaExpression(LambdaExpressionContext ctx) {
+    Nodes nodes = nodes(ctx);
+    return ImmutableLambdaExpression.builder()
+        .token(token(ctx))
+        .params(nodes.of(RedundentLambdaParams.class).map(e -> e.getValues()).orElse(Collections.emptyList()))
+        .body(nodes.of(RedundentLambdaBody.class).get())
+        .build();
+  }
+  
+  
+  @Override
+  public RedundentLambdaBody visitLambdaBody(LambdaBodyContext ctx) {
+    Nodes nodes = nodes(ctx);
+    return ImmutableRedundentLambdaBody.builder()
+        .token(token(ctx))
+        .value(nodes.of(AstNode.class).get())
+        .build();
+  }
+  
+  @Override
+  public RedundentLambdaParams visitLambdaParameters(LambdaParametersContext ctx) {
+    Nodes nodes = nodes(ctx);
+    return ImmutableRedundentLambdaParams.builder()
+        .token(token(ctx))
+        .values(nodes.list(TypeName.class))
+        .build();
+  }
+  
   @Override
   public AstNode visitPrimary(PrimaryContext ctx) {
     int n = ctx.getChildCount();
