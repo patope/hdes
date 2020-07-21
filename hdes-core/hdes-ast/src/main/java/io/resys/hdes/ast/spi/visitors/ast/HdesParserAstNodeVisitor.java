@@ -54,6 +54,7 @@ import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeNameScope;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.ImmutableArrayTypeDefNode;
 import io.resys.hdes.ast.api.nodes.ImmutableHeaders;
@@ -118,9 +119,21 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
 
   @Override
   public TypeName visitTypeName(TypeNameContext ctx) {
+    TerminalNode child = (TerminalNode) ctx.getChild(0);
+    final TypeNameScope scope;
+    if(child.getSymbol().getType() == HdesParser.STATIC_SCOPE) {
+      scope = TypeNameScope.STATIC;
+    } else if(child.getSymbol().getType() == HdesParser.INSTANCE_SCOPE) {
+      scope = TypeNameScope.INSTANCE;
+    } else {
+      scope = TypeNameScope.VAR;
+    }
+    
+    
     return ImmutableTypeName.builder()
         .token(token(ctx))
         .value(ctx.getText())
+        .scope(scope)
         .build();
   }
   

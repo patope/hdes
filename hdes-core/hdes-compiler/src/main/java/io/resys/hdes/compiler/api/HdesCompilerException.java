@@ -175,10 +175,10 @@ public class HdesCompilerException extends RuntimeException {
           .toString();
     }
     
-    public String incompatibleConversion(AstNode ast, ScalarType was1, ScalarType was2) {
+    public String incompatibleConversion(AstNode ast, ScalarType ...was) {
       return new StringBuilder()
           .append("Incompatible type used in expression!").append(System.lineSeparator())
-          .append("Operation is incompatible between these two types: ").append(was1).append(" <-> ").append(was2).append("!").append(System.lineSeparator())
+          .append("Operation is incompatible between these types: ").append(was).append("!").append(System.lineSeparator())
           .append(" AST: ").append(ast.getClass()).append(System.lineSeparator())
           .append("  - ").append(ast).append("!")
           .toString();
@@ -241,6 +241,15 @@ public class HdesCompilerException extends RuntimeException {
       return new StringBuilder()
           .append("Incompatible type used in EQUALITY expression!").append(System.lineSeparator())
           .append("Equality operation: ").append(ast.getType()).append(" can't be performed!").append(System.lineSeparator())
+          .append(" AST: ").append(ast.getClass()).append(System.lineSeparator())
+          .append("  - ").append(ast).append("!")
+          .toString();
+    }
+    
+    public String unknownGlobalFunctionCall(AstNode ast, String was, String ... known) {
+      return new StringBuilder()
+          .append("Unknown function in expression!").append(System.lineSeparator())
+          .append("Known functions: ").append(known).append(", but was: ").append(was).append(" !").append(System.lineSeparator())
           .append(" AST: ").append(ast.getClass()).append(System.lineSeparator())
           .append("  - ").append(ast).append("!")
           .toString();

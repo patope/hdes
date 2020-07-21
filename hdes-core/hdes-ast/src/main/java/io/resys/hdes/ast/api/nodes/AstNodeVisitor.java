@@ -48,6 +48,7 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.BetweenExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ConditionalExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.LambdaExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodRefNode;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MultiplicativeOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.NegateUnaryOperation;
@@ -123,6 +124,7 @@ public interface AstNodeVisitor<T, R> {
     T visitBetweenExpression(BetweenExpression node);
     T visitAdditiveOperation(AdditiveOperation node);
     T visitMultiplicativeOperation(MultiplicativeOperation node);
+    T visitLambdaExpression(LambdaExpression node);
   }
   
   // dt

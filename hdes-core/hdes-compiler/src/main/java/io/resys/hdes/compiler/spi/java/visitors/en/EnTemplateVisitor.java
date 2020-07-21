@@ -29,6 +29,7 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.BetweenExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ConditionalExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.LambdaExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodRefNode;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MultiplicativeOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.NegateUnaryOperation;
@@ -128,6 +129,11 @@ public class EnTemplateVisitor<R, T> implements ExpressionAstNodeVisitor<R, T> {
 
   @Override
   public R visitMultiplicativeOperation(MultiplicativeOperation node) {
+    throw new IllegalArgumentException("Not implemented");
+  }
+
+  @Override
+  public R visitLambdaExpression(LambdaExpression node) {
     throw new IllegalArgumentException("Not implemented");
   }
 }

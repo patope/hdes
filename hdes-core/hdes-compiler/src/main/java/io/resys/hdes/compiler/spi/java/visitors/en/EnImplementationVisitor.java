@@ -28,7 +28,9 @@ import java.time.LocalTime;
 import com.squareup.javapoet.CodeBlock;
 
 import io.resys.hdes.ast.api.nodes.AstNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ArrayTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
+import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
@@ -186,16 +188,33 @@ public class EnImplementationVisitor extends EnTemplateVisitor<EnCodeSpec, EnCod
   public EnCodeSpec visitPostDecrementUnaryOperation(PostDecrementUnaryOperation node) {
     // TODO
     return visit(node.getValue());
-  }
-
+  }*/
+  
   @Override
   public EnCodeSpec visitMethodRefNode(MethodRefNode node) {
-  
-    TODO::
-    List<AstNode> values = new ArrayList<>();
-    node.getValues().forEach(v -> values.addAll(visit(v).getValues()));
-    return ImmutableEnCodeSpec.builder().addValues(node).build();
-  }*/
+    
+    // global functions: min, max, sum, avg
+    if(node.getType().isEmpty()) {
+      
+      EnJavaSpec.listConverter();
+      for(AstNode ast : node.getValues()) {
+        if(ast instanceof ArrayTypeDefNode) {
+          
+        } else if(ast instanceof ObjectTypeDefNode) {
+          
+        }
+        
+        EnCodeSpec runningValue = visit(ast);
+      }
+      
+      throw new HdesCompilerException(HdesCompilerException.builder().unknownGlobalFunctionCall(node, node.getName(), "min, max, sum, avg"));
+    }
+    
+    
+    return ImmutableEnCodeSpec.builder()
+        
+        .build();
+  }
   
   @Override
   public EnCodeSpec visitEqualityOperation(EqualityOperation node) {

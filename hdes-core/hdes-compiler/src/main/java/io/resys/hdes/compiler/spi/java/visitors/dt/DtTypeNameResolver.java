@@ -43,6 +43,12 @@ public class DtTypeNameResolver implements TypeNameResolver {
   public TypeDefNode accept(TypeName typeName) {
     String[] pathName = typeName.getValue().split("\\.");
     
+    // static reference
+    if(pathName[0].equals("static")) {
+      
+    }
+    
+    
     // Find from inputs
     Optional<TypeDefNode> typeDef = body.getHeaders().getValues().stream()
         .map(f -> getTypeDefNode(f, pathName))

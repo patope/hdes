@@ -1,6 +1,6 @@
 parser grammar DecisionTableParser;
 options { tokenVocab = HdesLexer; }
-import CommonParser;
+import CommonParser, LiteralParser;
 
 
 dtBody: typeName description? headers hitPolicy;

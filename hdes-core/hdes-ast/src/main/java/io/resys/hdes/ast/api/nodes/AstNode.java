@@ -41,6 +41,7 @@ public interface AstNode {
   @Value.Immutable
   interface TypeName extends AstNode {
     String getValue();
+    TypeNameScope getScope();
   }
   
   @Value.Immutable
@@ -126,7 +127,7 @@ public interface AstNode {
   }
   
   enum DirectionType { IN, OUT }
-  
+  enum TypeNameScope { VAR, STATIC, INSTANCE }
   enum ScalarType {
     STRING, INTEGER, BOOLEAN, DECIMAL,
     DATE, DATE_TIME, TIME,

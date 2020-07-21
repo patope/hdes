@@ -1,6 +1,6 @@
 parser grammar FlowParser;
 options { tokenVocab = HdesLexer; }
-import CommonParser;
+import CommonParser, LiteralParser, ExpressionParser;
 
 taskTypes
   : DEF_FL

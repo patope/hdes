@@ -1,6 +1,6 @@
 parser grammar ManualTaskParser;
 options { tokenVocab = HdesLexer; }
-import CommonParser;
+import CommonParser, LiteralParser, ExpressionParser;
 
 
 dropdownType: DropdownType;

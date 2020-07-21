@@ -7,4 +7,4 @@ literal
   | BooleanLiteral
   | StringLiteral;
 
-typeName : Identifier | typeName '.' Identifier;
+typeName: 'static' | 'instance' | Identifier | typeName '.' Identifier;

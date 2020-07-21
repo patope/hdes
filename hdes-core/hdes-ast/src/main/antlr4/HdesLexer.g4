@@ -64,6 +64,9 @@ FORMULA: 'formula';
 
 LAMBDA: '->';
 
+STATIC_SCOPE: 'static';
+INSTANCE_SCOPE: 'instance';
+
 // DT
 ALL: 'ALL';
 FIRST: 'FIRST';

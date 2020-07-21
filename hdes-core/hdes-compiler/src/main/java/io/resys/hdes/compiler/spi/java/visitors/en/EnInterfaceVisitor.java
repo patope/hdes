@@ -34,6 +34,7 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.BetweenExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ConditionalExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.LambdaExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodRefNode;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MultiplicativeOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.NegateUnaryOperation;
@@ -219,6 +220,8 @@ public class EnInterfaceVisitor extends EnTemplateVisitor<EnRefSpec, List<TypeDe
       return visitAdditiveOperation((AdditiveOperation) node);
     } else if (node instanceof MultiplicativeOperation) {
       return visitMultiplicativeOperation((MultiplicativeOperation) node);
+    } else if(node instanceof LambdaExpression) {
+      return visitLambdaExpression((LambdaExpression) node);
     }
     throw new HdesCompilerException(HdesCompilerException.builder().unknownDTExpressionNode(node));
   }

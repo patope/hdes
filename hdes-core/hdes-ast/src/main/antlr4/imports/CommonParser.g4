@@ -1,6 +1,6 @@
 parser grammar CommonParser;
 options { tokenVocab = HdesLexer; }
-import ExpressionParser;
+import ExpressionParser, LiteralParser;
 
 directionType: DirectionType;
 scalarType: ScalarType;
