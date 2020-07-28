@@ -1,24 +1,20 @@
 package io.resys.hdes.compiler.spi.java.visitors.en;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.immutables.value.Value;
 
 import com.squareup.javapoet.CodeBlock;
 
 import io.resys.hdes.ast.api.nodes.AstNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
 
 
 
 public interface EnJavaSpec {
 
-  @FunctionalInterface
-  interface TypeNameResolver {
-    TypeDefNode accept(TypeName name);
-  }
   
   @Value.Immutable
   interface EnRefSpec extends EnJavaSpec {
@@ -26,11 +22,18 @@ public interface EnJavaSpec {
   }
   
   @Value.Immutable
-  interface EnCodeSpec extends EnJavaSpec {
+  interface EnScalarCodeSpec extends EnJavaSpec {
     CodeBlock getValue();
+    Optional<Boolean> getArray();
     ScalarType getType();
   }
   
+  @Value.Immutable
+  interface EnObjectCodeSpec extends EnJavaSpec {
+    CodeBlock getValue();
+    Optional<Boolean> getArray();
+    ObjectTypeDefNode getType();
+  }
   
   @Value.Immutable
   interface EnConvertionSpec extends EnJavaSpec {

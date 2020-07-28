@@ -24,11 +24,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Arrays;
+import java.util.List;
 
 import com.squareup.javapoet.CodeBlock;
 
 import io.resys.hdes.ast.api.nodes.AstNode;
-import io.resys.hdes.ast.api.nodes.AstNode.ArrayTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
@@ -56,381 +57,402 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.PostIncrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnaryOperation;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
-import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnCodeSpec;
+import io.resys.hdes.compiler.spi.java.en.EnReferedTypesSpec.EnReferedTypeResolver;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnConvertionSpec;
-import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.TypeNameResolver;
+import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnObjectCodeSpec;
+import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnScalarCodeSpec;
+import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
+import io.resys.hdes.executor.spi.HdesMath;
 
-public class EnImplementationVisitor extends EnTemplateVisitor<EnCodeSpec, EnCodeSpec> implements ExpressionAstNodeVisitor<EnCodeSpec, EnCodeSpec> {
-  
-  private final TypeNameResolver resolver;
-  
-  public EnImplementationVisitor(TypeNameResolver resolver) {
+public class EnImplementationVisitor extends EnTemplateVisitor<EnJavaSpec, EnScalarCodeSpec>
+    implements ExpressionAstNodeVisitor<EnJavaSpec, EnScalarCodeSpec> {
+
+  private final static List<String> GLOBAL_METHODS = Arrays.asList("min", "max", "sum", "avg");
+  private final EnReferedTypeResolver resolver;
+
+  public EnImplementationVisitor(EnReferedTypeResolver resolver) {
     super();
     this.resolver = resolver;
   }
 
   @Override
-  public EnCodeSpec visitExpressionBody(ExpressionBody node) {
-    return visit(node.getValue());
+  public EnScalarCodeSpec visitExpressionBody(ExpressionBody node) {
+    return visitScalar(node.getValue());
   }
-  
+
   @Override
-  public EnCodeSpec visitTypeName(TypeName node) {
+  public EnScalarCodeSpec visitTypeName(TypeName node) {
     TypeDefNode typeDefNode = resolver.accept(node);
-    if(!(typeDefNode instanceof ScalarTypeDefNode)) {
+    if (!(typeDefNode instanceof ScalarTypeDefNode)) {
       throw new HdesCompilerException(HdesCompilerException.builder().incompatibleScalarType(node, typeDefNode));
     }
     ScalarTypeDefNode scalarNode = (ScalarTypeDefNode) typeDefNode;
-    return ImmutableEnCodeSpec.builder()
-        .value(CodeBlock.builder()
-          .add("input.")
-          .add(JavaSpecUtil.methodCall(node.getValue()))
-          .build())
-        .type(scalarNode.getType())
-        .build();
+    return ImmutableEnScalarCodeSpec.builder()
+        .value(CodeBlock.builder().add("input.").add(JavaSpecUtil.methodCall(node.getValue())).build())
+        .type(scalarNode.getType()).build();
   }
 
   @Override
-  public EnCodeSpec visitLiteral(Literal node) {
+  public EnScalarCodeSpec visitLiteral(Literal node) {
     CodeBlock.Builder builder = CodeBlock.builder();
     switch (node.getType()) {
     case BOOLEAN:
-      builder.add(node.getValue()); break;
+      builder.add(node.getValue());
+      break;
     case DATE:
-      builder.add("$T.parse($S)", LocalDate.class, node.getValue()); break;
+      builder.add("$T.parse($S)", LocalDate.class, node.getValue());
+      break;
     case DATE_TIME:
-      builder.add("$T.parse($S)", LocalDateTime.class, node.getValue()); break;
+      builder.add("$T.parse($S)", LocalDateTime.class, node.getValue());
+      break;
     case TIME:
-      builder.add("$T.parse($S)", LocalTime.class, node.getValue()); break;
+      builder.add("$T.parse($S)", LocalTime.class, node.getValue());
+      break;
     case DECIMAL:
-      builder.add("new $T($S)", BigDecimal.class, node.getValue()); break;
+      builder.add("new $T($S)", BigDecimal.class, node.getValue());
+      break;
     case INTEGER:
-      builder.add("$L", node.getValue()); break;
+      builder.add("$L", node.getValue());
+      break;
     case STRING:
-      builder.add("$S", node.getValue()); break;
+      builder.add("$S", node.getValue());
+      break;
     default:
       throw new HdesCompilerException(HdesCompilerException.builder().unknownExpressionParameter(node));
     }
-    
-    return ImmutableEnCodeSpec.builder()
-        .value(builder.build())
-        .type(node.getType())
-        .build();
+
+    return ImmutableEnScalarCodeSpec.builder().value(builder.build()).type(node.getType()).build();
   }
 
   @Override
-  public EnCodeSpec visitNotUnaryOperation(NotUnaryOperation node) {
-    EnCodeSpec children = visit(node.getValue());
-    
-    if(children.getType() != ScalarType.BOOLEAN) {
-      throw new HdesCompilerException(HdesCompilerException.builder().incompatibleType(node, ScalarType.BOOLEAN, children.getType()));
+  public EnScalarCodeSpec visitNotUnaryOperation(NotUnaryOperation node) {
+    EnScalarCodeSpec children = visitScalar(node.getValue());
+
+    if (children.getType() != ScalarType.BOOLEAN) {
+      throw new HdesCompilerException(
+          HdesCompilerException.builder().incompatibleType(node, ScalarType.BOOLEAN, children.getType()));
     }
-    
-    return ImmutableEnCodeSpec.builder()
-        .type(ScalarType.BOOLEAN)
-        .value(CodeBlock.builder().add("!").add(children.getValue()).build())
-        .build();
+
+    return ImmutableEnScalarCodeSpec.builder().type(ScalarType.BOOLEAN)
+        .value(CodeBlock.builder().add("!").add(children.getValue()).build()).build();
   }
 
   @Override
-  public EnCodeSpec visitNegateUnaryOperation(NegateUnaryOperation node) {
-    EnCodeSpec spec = visit(node.getValue());
+  public EnScalarCodeSpec visitNegateUnaryOperation(NegateUnaryOperation node) {
+    EnScalarCodeSpec spec = visitScalar(node.getValue());
 
     CodeBlock.Builder value = CodeBlock.builder();
-    if(spec.getType() == ScalarType.DECIMAL) {
+    if (spec.getType() == ScalarType.DECIMAL) {
       value.add("$L.negate()", spec.getValue());
-    } else if(spec.getType() == ScalarType.INTEGER) {      
+    } else if (spec.getType() == ScalarType.INTEGER) {
       value.add("-$L", spec.getValue());
     } else {
-      throw new HdesCompilerException(HdesCompilerException.builder().incompatibleTypesInNegateUnaryOperation(node, spec.getType())); 
+      throw new HdesCompilerException(
+          HdesCompilerException.builder().incompatibleTypesInNegateUnaryOperation(node, spec.getType()));
     }
-    
-    return ImmutableEnCodeSpec.builder().value(value.build()).type(spec.getType()).build();
+
+    return ImmutableEnScalarCodeSpec.builder().value(value.build()).type(spec.getType()).build();
   }
 
   @Override
-  public EnCodeSpec visitPositiveUnaryOperation(PositiveUnaryOperation node) {
-    EnCodeSpec spec = visit(node.getValue());
+  public EnScalarCodeSpec visitPositiveUnaryOperation(PositiveUnaryOperation node) {
+    EnScalarCodeSpec spec = visitScalar(node.getValue());
 
     CodeBlock.Builder value = CodeBlock.builder();
-    if(spec.getType() == ScalarType.DECIMAL) {
+    if (spec.getType() == ScalarType.DECIMAL) {
       value.add("$L.plus()", spec.getValue());
-    } else if(spec.getType() == ScalarType.INTEGER) {      
+    } else if (spec.getType() == ScalarType.INTEGER) {
       value.add("+$L", spec.getValue());
     } else {
-      throw new HdesCompilerException(HdesCompilerException.builder().incompatibleTypesInPlusUnaryOperation(node, spec.getType())); 
+      throw new HdesCompilerException(
+          HdesCompilerException.builder().incompatibleTypesInPlusUnaryOperation(node, spec.getType()));
     }
-    
-    return ImmutableEnCodeSpec.builder().value(value.build()).type(spec.getType()).build();
+
+    return ImmutableEnScalarCodeSpec.builder().value(value.build()).type(spec.getType()).build();
   }
 
   /*
-  @Override
-  public EnCodeSpec visitPreIncrementUnaryOperation(PreIncrementUnaryOperation node) {
-    // TODO
-    return visit(node.getValue());
-  }
+   * @Override public EnCodeSpec
+   * visitPreIncrementUnaryOperation(PreIncrementUnaryOperation node) { // TODO
+   * return visit(node.getValue()); }
+   * 
+   * @Override public EnCodeSpec
+   * visitPreDecrementUnaryOperation(PreDecrementUnaryOperation node) { // TODO
+   * return visit(node.getValue()); }
+   * 
+   * @Override public EnCodeSpec
+   * visitPostIncrementUnaryOperation(PostIncrementUnaryOperation node) { // TODO
+   * return visit(node.getValue()); }
+   * 
+   * @Override public EnCodeSpec
+   * visitPostDecrementUnaryOperation(PostDecrementUnaryOperation node) { // TODO
+   * return visit(node.getValue()); }
+   */
 
   @Override
-  public EnCodeSpec visitPreDecrementUnaryOperation(PreDecrementUnaryOperation node) {
-    // TODO
-    return visit(node.getValue());
-  }
-
-  @Override
-  public EnCodeSpec visitPostIncrementUnaryOperation(PostIncrementUnaryOperation node) {
-    // TODO
-    return visit(node.getValue());
-  }
-
-  @Override
-  public EnCodeSpec visitPostDecrementUnaryOperation(PostDecrementUnaryOperation node) {
-    // TODO
-    return visit(node.getValue());
-  }*/
-  
-  @Override
-  public EnCodeSpec visitMethodRefNode(MethodRefNode node) {
+  public EnJavaSpec visitMethodRefNode(MethodRefNode node) {
     
-    // global functions: min, max, sum, avg
-    if(node.getType().isEmpty()) {
+    if (node.getType().isEmpty()) {
+
+      if (!GLOBAL_METHODS.contains(node.getName())) {
+        throw new HdesCompilerException(
+            HdesCompilerException.builder().unknownGlobalFunctionCall(node, node.getName(), "min, max, sum, avg"));
+      }
+
       
-      EnJavaSpec.listConverter();
-      for(AstNode ast : node.getValues()) {
-        if(ast instanceof ArrayTypeDefNode) {
-          
-        } else if(ast instanceof ObjectTypeDefNode) {
-          
+      boolean isDecimal = false;
+      CodeBlock.Builder params = CodeBlock.builder().add("$T.builder()", HdesMath.class);
+      for (AstNode ast : node.getValues()) {
+        EnJavaSpec spec = visitAny(ast);
+        
+        // Scalar ref
+        if(spec instanceof EnScalarCodeSpec) {
+          EnScalarCodeSpec runningValue = (EnScalarCodeSpec) spec;
+          if(runningValue.getType() == ScalarType.INTEGER) {
+            params.add(".integer($L)", runningValue.getValue());
+          } else if(runningValue.getType() == ScalarType.DECIMAL) {
+            params.add(".decimal($L)", runningValue.getValue());
+            isDecimal = true;
+          }
+          continue;
         }
         
-        EnCodeSpec runningValue = visit(ast);
+        // Object based ref
+        EnObjectCodeSpec runningValue = (EnObjectCodeSpec) spec;
+        for(TypeDefNode typeDefNode : runningValue.getType().getValues()) {
+          if(typeDefNode instanceof ScalarTypeDefNode) {
+            continue;
+          }
+          ScalarType scalar = ((ScalarTypeDefNode) typeDefNode).getType();
+          String name = JavaSpecUtil.methodCall(typeDefNode.getName());
+          if(scalar == ScalarType.INTEGER) {
+            params.add(".integer($L.$L)", runningValue.getValue(), name);
+          } else if(scalar == ScalarType.DECIMAL) {
+            params.add(".decimal($L.$L)", runningValue.getValue(), name);
+            isDecimal = true;
+          }
+        }
       }
       
-      throw new HdesCompilerException(HdesCompilerException.builder().unknownGlobalFunctionCall(node, node.getName(), "min, max, sum, avg"));
+      if(isDecimal) {
+        params.add(".toDecimal()");
+      } else {
+        params.add(".toInteger()");
+      }
+      
+      ScalarType returnType = isDecimal || node.getName().equals("avg") ? ScalarType.DECIMAL : ScalarType.INTEGER;
+      return ImmutableEnScalarCodeSpec.builder()
+          .value(params.add(".$L()", node.getName()).build())
+          .array(false)
+          .type(returnType)
+          .build(); 
     }
     
     
-    return ImmutableEnCodeSpec.builder()
-        
-        .build();
+    TypeDefNode typeDef = this.resolver.accept(node);
+    if(typeDef instanceof ScalarTypeDefNode) {
+      return ImmutableEnScalarCodeSpec.builder()
+          .value(CodeBlock.builder().add("input.").add(JavaSpecUtil.methodCall(node.getName())).build())
+          .array(typeDef.getArray())
+          .type(((ScalarTypeDefNode) typeDef).getType()).build(); 
+      
+    } else {
+      return ImmutableEnObjectCodeSpec.builder()
+          .value(CodeBlock.builder().add("input.").add(JavaSpecUtil.methodCall(node.getName())).build())
+          .array(typeDef.getArray())
+          .type((ObjectTypeDefNode) typeDef).build(); 
+      
+    }
   }
-  
-  @Override
-  public EnCodeSpec visitEqualityOperation(EqualityOperation node) {
 
-    EnConvertionSpec betweenSpec = EnJavaSpec.converter()
-        .src(node)
-        .value1(visit(node.getLeft()))
-        .value2(visit(node.getRight()))
-        .build();
+  @Override
+  public EnScalarCodeSpec visitEqualityOperation(EqualityOperation node) {
+
+    EnConvertionSpec betweenSpec = EnJavaSpec.converter().src(node).value1(visitScalar(node.getLeft()))
+        .value2(visitScalar(node.getRight())).build();
     ScalarType commonType = betweenSpec.getType();
     CodeBlock left = betweenSpec.getValue1();
     CodeBlock right = betweenSpec.getValue2();
-    
+
     CodeBlock.Builder body = CodeBlock.builder();
     switch (commonType) {
     case DECIMAL:
-      if(node.getType() == EqualityType.EQUAL) {
+      if (node.getType() == EqualityType.EQUAL) {
         body.add("$L.compareTo($L) == 0", left, right);
-      } else if(node.getType() == EqualityType.LESS) {
-        body.add("$L.compareTo($L) < 0", left, right);  
-      } else if(node.getType() == EqualityType.LESS_THEN) {
+      } else if (node.getType() == EqualityType.LESS) {
+        body.add("$L.compareTo($L) < 0", left, right);
+      } else if (node.getType() == EqualityType.LESS_THEN) {
         body.add("$L.compareTo($L) <= 0", left, right);
-      } else if(node.getType() == EqualityType.GREATER) {
+      } else if (node.getType() == EqualityType.GREATER) {
         body.add("$L.compareTo($L) > 0", left, right);
-      } else if(node.getType() == EqualityType.GREATER_THEN) {
+      } else if (node.getType() == EqualityType.GREATER_THEN) {
         body.add("$L.compareTo($L) >= 0", left, right);
       }
       break;
     case INTEGER:
-      if(node.getType() == EqualityType.EQUAL) {
+      if (node.getType() == EqualityType.EQUAL) {
         body.add("Integer.compare($L, $L) == 0", left, right);
-      } else if(node.getType() == EqualityType.LESS) {
-        body.add("Integer.compare($L, $L) < 0", left, right);  
-      } else if(node.getType() == EqualityType.LESS_THEN) {
+      } else if (node.getType() == EqualityType.LESS) {
+        body.add("Integer.compare($L, $L) < 0", left, right);
+      } else if (node.getType() == EqualityType.LESS_THEN) {
         body.add("Integer.compare($L, $L) <= 0", left, right);
-      } else if(node.getType() == EqualityType.GREATER) {
+      } else if (node.getType() == EqualityType.GREATER) {
         body.add("Integer.compare($L, $L) > 0", left, right);
-      } else if(node.getType() == EqualityType.GREATER_THEN) {
+      } else if (node.getType() == EqualityType.GREATER_THEN) {
         body.add("Integer.compare($L, $L) >= 0", left, right);
       }
       break;
     case DATE_TIME:
     case DATE:
     case TIME:
-      if(node.getType() == EqualityType.EQUAL) {
+      if (node.getType() == EqualityType.EQUAL) {
         body.add("$L.isEqual($L)", left, right);
-      } else if(node.getType() == EqualityType.LESS) {
-        body.add("$L.isBefore($L)", left, right);  
-      } else if(node.getType() == EqualityType.LESS_THEN) {
+      } else if (node.getType() == EqualityType.LESS) {
+        body.add("$L.isBefore($L)", left, right);
+      } else if (node.getType() == EqualityType.LESS_THEN) {
         body.add("($L.isBefore($L) || $L.isEqual($L))", left, right, left, right);
-      } else if(node.getType() == EqualityType.GREATER) {
+      } else if (node.getType() == EqualityType.GREATER) {
         body.add("$L.isAfter($L)", left, right);
-      } else if(node.getType() == EqualityType.GREATER_THEN) {
+      } else if (node.getType() == EqualityType.GREATER_THEN) {
         body.add("($L.isAfter($L) || $L.isEqual($L))", left, right, left, right);
       }
       break;
     default:
-      throw new HdesCompilerException(HdesCompilerException.builder().betweenOperationNotSupportedForType(node, commonType));
+      throw new HdesCompilerException(
+          HdesCompilerException.builder().betweenOperationNotSupportedForType(node, commonType));
     }
-    return ImmutableEnCodeSpec.builder()
-        .value(body.build())
-        .type(commonType)
-        .build();
-  
+    return ImmutableEnScalarCodeSpec.builder().value(body.build()).type(commonType).build();
+
   }
-  
+
   @Override
-  public EnCodeSpec visitMultiplicativeOperation(MultiplicativeOperation node) {
-    
-    EnCodeSpec left = visit(node.getLeft());
-    EnCodeSpec right = visit(node.getRight());
+  public EnScalarCodeSpec visitMultiplicativeOperation(MultiplicativeOperation node) {
+
+    EnScalarCodeSpec left = visitScalar(node.getLeft());
+    EnScalarCodeSpec right = visitScalar(node.getRight());
     EnConvertionSpec spec = EnJavaSpec.converter().src(node).value1(left).value2(right).build();
-    
-    if(spec.getType() != ScalarType.INTEGER && spec.getType() != ScalarType.DECIMAL) {
-      throw new HdesCompilerException(HdesCompilerException.builder()
-          .incompatibleTypesInAdditiveOperation(node, left.getType(), right.getType()));
+
+    if (spec.getType() != ScalarType.INTEGER && spec.getType() != ScalarType.DECIMAL) {
+      throw new HdesCompilerException(
+          HdesCompilerException.builder().incompatibleTypesInAdditiveOperation(node, left.getType(), right.getType()));
     }
 
     CodeBlock.Builder value = CodeBlock.builder();
-    if(spec.getType() == ScalarType.DECIMAL) {
-      value.add("$L.$L($L)", 
-          spec.getValue1(),
-          node.getType() == MultiplicativeType.MULTIPLY ? "multiply" : "divide",
+    if (spec.getType() == ScalarType.DECIMAL) {
+      value.add("$L.$L($L)", spec.getValue1(), node.getType() == MultiplicativeType.MULTIPLY ? "multiply" : "divide",
           spec.getValue2());
-    } else if(node.getType() == MultiplicativeType.MULTIPLY) {
+    } else if (node.getType() == MultiplicativeType.MULTIPLY) {
       value.add("$L * $L", spec.getValue1(), spec.getValue2());
     } else {
-      value.add("new $T($L).divide(new $T($L)))", BigDecimal.class, spec.getValue1(), BigDecimal.class, spec.getValue2());      
+      value.add("new $T($L).divide(new $T($L)))", BigDecimal.class, spec.getValue1(), BigDecimal.class,
+          spec.getValue2());
     }
-    
-    return ImmutableEnCodeSpec.builder().value(value.build()).type(spec.getType()).build();
+
+    return ImmutableEnScalarCodeSpec.builder().value(value.build()).type(spec.getType()).build();
   }
-  
+
   @Override
-  public EnCodeSpec visitAdditiveOperation(AdditiveOperation node) {
-    
-    EnCodeSpec left = visit(node.getLeft());
-    EnCodeSpec right = visit(node.getRight());
+  public EnScalarCodeSpec visitAdditiveOperation(AdditiveOperation node) {
+
+    EnScalarCodeSpec left = visitScalar(node.getLeft());
+    EnScalarCodeSpec right = visitScalar(node.getRight());
     EnConvertionSpec spec = EnJavaSpec.converter().src(node).value1(left).value2(right).build();
-    
-    if(spec.getType() != ScalarType.INTEGER && spec.getType() != ScalarType.DECIMAL) {
-      throw new HdesCompilerException(HdesCompilerException.builder()
-          .incompatibleTypesInAdditiveOperation(node, left.getType(), right.getType()));
+
+    if (spec.getType() != ScalarType.INTEGER && spec.getType() != ScalarType.DECIMAL) {
+      throw new HdesCompilerException(
+          HdesCompilerException.builder().incompatibleTypesInAdditiveOperation(node, left.getType(), right.getType()));
     }
 
     CodeBlock.Builder value = CodeBlock.builder();
-    if(spec.getType() == ScalarType.DECIMAL) {
-      value.add("$L.$L($L)", 
-          spec.getValue1(),
-          node.getType() == AdditiveType.ADD ? "add" : "subtract",
+    if (spec.getType() == ScalarType.DECIMAL) {
+      value.add("$L.$L($L)", spec.getValue1(), node.getType() == AdditiveType.ADD ? "add" : "subtract",
           spec.getValue2());
     } else {
-      value.add("$L $L $L", 
-          spec.getValue1(),
-          node.getType() == AdditiveType.ADD ? "+" : "-",
-          spec.getValue2());
+      value.add("$L $L $L", spec.getValue1(), node.getType() == AdditiveType.ADD ? "+" : "-", spec.getValue2());
     }
 
-    return ImmutableEnCodeSpec.builder().value(value.build()).type(spec.getType()).build();
-  }
-  
-  @Override
-  public EnCodeSpec visitAndOperation(AndOperation node) {
-    EnCodeSpec left = visit(node.getLeft());
-    if(left.getType() != ScalarType.BOOLEAN) {
-      throw new HdesCompilerException(HdesCompilerException.builder().incompatibleType(node, ScalarType.BOOLEAN, left.getType()));
-    }
-
-    EnCodeSpec right = visit(node.getLeft());
-    if(right.getType() != ScalarType.BOOLEAN) {
-      throw new HdesCompilerException(HdesCompilerException.builder().incompatibleType(node, ScalarType.BOOLEAN, right.getType()));
-    }
-
-    return ImmutableEnCodeSpec.builder()
-        .value(CodeBlock.builder().add(left.getValue()).add(" && ").add(right.getValue()).build())
-        .build();
+    return ImmutableEnScalarCodeSpec.builder().value(value.build()).type(spec.getType()).build();
   }
 
   @Override
-  public EnCodeSpec visitOrOperation(OrOperation node) {
-    EnCodeSpec left = visit(node.getLeft());
-    if(left.getType() != ScalarType.BOOLEAN) {
-      throw new HdesCompilerException(HdesCompilerException.builder().incompatibleType(node, ScalarType.BOOLEAN, left.getType()));
+  public EnScalarCodeSpec visitAndOperation(AndOperation node) {
+    EnScalarCodeSpec left = visitScalar(node.getLeft());
+    if (left.getType() != ScalarType.BOOLEAN) {
+      throw new HdesCompilerException(
+          HdesCompilerException.builder().incompatibleType(node, ScalarType.BOOLEAN, left.getType()));
     }
 
-    EnCodeSpec right = visit(node.getLeft());
-    if(right.getType() != ScalarType.BOOLEAN) {
-      throw new HdesCompilerException(HdesCompilerException.builder().incompatibleType(node, ScalarType.BOOLEAN, right.getType()));
+    EnScalarCodeSpec right = visitScalar(node.getLeft());
+    if (right.getType() != ScalarType.BOOLEAN) {
+      throw new HdesCompilerException(
+          HdesCompilerException.builder().incompatibleType(node, ScalarType.BOOLEAN, right.getType()));
     }
 
-    return ImmutableEnCodeSpec.builder()
-        .value(CodeBlock.builder().add(left.getValue()).add(" || ").add(right.getValue()).build())
-        .build();
+    return ImmutableEnScalarCodeSpec.builder()
+        .value(CodeBlock.builder().add(left.getValue()).add(" && ").add(right.getValue()).build()).build();
   }
 
   @Override
-  public EnCodeSpec visitConditionalExpression(ConditionalExpression node) {
-    EnCodeSpec condition = visit(node.getOperation());
-    if(condition.getType() != ScalarType.BOOLEAN) {
-      throw new HdesCompilerException(HdesCompilerException.builder().incompatibleType(node, ScalarType.BOOLEAN, condition.getType()));
+  public EnScalarCodeSpec visitOrOperation(OrOperation node) {
+    EnScalarCodeSpec left = visitScalar(node.getLeft());
+    if (left.getType() != ScalarType.BOOLEAN) {
+      throw new HdesCompilerException(
+          HdesCompilerException.builder().incompatibleType(node, ScalarType.BOOLEAN, left.getType()));
     }
-    EnConvertionSpec conversion = EnJavaSpec.converter()
-        .src(node)
-        .value1(visit(node.getLeft()))
-        .value2(visit(node.getRight()))
-        .build();
-    
-    return ImmutableEnCodeSpec.builder()
-        .value(CodeBlock.builder()
-            .add(condition.getValue()).add("?")
-            .add(conversion.getValue1())
-            .add(":")
-            .add(conversion.getValue2())
-            .build())
-        .type(conversion.getType())
-        .build();
+
+    EnScalarCodeSpec right = visitScalar(node.getLeft());
+    if (right.getType() != ScalarType.BOOLEAN) {
+      throw new HdesCompilerException(
+          HdesCompilerException.builder().incompatibleType(node, ScalarType.BOOLEAN, right.getType()));
+    }
+
+    return ImmutableEnScalarCodeSpec.builder()
+        .value(CodeBlock.builder().add(left.getValue()).add(" || ").add(right.getValue()).build()).build();
   }
 
   @Override
-  public EnCodeSpec visitBetweenExpression(BetweenExpression node) {
-    
-    EnConvertionSpec betweenSpec = EnJavaSpec.converter()
-        .src(node)
-        .value1(visit(node.getLeft()))
-        .value2(visit(node.getRight()))
-        .build();
-    EnCodeSpec valueSpec = visit(node.getValue());
-    
+  public EnScalarCodeSpec visitConditionalExpression(ConditionalExpression node) {
+    EnScalarCodeSpec condition = visitScalar(node.getOperation());
+    if (condition.getType() != ScalarType.BOOLEAN) {
+      throw new HdesCompilerException(
+          HdesCompilerException.builder().incompatibleType(node, ScalarType.BOOLEAN, condition.getType()));
+    }
+    EnConvertionSpec conversion = EnJavaSpec.converter().src(node).value1(visitScalar(node.getLeft()))
+        .value2(visitScalar(node.getRight())).build();
+
+    return ImmutableEnScalarCodeSpec.builder().value(CodeBlock.builder().add(condition.getValue()).add("?")
+        .add(conversion.getValue1()).add(":").add(conversion.getValue2()).build()).type(conversion.getType()).build();
+  }
+
+  @Override
+  public EnScalarCodeSpec visitBetweenExpression(BetweenExpression node) {
+
+    EnConvertionSpec betweenSpec = EnJavaSpec.converter().src(node).value1(visitScalar(node.getLeft()))
+        .value2(visitScalar(node.getRight())).build();
+    EnScalarCodeSpec valueSpec = visitScalar(node.getValue());
+
     ScalarType commonType = betweenSpec.getType();
     CodeBlock left = betweenSpec.getValue1();
     CodeBlock right = betweenSpec.getValue2();
     CodeBlock value = valueSpec.getValue();
-    
-    if(valueSpec.getType() != betweenSpec.getType()) {
-      EnConvertionSpec conversion1 = EnJavaSpec.converter()
-          .src(node)
-          .value1(valueSpec)
-          .value2(ImmutableEnCodeSpec.builder().type(betweenSpec.getType()).value(left).build())
-          .build();
-      
+
+    if (valueSpec.getType() != betweenSpec.getType()) {
+      EnConvertionSpec conversion1 = EnJavaSpec.converter().src(node).value1(valueSpec)
+          .value2(ImmutableEnScalarCodeSpec.builder().type(betweenSpec.getType()).value(left).build()).build();
+
       // new types
       value = conversion1.getValue1();
       left = conversion1.getValue2();
-      
-      EnConvertionSpec conversion2 = EnJavaSpec.converter()
-          .src(node)
-          .value1(ImmutableEnCodeSpec.builder().type(conversion1.getType()).value(value).build())
-          .value2(ImmutableEnCodeSpec.builder().type(betweenSpec.getType()).value(right).build())
-          .build();
+
+      EnConvertionSpec conversion2 = EnJavaSpec.converter().src(node)
+          .value1(ImmutableEnScalarCodeSpec.builder().type(conversion1.getType()).value(value).build())
+          .value2(ImmutableEnScalarCodeSpec.builder().type(betweenSpec.getType()).value(right).build()).build();
 
       // new types
       commonType = conversion2.getType();
       right = conversion2.getValue2();
     }
-    
-    
+
     CodeBlock.Builder leftBuilder = CodeBlock.builder();
     CodeBlock.Builder rightBuilder = CodeBlock.builder();
     switch (commonType) {
@@ -449,22 +471,27 @@ public class EnImplementationVisitor extends EnTemplateVisitor<EnCodeSpec, EnCod
       rightBuilder.add("($L.isAfter($L) || $L.isEqual($L))", right, value, right, value);
       break;
     default:
-      throw new HdesCompilerException(HdesCompilerException.builder().betweenOperationNotSupportedForType(node, commonType));
+      throw new HdesCompilerException(
+          HdesCompilerException.builder().betweenOperationNotSupportedForType(node, commonType));
     }
-    
-    //lte(left, arg) && gte(right, arg)
-    
-    return ImmutableEnCodeSpec.builder()
-        .value(CodeBlock.builder()
-            .add(leftBuilder.build())
-            .add(" && ")
-            .add(rightBuilder.build())
-            .build())
-        .type(commonType)
-        .build();
+
+    // lte(left, arg) && gte(right, arg)
+
+    return ImmutableEnScalarCodeSpec.builder()
+        .value(CodeBlock.builder().add(leftBuilder.build()).add(" && ").add(rightBuilder.build()).build())
+        .type(commonType).build();
   }
 
-  private EnCodeSpec visit(AstNode node) {
+  private EnScalarCodeSpec visitScalar(AstNode node) {
+    EnJavaSpec result = visitAny(node);
+    if(result instanceof EnScalarCodeSpec) {
+      return (EnScalarCodeSpec) result;
+    }
+    throw new HdesCompilerException(HdesCompilerException.builder().unknownDTExpressionNode(node));
+  }
+  
+  
+  private EnJavaSpec visitAny(AstNode node) {
     if (node instanceof TypeName) {
       return visitTypeName((TypeName) node);
     } else if (node instanceof Literal) {
@@ -474,17 +501,7 @@ public class EnImplementationVisitor extends EnTemplateVisitor<EnCodeSpec, EnCod
     } else if (node instanceof NegateUnaryOperation) {
       return visitNegateUnaryOperation((NegateUnaryOperation) node);
     } else if (node instanceof PositiveUnaryOperation) {
-      return visitPositiveUnaryOperation((PositiveUnaryOperation) node);
-    } else if (node instanceof PreIncrementUnaryOperation) {
-      return visitPreIncrementUnaryOperation((PreIncrementUnaryOperation) node);
-    } else if (node instanceof PreDecrementUnaryOperation) {
-      return visitPreDecrementUnaryOperation((PreDecrementUnaryOperation) node);
-    } else if (node instanceof PostIncrementUnaryOperation) {
-      return visitPostIncrementUnaryOperation((PostIncrementUnaryOperation) node);
-    } else if (node instanceof PostDecrementUnaryOperation) {
-      return visitPostDecrementUnaryOperation((PostDecrementUnaryOperation) node);
-    } else if (node instanceof MethodRefNode) {
-      return visitMethodRefNode((MethodRefNode) node);
+      return visitPositiveUnaryOperation((PositiveUnaryOperation) node);  
     } else if (node instanceof EqualityOperation) {
       return visitEqualityOperation((EqualityOperation) node);
     } else if (node instanceof AndOperation) {
@@ -499,6 +516,16 @@ public class EnImplementationVisitor extends EnTemplateVisitor<EnCodeSpec, EnCod
       return visitAdditiveOperation((AdditiveOperation) node);
     } else if (node instanceof MultiplicativeOperation) {
       return visitMultiplicativeOperation((MultiplicativeOperation) node);
+    } else if (node instanceof MethodRefNode) {
+      return visitMethodRefNode((MethodRefNode) node);
+    } else if (node instanceof PreIncrementUnaryOperation) {
+      return visitPreIncrementUnaryOperation((PreIncrementUnaryOperation) node);
+    } else if (node instanceof PreDecrementUnaryOperation) {
+      return visitPreDecrementUnaryOperation((PreDecrementUnaryOperation) node);
+    } else if (node instanceof PostIncrementUnaryOperation) {
+      return visitPostIncrementUnaryOperation((PostIncrementUnaryOperation) node);
+    } else if (node instanceof PostDecrementUnaryOperation) {
+      return visitPostDecrementUnaryOperation((PostDecrementUnaryOperation) node);
     }
     throw new HdesCompilerException(HdesCompilerException.builder().unknownDTExpressionNode(node));
   }

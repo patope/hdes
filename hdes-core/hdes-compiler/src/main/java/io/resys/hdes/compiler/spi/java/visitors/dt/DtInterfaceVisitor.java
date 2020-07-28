@@ -5,31 +5,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-/*-
- * #%L
- * hdes-compiler
- * %%
- * Copyright (C) 2020 Copyright 2020 ReSys OÜ
- * %%
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * #L%
- */
-
-import java.util.function.Function;
-
 import javax.lang.model.element.Modifier;
-
-import org.immutables.value.Value.Immutable;
 
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
@@ -49,10 +25,10 @@ import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyFirst;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyMatrix;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.MatrixRow;
 import io.resys.hdes.ast.api.nodes.ImmutableScalarTypeDefNode;
-import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtMethodSpec;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtMethodsSpec;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtTypesSpec;
+import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.HdesExecutable;
 
@@ -77,26 +53,18 @@ public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> 
         .addModifiers(Modifier.PUBLIC)
         .addAnnotations(annotations)
         .addSuperinterface(naming.dt().executable(node))
-        .addTypes(visitHeaders(node.getHeaders()).getValues()).build();
+        .addTypes(visitHeaders(node.getHeaders()).getValues())
+        .addType(new DtStaticVariableRefVisitor(naming).visitDecisionTableBody(node))
+        .build();
     return result;
   }
   
   @Override
-  public DtTypesSpec visitHeaders(Headers node) {
-    Function<ClassName, TypeSpec.Builder> from = (name) -> {
-      ClassName jsonType = JavaSpecUtil.immutable(name);
-      return TypeSpec
-          .interfaceBuilder(name)
-          .addAnnotation(Immutable.class)
-          .addAnnotation(AnnotationSpec.builder(ClassName.get("com.fasterxml.jackson.databind.annotation", "JsonSerialize")).addMember("as", "$T.class", jsonType).build())
-          .addAnnotation(AnnotationSpec.builder(ClassName.get("com.fasterxml.jackson.databind.annotation", "JsonDeserialize")).addMember("as", "$T.class", jsonType).build())
-          .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
-    };
-        
-    TypeSpec.Builder inputBuilder = from.apply(naming.dt().inputValue(body))
+  public DtTypesSpec visitHeaders(Headers node) {        
+    TypeSpec.Builder inputBuilder = JavaSpecUtil.immutableSpec(naming.dt().inputValue(body))
         .addSuperinterface(HdesExecutable.InputValue.class);
     
-    TypeSpec.Builder outputBuilder = from.apply(naming.dt().outputValueFlux(body))
+    TypeSpec.Builder outputBuilder = JavaSpecUtil.immutableSpec(naming.dt().outputValueFlux(body))
         .addSuperinterface(HdesExecutable.OutputValue.class);
     
     for(TypeDefNode header : node.getValues()) {
@@ -118,7 +86,7 @@ public class DtInterfaceVisitor extends DtTemplateVisitor<DtJavaSpec, TypeSpec> 
     boolean isCollection = body.getHitPolicy() instanceof HitPolicyAll;
     if (isCollection) {
       ParameterizedTypeName returnType = ParameterizedTypeName.get(ClassName.get(Collection.class), naming.dt().outputValueFlux(body));
-      TypeSpec collectionOutput = from.apply(naming.dt().outputValueMono(body))
+      TypeSpec collectionOutput = JavaSpecUtil.immutableSpec(naming.dt().outputValueMono(body))
         .addSuperinterface(HdesExecutable.OutputValue.class)
         .addMethod(MethodSpec.methodBuilder(JavaSpecUtil.methodName("values"))
           .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)

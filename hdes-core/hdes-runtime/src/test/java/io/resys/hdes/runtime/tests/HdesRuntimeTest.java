@@ -47,7 +47,6 @@ public class HdesRuntimeTest {
   private static final HdesCompiler compiler = JavaHdesCompiler.config().build();
   private static final ObjectMapper objectMapper = new ObjectMapper();
   
-
   @Test 
   public void dtHitPolicyAll() {
     String src = "define decision-table: ExpressionDT description: 'uber dt'\n" + 
@@ -152,8 +151,8 @@ public class HdesRuntimeTest {
         "headers: {\n" + 
         "  name     STRING required IN,\n" + 
         "  lastName STRING required IN,\n" +  
-        "  total    INTEGER required OUT formula: sum(instance), // total score of hit columns\n" + 
-        "  avg      INTEGER required OUT formula: avg(instance), // avg score hit columns\n" + 
+//        "  total    INTEGER required OUT formula: sum(instance), // total score of hit columns\n" + 
+//        "  avg      INTEGER required OUT formula: avg(instance), // avg score hit columns\n" + 
         "  max      INTEGER required OUT formula: sum(static.map(row -> max(row))) // sum max possible score of defined fields\n" + 
         "\n" + 
         "} MATRIX from STRING to INTEGER: {\n" + 

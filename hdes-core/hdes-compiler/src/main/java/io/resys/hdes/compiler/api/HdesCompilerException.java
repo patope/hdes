@@ -254,5 +254,33 @@ public class HdesCompilerException extends RuntimeException {
           .append("  - ").append(ast).append("!")
           .toString();
     }
+    
+    
+    public String unknownFunctionCall(AstNode ast, String was) {
+      return new StringBuilder()
+          .append("Unknown function in expression!").append(System.lineSeparator())
+          .append("Function: ").append(was).append(" !").append(System.lineSeparator())
+          .append(" AST: ").append(ast.getClass()).append(System.lineSeparator())
+          .append("  - ").append(ast).append("!")
+          .toString();
+    }
+    
+    public String dtHeaderOutputMatrixCantBeRequired(TypeDefNode header) {
+      return new StringBuilder()
+          .append("Decision table with hit policy matrix can't have REQUIRED output!").append(System.lineSeparator())
+          .append("Header name: ").append(header.getName()).append(" !").append(System.lineSeparator())
+          .append(" AST: ").append(header.getClass()).append(System.lineSeparator())
+          .append("  - ").append(header).append("!")
+          .toString();
+    }
+    
+    public String dtHeaderOutputMatrixHasToHaveFormula(TypeDefNode header) {
+      return new StringBuilder()
+          .append("Decision table with hit policy matrix can't have output without FORMULA!").append(System.lineSeparator())
+          .append("Header name: ").append(header.getName()).append(" !").append(System.lineSeparator())
+          .append(" AST: ").append(header.getClass()).append(System.lineSeparator())
+          .append("  - ").append(header).append("!")
+          .toString();
+    }
   }
 }

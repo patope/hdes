@@ -21,6 +21,7 @@ package io.resys.hdes.executor.api;
  */
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 
 import org.immutables.value.Value;
@@ -38,5 +39,10 @@ public interface DecisionTableMeta extends HdesExecutable.Meta {
     int getId();
     int getIndex();
     MetaToken getToken();
+  }
+  
+  
+  interface DecisionTableStaticValue<T> extends Serializable, Iterable<T> {
+    List<T> getValues();
   }
 }

@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.immutables.value.Value;
@@ -46,7 +47,6 @@ import io.resys.hdes.ast.HdesParser.TypeNameContext;
  */
 
 import io.resys.hdes.ast.api.nodes.AstNode;
-import io.resys.hdes.ast.api.nodes.AstNode.ArrayTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
@@ -56,7 +56,6 @@ import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeNameScope;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
-import io.resys.hdes.ast.api.nodes.ImmutableArrayTypeDefNode;
 import io.resys.hdes.ast.api.nodes.ImmutableHeaders;
 import io.resys.hdes.ast.api.nodes.ImmutableObjectTypeDefNode;
 import io.resys.hdes.ast.api.nodes.ImmutableScalarTypeDefNode;
@@ -77,8 +76,9 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
   public interface RedundentScalarType extends AstNode {
     ScalarType getValue();
   }
+
   @Value.Immutable
-  public interface RedundentDebugValue extends ManualTaskNode {
+  public interface RedundentDebugValue extends AstNode {
     String getValue();
   }
   @Value.Immutable
@@ -119,17 +119,19 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
 
   @Override
   public TypeName visitTypeName(TypeNameContext ctx) {
-    TerminalNode child = (TerminalNode) ctx.getChild(0);
-    final TypeNameScope scope;
-    if(child.getSymbol().getType() == HdesParser.STATIC_SCOPE) {
+    final TypeNameScope scope;    
+    
+    ParseTree child = ctx.getChild(0);
+    TerminalNode terminal = child instanceof TerminalNode ? (TerminalNode) child : null;
+    
+    if(terminal != null && terminal.getSymbol().getType() == HdesParser.STATIC_SCOPE) {
       scope = TypeNameScope.STATIC;
-    } else if(child.getSymbol().getType() == HdesParser.INSTANCE_SCOPE) {
+    } else if(terminal != null && terminal.getSymbol().getType() == HdesParser.INSTANCE_SCOPE) {
       scope = TypeNameScope.INSTANCE;
     } else {
       scope = TypeNameScope.VAR;
     }
-    
-    
+  
     return ImmutableTypeName.builder()
         .token(token(ctx))
         .value(ctx.getText())
@@ -181,6 +183,13 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
   }
   
   @Override
+  public RedundentFormula visitFormula(FormulaContext ctx) {
+    Nodes nodes = nodes(ctx);
+    Optional<ExpressionBody> exp = nodes.of(ExpressionBody.class);
+    return ImmutableRedundentFormula.builder().token(token(ctx)).value(exp.get()).build();
+  }
+  
+  @Override
   public ScalarTypeDefNode visitSimpleType(SimpleTypeContext ctx) {
     TerminalNode requirmentType = (TerminalNode) ctx.getChild(1);
     Nodes nodes = nodes(ctx);
@@ -193,28 +202,20 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
         .direction(nodes.of(RedundentDirection.class).get().getValue())
         .debugValue(nodes.of(RedundentDebugValue.class).map(e -> e.getValue()))
         .formula(nodes.of(RedundentFormula.class).map(e -> e.getValue()))
+        .array(false)
         .build();
   }
   
   @Override
-  public RedundentFormula visitFormula(FormulaContext ctx) {
-    Nodes nodes = nodes(ctx);
-    Optional<ExpressionBody> exp = nodes.of(ExpressionBody.class);
-    return ImmutableRedundentFormula.builder().token(token(ctx)).value(exp.get()).build();
-  }
-  
-  @Override
-  public ArrayTypeDefNode visitArrayType(ArrayTypeContext ctx) {
+  public TypeDefNode visitArrayType(ArrayTypeContext ctx) {
     Nodes nodes = nodes(ctx);
     TypeDefNode input = nodes.of(TypeDefNode.class).get();
-    
-    return ImmutableArrayTypeDefNode.builder()
-        .token(token(ctx))
-        .required(input.getRequired())
-        .name(input.getName())
-        .direction(input.getDirection())
-        .value(input)
-        .build();
+    if(input instanceof ObjectTypeDefNode) {
+      ObjectTypeDefNode def = (ObjectTypeDefNode) input;
+      return ImmutableObjectTypeDefNode.builder().from(def).array(true).build();
+    }
+    ScalarTypeDefNode def = (ScalarTypeDefNode) input;
+    return ImmutableScalarTypeDefNode.builder().from(def).array(true).build();
   }
 
   @Override
@@ -230,6 +231,7 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
         .name(getDefTypeName(ctx).getValue())
         .direction(nodes.of(RedundentDirection.class).get().getValue())
         .values(values)
+        .array(false)
         .build();
   }
 
@@ -240,5 +242,12 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
         .token(token(ctx))
         .value(nodes.of(Literal.class).get().getValue())
         .build();
+  }
+  
+  protected final TypeName getDefTypeName(ParserRuleContext ctx) {
+    if(ctx.getParent() instanceof TypeDefContext) {
+      return (TypeName) ctx.getParent().getChild(0).accept(this);
+    }
+    return (TypeName) ctx.getParent().getParent().getChild(0).accept(this);
   }
 }

@@ -1,4 +1,4 @@
-package io.resys.hdes.compiler.spi.java.visitors.dt;
+package io.resys.hdes.compiler.spi.java;
 
 /*-
  * #%L
@@ -26,36 +26,39 @@ import java.util.stream.Collectors;
 import com.squareup.javapoet.TypeSpec;
 
 import io.resys.hdes.ast.api.AstEnvir;
-import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
+import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompiler.Resource;
 import io.resys.hdes.compiler.api.ImmutableResource;
 import io.resys.hdes.compiler.api.ImmutableTypeDeclaration;
 import io.resys.hdes.compiler.api.ImmutableTypeName;
-import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
+import io.resys.hdes.compiler.spi.java.visitors.fl.FlImplementationVisitor;
+import io.resys.hdes.compiler.spi.java.visitors.fl.FlInterfaceVisitor;
+import io.resys.hdes.compiler.spi.java.visitors.fl.FlSwitchVisitor;
+import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.HdesExecutable;
 
-public class DtDeclarationFactory {
-  private DecisionTableBody body;
+public class FlDeclarationFactory {
+  private FlowBody body;
   private AstEnvir envir;
   private Namings naming;
 
-  public static DtDeclarationFactory create() {
-    return new DtDeclarationFactory();
+  public static FlDeclarationFactory create() {
+    return new FlDeclarationFactory();
   }
 
-  public DtDeclarationFactory body(DecisionTableBody body) {
+  public FlDeclarationFactory body(FlowBody body) {
     this.body = body;
     return this;
   }
 
-  public DtDeclarationFactory envir(AstEnvir envir) {
+  public FlDeclarationFactory envir(AstEnvir envir) {
     this.envir = envir;
     return this;
   }
 
-  public DtDeclarationFactory naming(Namings naming) {
+  public FlDeclarationFactory naming(Namings naming) {
     this.naming = naming;
     return this;
   }
@@ -65,26 +68,23 @@ public class DtDeclarationFactory {
     Assertions.notNull(envir, () -> "envir can't be null");
     Assertions.notNull(body, () -> "body can't be null");
 
-    final TypeSpec api = new DtInterfaceVisitor(naming).visitDecisionTableBody(body);
-    final TypeSpec impl = new DtImplementationVisitor(naming).visitDecisionTableBody(body);
-    final List<TypeSpec> formulaApis = new DtFormulaVisitor(naming).visitDecisionTableBody(body);
+    TypeSpec api = new FlInterfaceVisitor(naming).visitBody(body);
+    TypeSpec impl = new FlImplementationVisitor(naming).visitBody(body);
+    List<TypeSpec> switches = new FlSwitchVisitor(naming).visitBody(body);
     
-    final var pkg = naming.dt().pkg(body);
-    final var nestedPkg = pkg + "." + api.name;
+
+    String pkg = naming.fl().pkg(body); 
     
     return ImmutableResource.builder()
-        .type(HdesExecutable.SourceType.DT)
+        .type(HdesExecutable.SourceType.FL)
         .name(body.getId().getValue())
         .source(body.getToken().getText())
         .ast(body)
-        .addAllTypes(api.typeSpecs.stream().map(spec -> ImmutableTypeName.builder().name(spec.name).pkg(nestedPkg).build()).collect(Collectors.toList()))
-        .addTypes(ImmutableTypeName.builder().name(api.name).pkg(pkg).build())
-        .addTypes(ImmutableTypeName.builder().name(impl.name).pkg(pkg).build())
         
-        .input(JavaSpecUtil.typeName(naming.dt().inputValue(body)))
-        .output(JavaSpecUtil.typeName(naming.dt().outputValueMono(body)))
-        
-        .addAllDeclarations(formulaApis.stream().map(s -> ImmutableTypeDeclaration.builder()
+        .input(JavaSpecUtil.typeName(naming.fl().inputValue(body)))
+        .output(JavaSpecUtil.typeName(naming.fl().outputValue(body)))
+
+        .addAllDeclarations(switches.stream().map(s -> ImmutableTypeDeclaration.builder()
             .type(ImmutableTypeName.builder().name(s.name).pkg(pkg).build())
             .isExecutable(false).value(JavaSpecUtil.javaFile(s, pkg)).build())
             .collect(Collectors.toList()))
@@ -96,7 +96,7 @@ public class DtDeclarationFactory {
         .addDeclarations(ImmutableTypeDeclaration.builder()
             .type(ImmutableTypeName.builder().name(impl.name).pkg(pkg).build())
             .isExecutable(true).value(JavaSpecUtil.javaFile(impl, pkg)).build())
-        
+
         .build();
   }
 }

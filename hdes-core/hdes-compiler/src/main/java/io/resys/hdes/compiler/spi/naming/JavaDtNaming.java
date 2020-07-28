@@ -58,6 +58,12 @@ public class JavaDtNaming implements DtNaming {
   }
 
   @Override
+  public ClassName staticValue(DecisionTableBody node) {
+    ClassName api = api(node);
+    return ClassName.get(api.canonicalName(), node.getId().getValue() + "Static");
+  }
+  
+  @Override
   public ClassName inputValue(DecisionTableBody node) {
     return inputValue(node.getId().getValue());
   }

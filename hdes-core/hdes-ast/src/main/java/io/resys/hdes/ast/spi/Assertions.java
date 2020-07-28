@@ -33,8 +33,9 @@ public class Assertions {
   }
 
   public static void isTrue(boolean object, Supplier<String> msg) {
-    if(!object) {
-      throw new AstNodeException(msg.get());
+    if(object) {
+      return;
     }
+    throw new AstNodeException(msg.get());
   }
 }

@@ -30,7 +30,6 @@ import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings.FlNaming;
 import io.resys.hdes.compiler.spi.naming.Namings.TaskRefNaming;
 import io.resys.hdes.executor.api.FlowMeta;

@@ -37,7 +37,6 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 
-import io.resys.hdes.ast.api.nodes.AstNode.ArrayTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
 import io.resys.hdes.ast.api.nodes.AstNode.Headers;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
@@ -46,11 +45,11 @@ import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.ImmutableScalarTypeDefNode;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtHeaderSpec;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtTypesSpec;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnImplementationVisitor;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnInterfaceVisitor;
+import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.FormulaMeta;
 import io.resys.hdes.executor.api.HdesExecutable;
@@ -62,7 +61,7 @@ import io.resys.hdes.executor.api.ImmutableFormulaMeta;
 public class DtFormulaVisitor extends DtTemplateVisitor<DtJavaSpec, List<TypeSpec>> {
 
   private final Namings naming;
-  private DtTypeNameResolver typeNames;
+  private DtEnReferedTypeResolver typeNames;
   private DecisionTableBody body;
 
   public DtFormulaVisitor(Namings naming) {
@@ -73,7 +72,7 @@ public class DtFormulaVisitor extends DtTemplateVisitor<DtJavaSpec, List<TypeSpe
   @Override
   public List<TypeSpec> visitDecisionTableBody(DecisionTableBody node) {
     this.body = node;
-    this.typeNames = new DtTypeNameResolver(node);
+    this.typeNames = new DtEnReferedTypeResolver(node);
     return Collections.unmodifiableList(visitHeaders(node.getHeaders()).getValues());
   }
   
@@ -103,7 +102,7 @@ public class DtFormulaVisitor extends DtTemplateVisitor<DtJavaSpec, List<TypeSpe
     
     ScalarTypeDefNode outputReturnType = ImmutableScalarTypeDefNode.builder().from(typeDef).required(Boolean.TRUE).build();
     
-    List<TypeDefNode> types = new EnInterfaceVisitor(this.typeNames).visitExpressionBody(typeDef.getFormula().get());
+    List<TypeDefNode> expressionTypes = new EnInterfaceVisitor(this.typeNames).visitExpressionBody(typeDef.getFormula().get());
     ClassName outputType = naming.fr().outputValue(body, typeDef);
     
     TypeSpec api = TypeSpec.interfaceBuilder(naming.fr().api(body, typeDef))
@@ -114,7 +113,7 @@ public class DtFormulaVisitor extends DtTemplateVisitor<DtJavaSpec, List<TypeSpe
         .addSuperinterface(naming.fr().executable(body, typeDef))
         
         // input
-        .addTypes(visitInputs(types, typeDef).getValues())
+        .addTypes(visitInputs(expressionTypes, typeDef).getValues())
         
         // output
         .addType(JavaSpecUtil.immutableSpec(outputType)
@@ -191,8 +190,6 @@ public class DtFormulaVisitor extends DtTemplateVisitor<DtJavaSpec, List<TypeSpe
   private DtHeaderSpec visitTypeDef(TypeDefNode node, ScalarTypeDefNode parent) {
     if (node instanceof ScalarTypeDefNode) {
       return visitScalarDef((ScalarTypeDefNode) node);
-    } else if (node instanceof ArrayTypeDefNode) {
-      return visitArrayDef((ArrayTypeDefNode) node, parent);
     } else if (node instanceof ObjectTypeDefNode) {
       return visitObjectDef((ObjectTypeDefNode) node, parent);
     }
@@ -201,27 +198,22 @@ public class DtFormulaVisitor extends DtTemplateVisitor<DtJavaSpec, List<TypeSpe
 
   @Override
   public DtHeaderSpec visitScalarDef(ScalarTypeDefNode node) {
-    Class<?> returnType = JavaSpecUtil.type(node.getType());
-    MethodSpec method = MethodSpec.methodBuilder(JavaSpecUtil.methodName(node.getName()))
-        .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-        .returns( node.getRequired() ? ClassName.get(returnType) : ParameterizedTypeName.get(Optional.class, returnType))
-        .build();
-    return ImmutableDtHeaderSpec.builder().value(method).build();
-  }
-
-  private DtHeaderSpec visitArrayDef(ArrayTypeDefNode node, ScalarTypeDefNode parent) {
-    DtHeaderSpec childSpec = visitTypeDef(node.getValue(), parent);
-    com.squareup.javapoet.TypeName arrayType;
-    if (node.getValue().getRequired()) {
-      arrayType = childSpec.getValue().returnType;
+    final Class<?> returnType = JavaSpecUtil.type(node.getType());
+    
+    final com.squareup.javapoet.TypeName returnTypeName;
+    if(node.getArray()) {
+      returnTypeName = ParameterizedTypeName.get(ClassName.get(List.class), ClassName.get(returnType));
+    } else if(node.getRequired()) {
+      returnTypeName = ClassName.get(returnType);
     } else {
-      arrayType = ((ParameterizedTypeName) childSpec.getValue().returnType).typeArguments.get(0);
+      returnTypeName = ParameterizedTypeName.get(Optional.class, returnType);
     }
-    return ImmutableDtHeaderSpec.builder()
-        .value(childSpec.getValue().toBuilder()
-            .returns(ParameterizedTypeName.get(ClassName.get(List.class), arrayType))
-            .build())
-        .children(childSpec.getChildren())
+    
+    return ImmutableDtHeaderSpec.builder().value(
+        MethodSpec.methodBuilder(JavaSpecUtil
+            .methodName(node.getName()))
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .returns(returnTypeName).build())
         .build();
   }
 
@@ -240,13 +232,22 @@ public class DtFormulaVisitor extends DtTemplateVisitor<DtJavaSpec, List<TypeSpe
     }
     TypeSpec objectType = objectBuilder.build();
     nested.add(objectType);
+    
+    final com.squareup.javapoet.TypeName returnTypeName;
+    if(node.getArray()) {
+      returnTypeName = ParameterizedTypeName.get(ClassName.get(List.class), typeName);
+    } else if(node.getRequired()) {
+      returnTypeName = typeName;
+    } else {
+      returnTypeName = ParameterizedTypeName.get(ClassName.get(Optional.class), typeName);
+    }
+    
     return ImmutableDtHeaderSpec.builder()
         .children(nested)
-        .value(
-            MethodSpec.methodBuilder(JavaSpecUtil.methodName(node.getName()))
-                .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-                .returns(node.getRequired() ? typeName : ParameterizedTypeName.get(ClassName.get(Optional.class), typeName))
-                .build())
+        .value(MethodSpec
+            .methodBuilder(JavaSpecUtil.methodName(node.getName()))
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .returns(returnTypeName).build())
         .build();
   }
 }

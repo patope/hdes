@@ -22,11 +22,13 @@ package io.resys.hdes.compiler.spi.java.visitors.en;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeNameScope;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.ExpressionAstNodeVisitor;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.AndOperation;
@@ -46,14 +48,14 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.PostIncrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnaryOperation;
 import io.resys.hdes.compiler.api.HdesCompilerException;
+import io.resys.hdes.compiler.spi.java.en.EnReferedTypesSpec.EnReferedTypeResolver;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnRefSpec;
-import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.TypeNameResolver;
 
 public class EnInterfaceVisitor extends EnTemplateVisitor<EnRefSpec, List<TypeDefNode>> implements ExpressionAstNodeVisitor<EnRefSpec, List<TypeDefNode>> {
   
-  private final TypeNameResolver resolver;
+  private final EnReferedTypeResolver resolver;
   
-  public EnInterfaceVisitor(TypeNameResolver resolver) {
+  public EnInterfaceVisitor(EnReferedTypeResolver resolver) {
     super();
     this.resolver = resolver;
   }
@@ -63,17 +65,41 @@ public class EnInterfaceVisitor extends EnTemplateVisitor<EnRefSpec, List<TypeDe
     List<TypeDefNode> result = new ArrayList<>();
     for(AstNode ref : visit(node.getValue()).getValues()) {
       if(ref instanceof TypeName) {
-        TypeDefNode def = resolver.accept((TypeName) ref); 
+        TypeName typeName = (TypeName) ref;
+        if(typeName.getScope() == TypeNameScope.STATIC) {
+          continue;
+        }
+        
+        TypeDefNode def = resolver.accept(typeName); 
         result.add(def);
       } else if(ref instanceof MethodRefNode) {
         EnRefSpec spec = visitMethodRefNode((MethodRefNode) ref);
-        // TODO
         
+        for(AstNode child : spec.getValues()) {
+          if(child instanceof TypeDefNode) {
+            result.add((TypeDefNode) child);
+          }
+        }
       } else {
         throw new HdesCompilerException(HdesCompilerException.builder().unknownExpressionParameter(ref));
       }
     }
     return result;
+  }
+  
+  @Override
+  public EnRefSpec visitLambdaExpression(LambdaExpression node) {
+    List<String> lambdaParams = node.getParams().stream()
+        .map(t -> t.getValue())
+        .collect(Collectors.toList());
+    
+    List<AstNode> values = visit(node.getBody()).getValues().stream()
+      .filter(t -> t instanceof TypeName)
+      .map(t -> (TypeName) t)
+      .filter(t -> !lambdaParams.contains(t.getValue()))
+      .collect(Collectors.toList());
+
+    return ImmutableEnRefSpec.builder().addAllValues(values).build();
   }
   
   @Override
@@ -84,8 +110,11 @@ public class EnInterfaceVisitor extends EnTemplateVisitor<EnRefSpec, List<TypeDe
   @Override
   public EnRefSpec visitMethodRefNode(MethodRefNode node) {
     List<AstNode> values = new ArrayList<>();
+    if(node.getType().isPresent()) {
+      values.addAll(visitTypeName(node.getType().get()).getValues());
+    }
     node.getValues().forEach(v -> values.addAll(visit(v).getValues()));
-    return ImmutableEnRefSpec.builder().addValues(node).build();
+    return ImmutableEnRefSpec.builder().addAllValues(values).build();
   }
   
   @Override

@@ -1,7 +1,6 @@
 package io.resys.hdes.ast.api.nodes;
 
 import java.util.List;
-import java.util.Optional;
 
 /*-
  * #%L
@@ -32,7 +31,6 @@ public interface DecisionTableNode extends AstNode {
   
   @Value.Immutable
   interface DecisionTableBody extends DecisionTableNode, BodyNode {
-    Optional<String> getDescription();
     HitPolicy getHitPolicy();
   }
  

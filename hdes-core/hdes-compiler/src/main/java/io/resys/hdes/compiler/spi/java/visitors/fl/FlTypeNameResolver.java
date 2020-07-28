@@ -24,12 +24,12 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import io.resys.hdes.ast.api.AstEnvir;
-import io.resys.hdes.ast.api.nodes.AstNode.ArrayTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.BodyNode;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodRefNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskPointer;
@@ -37,9 +37,9 @@ import io.resys.hdes.ast.api.nodes.FlowNode.ThenPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.TypeNameResolver;
+import io.resys.hdes.compiler.spi.java.en.EnReferedTypesSpec.EnReferedTypeResolver;
 
-public class FlTypeNameResolver implements TypeNameResolver {
+public class FlTypeNameResolver implements EnReferedTypeResolver {
   private final FlowBody body;
   private final AstEnvir astEnvir;
 
@@ -133,10 +133,14 @@ public class FlTypeNameResolver implements TypeNameResolver {
       
       return Optional.empty();
     
-    } else if(node instanceof ArrayTypeDefNode) {
-      // array access not supported
     }
     return Optional.empty();
     
+  }
+
+  @Override
+  public TypeDefNode accept(MethodRefNode name) {
+    // TODO Auto-generated method stub
+    return null;
   }
 }

@@ -36,7 +36,6 @@ public interface ManualTaskNode extends AstNode {
   
   @Value.Immutable
   interface ManualTaskBody extends ManualTaskNode, BodyNode {
-    String getDescription();
     ManualTaskDropdowns getDropdowns();
     ManualTaskActions getActions();
     ManualTaskForm getForm();

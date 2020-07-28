@@ -9,14 +9,14 @@ import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
-import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnCodeSpec;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnConvertionSpec;
+import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnScalarCodeSpec;
+import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 
 public class TypeConverter {
   private AstNode src;
-  private EnCodeSpec value1;
-  private EnCodeSpec value2;
+  private EnScalarCodeSpec value1;
+  private EnScalarCodeSpec value2;
   
   private static boolean stringType(ScalarType t) {
     return t == ScalarType.STRING;
@@ -42,23 +42,23 @@ public class TypeConverter {
     return this;
   }
   
-  public TypeConverter value1(EnCodeSpec value1) {
+  public TypeConverter value1(EnScalarCodeSpec value1) {
     this.value1 = value1;
     return this;
   }
   
   public TypeConverter value1(CodeBlock value1, ScalarType type) {
-    this.value1 = ImmutableEnCodeSpec.builder().value(value1).type(type).build();;
+    this.value1 = ImmutableEnScalarCodeSpec.builder().value(value1).type(type).build();;
     return this;
   }
   
-  public TypeConverter value2(EnCodeSpec value2) {
+  public TypeConverter value2(EnScalarCodeSpec value2) {
     this.value2 = value2;
     return this;      
   }
   
   public TypeConverter value2(CodeBlock value2, ScalarType type) {
-    this.value2 = ImmutableEnCodeSpec.builder().value(value2).type(type).build();
+    this.value2 = ImmutableEnScalarCodeSpec.builder().value(value2).type(type).build();
     return this;      
   }
   

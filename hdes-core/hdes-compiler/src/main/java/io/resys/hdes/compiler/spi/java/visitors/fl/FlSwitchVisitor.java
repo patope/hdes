@@ -34,7 +34,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 
-import io.resys.hdes.ast.api.nodes.AstNode.ArrayTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
@@ -47,12 +46,12 @@ import io.resys.hdes.ast.api.nodes.FlowNode.ThenPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnImplementationVisitor;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnInterfaceVisitor;
-import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnCodeSpec;
+import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnScalarCodeSpec;
 import io.resys.hdes.compiler.spi.java.visitors.fl.FlJavaSpec.FlHeaderSpec;
 import io.resys.hdes.compiler.spi.java.visitors.fl.FlJavaSpec.FlTypesSpec;
+import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.HdesExecutable;
 
@@ -107,7 +106,7 @@ public class FlSwitchVisitor extends FlTemplateVisitor<FlJavaSpec, List<TypeSpec
           switchTypes.addAll(new EnInterfaceVisitor(this.typeNames).visitExpressionBody(c.getWhen().get()));
           
           // Expression Body - boolean conditions
-          EnCodeSpec gateBody = new EnImplementationVisitor(this.typeNames).visitExpressionBody(c.getWhen().get());
+          EnScalarCodeSpec gateBody = new EnImplementationVisitor(this.typeNames).visitExpressionBody(c.getWhen().get());
           System.out.println(gateBody);
         }
         
@@ -168,10 +167,12 @@ public class FlSwitchVisitor extends FlTemplateVisitor<FlJavaSpec, List<TypeSpec
   }
 
   private FlHeaderSpec visitTypeDef(TypeDefNode node, FlowTaskNode parent) {
-    if (node instanceof ScalarTypeDefNode) {
+    if (node.getArray()) {
+      return visitArrayDef(node, parent);
+
+    } else if (node instanceof ScalarTypeDefNode) {
       return visitScalarDef((ScalarTypeDefNode) node, parent);
-    } else if (node instanceof ArrayTypeDefNode) {
-      return visitArrayDef((ArrayTypeDefNode) node, parent);
+    
     } else if (node instanceof ObjectTypeDefNode) {
       return visitObjectDef((ObjectTypeDefNode) node, parent);
     }
@@ -188,10 +189,11 @@ public class FlSwitchVisitor extends FlTemplateVisitor<FlJavaSpec, List<TypeSpec
     return ImmutableFlHeaderSpec.builder().value(method).build();
   }
 
-  private FlHeaderSpec visitArrayDef(ArrayTypeDefNode node, FlowTaskNode parent) {
-    FlHeaderSpec childSpec = visitTypeDef(node.getValue(), parent);
+  private FlHeaderSpec visitArrayDef(TypeDefNode node, FlowTaskNode parent) {
+    FlHeaderSpec childSpec = visitTypeDef(node, parent);
     com.squareup.javapoet.TypeName arrayType;
-    if (node.getValue().getRequired()) {
+    
+    if (node instanceof ScalarTypeDefNode && ((ScalarTypeDefNode) node).getRequired()) {
       arrayType = childSpec.getValue().returnType;
     } else {
       arrayType = ((ParameterizedTypeName) childSpec.getValue().returnType).typeArguments.get(0);

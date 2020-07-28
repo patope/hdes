@@ -28,7 +28,6 @@ import io.resys.hdes.ast.api.nodes.AstNode.BodyNode;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
-import io.resys.hdes.compiler.spi.java.visitors.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings.FormulaNaming;
 import io.resys.hdes.executor.api.FormulaMeta;
 import io.resys.hdes.executor.api.HdesExecutable.Execution;

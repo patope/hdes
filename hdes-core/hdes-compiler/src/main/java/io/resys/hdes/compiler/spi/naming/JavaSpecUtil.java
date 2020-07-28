@@ -1,4 +1,4 @@
-package io.resys.hdes.compiler.spi.java.visitors;
+package io.resys.hdes.compiler.spi.naming;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -45,13 +45,18 @@ import io.resys.hdes.compiler.api.ImmutableTypeName;
 
 public class JavaSpecUtil {
   
+  
   public static TypeSpec.Builder immutableSpec(ClassName name) {
     ClassName immutable = immutable(name);
     return TypeSpec
       .interfaceBuilder(name)
       .addAnnotation(Immutable.class)
-      .addModifiers(Modifier.PUBLIC, Modifier.STATIC)    
-      .addAnnotation(AnnotationSpec.builder(ClassName.get("com.fasterxml.jackson.databind.annotation", "JsonSerialize")).addMember("as", "$T.class", immutable).build())
+      .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+      .addAnnotation(AnnotationSpec
+          .builder(ClassName.get("com.fasterxml.jackson.databind.annotation", "JsonSerialize"))
+          .addMember("as", "$T.class", immutable)
+          .build())
+      
       .addAnnotation(AnnotationSpec.builder(ClassName.get("com.fasterxml.jackson.databind.annotation", "JsonDeserialize")).addMember("as", "$T.class", immutable).build());    
   }
   

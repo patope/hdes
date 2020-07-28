@@ -2,8 +2,7 @@ define decision-table: SimpleHitPolicyMatrixDt
 
 headers: {
   name     STRING required IN,
-  lastName STRING required IN,
-  score    INTEGER required OUT
+  lastName STRING required IN
 
 } MATRIX from STRING to INTEGER: {
 /* first row is expressions */ { 'BOB', 'SAM', ? },

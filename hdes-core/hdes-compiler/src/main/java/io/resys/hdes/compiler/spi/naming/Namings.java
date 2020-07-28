@@ -74,6 +74,7 @@ public interface Namings {
     
     ParameterizedTypeName execution(DecisionTableBody node);
     
+    ClassName staticValue(DecisionTableBody node);
     ClassName inputValue(DecisionTableBody node);
     ClassName outputValueMono(DecisionTableBody node);
     ClassName outputValueFlux(DecisionTableBody node);

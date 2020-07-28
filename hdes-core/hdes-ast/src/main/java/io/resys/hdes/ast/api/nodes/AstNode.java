@@ -31,6 +31,7 @@ public interface AstNode {
   
   interface BodyNode extends AstNode {
     TypeName getId();
+    Optional<String> getDescription();
     Headers getHeaders();
   }
   
@@ -107,18 +108,14 @@ public interface AstNode {
     Boolean getRequired();
     DirectionType getDirection();
     String getName();
+    Boolean getArray();
   }
   
   @Value.Immutable
   interface ObjectTypeDefNode extends TypeDefNode {
     List<TypeDefNode> getValues();
   }
-  
-  @Value.Immutable
-  interface ArrayTypeDefNode extends TypeDefNode {
-    TypeDefNode getValue();
-  }
-  
+
   @Value.Immutable
   interface ScalarTypeDefNode extends TypeDefNode {
     Optional<String> getDebugValue();

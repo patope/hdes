@@ -146,7 +146,7 @@ public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
     return ImmutableLambdaExpression.builder()
         .token(token(ctx))
         .params(nodes.of(RedundentLambdaParams.class).map(e -> e.getValues()).orElse(Collections.emptyList()))
-        .body(nodes.of(RedundentLambdaBody.class).get())
+        .body(nodes.of(RedundentLambdaBody.class).get().getValue())
         .build();
   }
   
