@@ -29,8 +29,8 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.NotUnaryOperation;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec;
-import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnConvertionSpec;
+import io.resys.hdes.compiler.spi.java.en.TypeConverter;
+import io.resys.hdes.compiler.spi.java.en.TypeConverter.EnConvertionSpec;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 
 public class DtRuleSpec {
@@ -116,7 +116,7 @@ public class DtRuleSpec {
       DtExpressionCodeSpec value1 = accept(node.getLeft());
       DtExpressionCodeSpec value2 = accept(node.getRight());
 
-      EnConvertionSpec spec = EnJavaSpec.converter().src(node).value1(value1.getValue(), value1.getType())
+      EnConvertionSpec spec = new TypeConverter().src(node).value1(value1.getValue(), value1.getType())
           .value2(value2.getValue(), value2.getType()).build();
       CodeBlock left = spec.getValue1();
       CodeBlock right = spec.getValue2();

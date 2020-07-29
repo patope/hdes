@@ -1,5 +1,6 @@
 package io.resys.hdes.compiler.spi.java;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -15,6 +16,7 @@ import io.resys.hdes.compiler.api.ImmutableTypeDeclaration;
 import io.resys.hdes.compiler.api.ImmutableTypeName;
 import io.resys.hdes.compiler.spi.java.dt.DtApiSpec;
 import io.resys.hdes.compiler.spi.java.dt.DtFrApiSpec;
+import io.resys.hdes.compiler.spi.java.dt.DtFrImplSpec;
 import io.resys.hdes.compiler.spi.java.dt.DtImplSpec;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
@@ -54,11 +56,14 @@ public class DtDeclarationFactory {
     
     //final List<TypeSpec> formulaApis = new DtFormulaVisitor(naming).visitDecisionTableBody(body);
     
-    final List<TypeSpec> formulaApis = body.getHeaders().getValues().stream()
+    final List<TypeSpec> formulas = new ArrayList<>();
+    body.getHeaders().getValues().stream()
         .map(h -> (ScalarTypeDefNode) h)
         .filter(h -> h.getFormula().isPresent())
-        .map(f -> DtFrApiSpec.builder(naming).body(body).build(f))
-        .collect(Collectors.toList());
+        .forEach(f -> {
+          formulas.add(DtFrApiSpec.builder(naming).body(body).build(f));
+          formulas.add(DtFrImplSpec.builder(naming).body(body).build(f));
+        });
     
     final var pkg = naming.dt().pkg(body);
     final var nestedPkg = pkg + "." + api.name;
@@ -75,7 +80,7 @@ public class DtDeclarationFactory {
         .input(JavaSpecUtil.typeName(naming.dt().inputValue(body)))
         .output(JavaSpecUtil.typeName(naming.dt().outputValueMono(body)))
         
-        .addAllDeclarations(formulaApis.stream().map(s -> ImmutableTypeDeclaration.builder()
+        .addAllDeclarations(formulas.stream().map(s -> ImmutableTypeDeclaration.builder()
             .type(ImmutableTypeName.builder().name(s.name).pkg(pkg).build())
             .isExecutable(false).value(JavaSpecUtil.javaFile(s, pkg)).build())
             .collect(Collectors.toList()))

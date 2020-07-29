@@ -1,4 +1,4 @@
-package io.resys.hdes.compiler.spi.java.visitors.en;
+package io.resys.hdes.compiler.spi.java.en;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -7,17 +7,25 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.immutables.value.Value;
+
 import com.squareup.javapoet.CodeBlock;
 
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnListConvertionSpec;
-import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnScalarCodeSpec;
+import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor.EnScalarCodeSpec;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 
 public class ListTypeConverter {
+
+  @Value.Immutable
+  public interface EnListConvertionSpec {
+    List<CodeBlock> getValue();
+    ScalarType getType();
+  }
+  
   private final List<EnScalarCodeSpec> values = new ArrayList<>();
   private final Set<ScalarType> types = new HashSet<>();
   private AstNode src;

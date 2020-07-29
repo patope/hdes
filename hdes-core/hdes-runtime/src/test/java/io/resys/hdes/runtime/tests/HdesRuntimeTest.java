@@ -127,6 +127,7 @@ public class HdesRuntimeTest {
         "  b INTEGER required IN,\n" +
         "  c DECIMAL required IN,\n" +
         "  total DECIMAL optional IN formula: a + b + c,\n" +
+        "  totalOut DECIMAL optional OUT formula: total,\n" +
         "  score STRING required OUT\n" + 
         "} FIRST: {\n" + 
         "  { ?, ?, ?, > 100, 'high-risk'},\n" + 
@@ -141,7 +142,7 @@ public class HdesRuntimeTest {
     HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> output = runDT("DtWithFormula", src, data);
     Assertions.assertEquals(output.getMeta().getValues().size(), 1);
     Assertions.assertEquals(output.getMeta().getValues().get(0).getIndex(), 0);
-    Assertions.assertEquals("DtWithFormulaOut{score=high-risk}", output.getValue().toString());
+    Assertions.assertEquals("DtWithFormulaOut{totalOut=120.78, score=high-risk}", output.getValue().toString());
   }
   
   @Test 

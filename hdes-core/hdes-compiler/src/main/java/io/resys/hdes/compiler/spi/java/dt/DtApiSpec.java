@@ -102,7 +102,7 @@ public class DtApiSpec {
           .addSuperinterface(HdesExecutable.OutputValue.class);
 
       // normal input/outputs
-      for (TypeDefNode header : body.getHeaders().getValues()) {
+      for (TypeDefNode header : body.getHeaders().getValues()) {        
         MethodSpec method = header(header);
         if (header.getDirection() == DirectionType.IN) {
           inputBuilder.addMethod(method);

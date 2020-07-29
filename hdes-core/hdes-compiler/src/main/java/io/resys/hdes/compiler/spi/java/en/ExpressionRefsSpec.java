@@ -12,7 +12,7 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodRefNode;
 import io.resys.hdes.ast.spi.Assertions;
 
-public class EnReferedTypesSpec {
+public class ExpressionRefsSpec {
 
   @Value.Immutable
   public interface EnReferedTypes {
@@ -26,6 +26,7 @@ public class EnReferedTypesSpec {
     Optional<TypeName> getTypeName();
     Optional<MethodRefNode> getMethodRef(); 
     EnReferedScope getScope();
+    List<EnReferedType> getChildren();
   }
   
   public interface EnReferedTypeResolver {
@@ -57,7 +58,7 @@ public class EnReferedTypesSpec {
     }
     
     public EnReferedTypes build() {
-      return new EnReferedTypesSpecVisitor(resolver).visitExpressionBody(body);
+      return new ExpressionRefsVisitor(resolver).visitExpressionBody(body);
     }
   }
 }

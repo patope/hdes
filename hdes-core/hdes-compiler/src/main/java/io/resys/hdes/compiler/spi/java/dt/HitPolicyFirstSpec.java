@@ -4,9 +4,11 @@ import org.immutables.value.Value;
 
 import com.squareup.javapoet.CodeBlock;
 
+import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
+import io.resys.hdes.ast.api.nodes.DecisionTableNode.ExpressionValue;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyFirst;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.LiteralValue;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.Rule;
@@ -71,7 +73,11 @@ public class HitPolicyFirstSpec {
           and = true;
           
         } else {
-          CodeBlock literal = DtRuleSpec.builder(body).build(header, ((LiteralValue) rule.getValue()).getValue()).getValue();
+          AstNode exp = ruleValue instanceof LiteralValue ? 
+              ((LiteralValue) ruleValue).getValue() :
+              ((ExpressionValue) ruleValue).getExpression();
+              
+          CodeBlock literal = DtRuleSpec.builder(body).build(header, exp).getValue();
           CodeBlock ruleCode = CodeBlock.builder().add(".$L($L)", header.getName(), literal).build();
           if (ruleCode.isEmpty()) {
             continue;

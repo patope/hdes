@@ -35,6 +35,9 @@ import javax.tools.JavaCompiler.CompilationTask;
 import javax.tools.SimpleJavaFileObject;
 import javax.tools.ToolProvider;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.resys.hdes.compiler.api.HdesCompiler.Resource;
 import io.resys.hdes.compiler.api.HdesCompiler.TypeDeclaration;
 import io.resys.hdes.compiler.api.HdesCompiler.TypeName;
@@ -44,6 +47,7 @@ import io.resys.hdes.runtime.spi.tools.HdesJavaFileObject;
 import io.resys.hdes.runtime.spi.tools.ImmutableRuntimeEnvir;
 
 public class ImmutableHdesRuntime implements HdesRuntime {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ImmutableHdesRuntime.class);
   
   public static Builder builder() {
     return new ImmutableEnvirBuilder();
@@ -77,7 +81,7 @@ public class ImmutableHdesRuntime implements HdesRuntime {
         
         // Java source code
         for(TypeDeclaration typeDeclaration : resource.getDeclarations()) {
-          System.out.println(typeDeclaration.getValue());
+          log(typeDeclaration);
           files.add(HdesJavaFileObject.create(typeDeclaration.getType().getName(), typeDeclaration.getValue()));
           if(typeDeclaration.isExecutable()) {
             executables.put(resource.getName(), typeDeclaration.getType());
@@ -101,6 +105,18 @@ public class ImmutableHdesRuntime implements HdesRuntime {
       }
       return this;
     }
-    
-  } 
+  }
+  
+  private static void log(TypeDeclaration type) {
+    if(LOGGER.isDebugEnabled()) {
+      StringBuilder result = new StringBuilder(type.getType().getName()).append(System.lineSeparator());
+      
+      int index = 1;
+      for(String value : type.getValue().split("\\r?\\n")) {
+        result.append(index++).append(":   ").append(value).append(System.lineSeparator());
+      }
+      
+      LOGGER.debug(result.toString());
+    }
+  }
 }

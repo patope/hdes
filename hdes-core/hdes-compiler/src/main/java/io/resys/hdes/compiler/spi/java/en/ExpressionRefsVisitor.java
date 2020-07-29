@@ -28,16 +28,16 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.PostIncrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnaryOperation;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.en.EnReferedTypesSpec.EnReferedScope;
-import io.resys.hdes.compiler.spi.java.en.EnReferedTypesSpec.EnReferedType;
-import io.resys.hdes.compiler.spi.java.en.EnReferedTypesSpec.EnReferedTypeResolver;
-import io.resys.hdes.compiler.spi.java.en.EnReferedTypesSpec.EnReferedTypes;
+import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedScope;
+import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedType;
+import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedTypeResolver;
+import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedTypes;
 
-public class EnReferedTypesSpecVisitor implements ExpressionAstNodeVisitor<EnReferedTypes, EnReferedTypes> {
+public class ExpressionRefsVisitor implements ExpressionAstNodeVisitor<EnReferedTypes, EnReferedTypes> {
   
   private final EnReferedTypeResolver resolver;
   
-  public EnReferedTypesSpecVisitor(EnReferedTypeResolver resolver) {
+  public ExpressionRefsVisitor(EnReferedTypeResolver resolver) {
     super();
     this.resolver = resolver;
   }

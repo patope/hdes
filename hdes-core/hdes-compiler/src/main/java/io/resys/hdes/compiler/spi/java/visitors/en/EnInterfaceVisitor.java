@@ -48,8 +48,9 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.PostIncrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnaryOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnaryOperation;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.en.EnReferedTypesSpec.EnReferedTypeResolver;
-import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnRefSpec;
+import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor.EnRefSpec;
+import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedTypeResolver;
+import io.resys.hdes.compiler.spi.java.en.ImmutableEnRefSpec;
 
 public class EnInterfaceVisitor extends EnTemplateVisitor<EnRefSpec, List<TypeDefNode>> implements ExpressionAstNodeVisitor<EnRefSpec, List<TypeDefNode>> {
   

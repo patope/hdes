@@ -67,14 +67,14 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.BetweenExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.NotUnaryOperation;
 import io.resys.hdes.compiler.api.HdesCompilerException;
+import io.resys.hdes.compiler.spi.java.en.TypeConverter;
+import io.resys.hdes.compiler.spi.java.en.TypeConverter.EnConvertionSpec;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtCodeSpec;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtCodeSpecPair;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtCodeValueSpec;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtFormulaSpec;
 import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec.DtMethodsSpec;
 import io.resys.hdes.compiler.spi.java.visitors.en.EnInterfaceVisitor;
-import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec;
-import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnConvertionSpec;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.DecisionTableMeta;
@@ -555,7 +555,7 @@ public class DtImplementationVisitor2 extends DtTemplateVisitor<DtJavaSpec, Type
     DtCodeSpec value1 = visitExpressionRuleValue(node.getLeft());
     DtCodeSpec value2 = visitExpressionRuleValue(node.getRight());
     
-    EnConvertionSpec spec = EnJavaSpec.converter().src(node)
+    EnConvertionSpec spec = new TypeConverter().src(node)
         .value1(value1.getValue(), value1.getType())
         .value2(value2.getValue(), value2.getType())
         .build();

@@ -1,7 +1,10 @@
 package io.resys.hdes.compiler.api;
 
+import java.util.List;
+
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
@@ -278,6 +281,36 @@ public class HdesCompilerException extends RuntimeException {
       return new StringBuilder()
           .append("Decision table with hit policy matrix can't have output without FORMULA!").append(System.lineSeparator())
           .append("Header name: ").append(header.getName()).append(" !").append(System.lineSeparator())
+          .append(" AST: ").append(header.getClass()).append(System.lineSeparator())
+          .append("  - ").append(header).append("!")
+          .toString();
+    }
+    
+    public String dtFormulaContainsIncorectScopeParameters(TypeDefNode header, List<String> unusables) {
+      return new StringBuilder()
+          .append("Decision table FORMULA contains parameters that can't be used!").append(System.lineSeparator())
+          .append("Header name: ").append(header.getName()).append(" !").append(System.lineSeparator())
+          .append("Unusable parameters: ").append(unusables).append(" !").append(System.lineSeparator())
+          .append(" AST: ").append(header.getClass()).append(System.lineSeparator())
+          .append("  - ").append(header).append("!")
+          .toString();
+    }
+        
+    public String dtFormulaContainsIncorectArrayType(TypeDefNode header, boolean was) {
+      return new StringBuilder()
+          .append("Decision table FORMULA array type is incorrect!").append(System.lineSeparator())
+          .append("Header name: ").append(header.getName()).append(" !").append(System.lineSeparator())
+          .append("Expecting formula to be array: ").append(header.getArray()).append(" but was: ").append(was).append("!").append(System.lineSeparator())
+          .append(" AST: ").append(header.getClass()).append(System.lineSeparator())
+          .append("  - ").append(header).append("!")
+          .toString();
+    }
+    
+    public String dtFormulaContainsIncorectScalarTypes(ScalarTypeDefNode header, ScalarType was) {
+      return new StringBuilder()
+          .append("Decision table FORMULA declaration and formula evaluation types do not match!").append(System.lineSeparator())
+          .append("Header name: ").append(header.getName()).append(" !").append(System.lineSeparator())
+          .append("Declared type: ").append(header.getType()).append(" but was: ").append(was).append("!").append(System.lineSeparator())
           .append(" AST: ").append(header.getClass()).append(System.lineSeparator())
           .append("  - ").append(header).append("!")
           .toString();

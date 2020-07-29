@@ -1,7 +1,9 @@
-package io.resys.hdes.compiler.spi.java.visitors.en;
+package io.resys.hdes.compiler.spi.java.en;
 
 import java.math.BigDecimal;
 import java.util.function.Function;
+
+import org.immutables.value.Value;
 
 import com.squareup.javapoet.CodeBlock;
 
@@ -9,11 +11,17 @@ import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnConvertionSpec;
-import io.resys.hdes.compiler.spi.java.visitors.en.EnJavaSpec.EnScalarCodeSpec;
+import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor.EnScalarCodeSpec;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 
 public class TypeConverter {
+  @Value.Immutable
+  public interface EnConvertionSpec {
+    CodeBlock getValue1();
+    CodeBlock getValue2();
+    ScalarType getType();
+  }
+  
   private AstNode src;
   private EnScalarCodeSpec value1;
   private EnScalarCodeSpec value2;

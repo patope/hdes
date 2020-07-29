@@ -36,7 +36,7 @@ import io.resys.hdes.ast.api.nodes.ImmutableObjectTypeDefNode;
 import io.resys.hdes.ast.api.nodes.ImmutableScalarTypeDefNode;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.en.EnReferedTypesSpec.EnReferedTypeResolver;
+import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedTypeResolver;
 
 public class DtEnReferedTypeResolver implements EnReferedTypeResolver {
   private final DecisionTableBody body;
