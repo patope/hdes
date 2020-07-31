@@ -87,7 +87,7 @@ public interface ExpressionNode extends AstNode {
    * Ref nodes
    */
   @Value.Immutable
-  interface MethodInvocation extends Invociation, ExpressionNode {
+  interface MethodInvocation extends Invocation, ExpressionNode {
     Optional<TypeInvocation> getType();
     String getName();
     List<AstNode> getValues();

@@ -6,10 +6,13 @@ import java.util.Set;
 
 import org.immutables.value.Value;
 
+import io.resys.hdes.ast.api.nodes.AstNode.Invocation;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
+import io.resys.hdes.ast.api.nodes.AstNodeVisitor.AstNodeVisitorContext;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodInvocation;
+import io.resys.hdes.ast.api.nodes.ImmutableAstNodeVisitorContext;
 import io.resys.hdes.ast.spi.Assertions;
 
 public class ExpressionRefsSpec {
@@ -28,26 +31,25 @@ public class ExpressionRefsSpec {
     EnReferedScope getScope();
     List<EnReferedType> getChildren();
   }
-  
-  public interface EnReferedTypeResolver {
-    TypeDef accept(TypeInvocation name);
-    TypeDef accept(MethodInvocation name);
+
+  public interface InvocationResolver {
+    TypeDef accept(Invocation name);
   }
   
   public static enum EnReferedScope {
     INSTANCE, STATIC, LAMBDA, IN, OUT, METHOD
   }
   
-  public static Builder builder(EnReferedTypeResolver namings) {
+  public static Builder builder(InvocationResolver namings) {
     Assertions.notNull(namings, () -> "namings must be defined!");
     return new Builder(namings);
   }
 
   public static class Builder {
-    private final EnReferedTypeResolver resolver;
+    private final InvocationResolver resolver;
     private ExpressionBody body;
 
-    private Builder(EnReferedTypeResolver resolver) {
+    private Builder(InvocationResolver resolver) {
       super();
       this.resolver = resolver;
     }
@@ -58,7 +60,8 @@ public class ExpressionRefsSpec {
     }
     
     public EnReferedTypes build() {
-      return new ExpressionRefsVisitor(resolver).visitBody(body);
+      AstNodeVisitorContext ctx = ImmutableAstNodeVisitorContext.builder().value(body).build();
+      return new ExpressionRefsVisitor(resolver).visitBody(body, ctx);
     }
   }
 }

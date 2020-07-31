@@ -36,7 +36,7 @@ public interface AstNode {
     DATE, DATE_TIME, TIME,
   }
   
-  interface Invociation extends AstNode { }
+  interface Invocation extends AstNode { }
   
   interface Body extends AstNode {
     BodyId getId();
@@ -82,7 +82,7 @@ public interface AstNode {
   }
   
   @Value.Immutable
-  interface TypeInvocation extends Invociation {
+  interface TypeInvocation extends Invocation {
     String getValue();
     TypeNameScope getScope();
   }

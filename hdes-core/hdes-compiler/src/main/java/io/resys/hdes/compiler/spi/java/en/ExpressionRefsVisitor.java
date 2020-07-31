@@ -27,35 +27,35 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.PostDecrementUnary;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PostIncrementUnary;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnary;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnary;
+import io.resys.hdes.ast.api.nodes.ImmutableAstNodeVisitorContext;
 import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedScope;
 import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedType;
-import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedTypeResolver;
 import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedTypes;
+import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.InvocationResolver;
 
 public class ExpressionRefsVisitor implements ExpressionAstNodeVisitor<EnReferedTypes, EnReferedTypes> {
   
-  private final EnReferedTypeResolver resolver;
+  private final InvocationResolver resolver;
   
-  public ExpressionRefsVisitor(EnReferedTypeResolver resolver) {
+  public ExpressionRefsVisitor(InvocationResolver resolver) {
     super();
     this.resolver = resolver;
   }
 
+  
   @Override
-  public EnReferedTypes visitBody(ExpressionBody node) {
+  public EnReferedTypes visitBody(ExpressionBody node, AstNodeVisitorContext ctx) {
     ImmutableEnReferedTypes.Builder result = ImmutableEnReferedTypes.builder();
-    
-    for(EnReferedType ref : visit(node.getValue()).getValues()) {
+    for(EnReferedType ref : visit(node.getValue(), ctx).getValues()) {
       result.addScopes(ref.getScope());
       result.addValues(ref);
     }
-    
     return result.build();
   }
   
   @Override
-  public EnReferedTypes visitTypeInvocation(TypeInvocation node) {
+  public EnReferedTypes visitTypeInvocation(TypeInvocation node, AstNodeVisitorContext ctx) {
     final TypeDef typeDef = resolver.accept(node);
     final EnReferedScope scope;
     
@@ -81,7 +81,7 @@ public class ExpressionRefsVisitor implements ExpressionAstNodeVisitor<EnRefered
   }
   
   @Override
-  public EnReferedTypes visitMethod(MethodInvocation node) {
+  public EnReferedTypes visitMethod(MethodInvocation node, AstNodeVisitorContext ctx) {
     final TypeDef typeDef = resolver.accept(node);
     ImmutableEnReferedTypes.Builder builder = ImmutableEnReferedTypes.builder().addValues(
         ImmutableEnReferedType.builder()
@@ -105,12 +105,12 @@ public class ExpressionRefsVisitor implements ExpressionAstNodeVisitor<EnRefered
   }
 
   @Override
-  public EnReferedTypes visitLambda(LambdaExpression node) {
+  public EnReferedTypes visitLambda(LambdaExpression node, AstNodeVisitorContext ctx) {
     List<String> lambdaParams = node.getParams().stream()
         .map(t -> t.getValue())
         .collect(Collectors.toList());
     
-    List<AstNode> values = visit(node.getBody()).getValues().stream()
+    List<AstNode> values = visit(node.getBody(), ctx).getValues().stream()
       .filter(t -> t instanceof TypeInvocation)
       .map(t -> (TypeInvocation) t)
       .filter(t -> !lambdaParams.contains(t.getValue()))
@@ -120,139 +120,141 @@ public class ExpressionRefsVisitor implements ExpressionAstNodeVisitor<EnRefered
   }
   
   @Override
-  public EnReferedTypes visitLiteral(Literal node) {
+  public EnReferedTypes visitLiteral(Literal node, AstNodeVisitorContext ctx) {
     return ImmutableEnReferedTypes.builder().build();
   }
 
   @Override
-  public EnReferedTypes visitNot(NotUnary node) {
-    return visit(node.getValue());
+  public EnReferedTypes visitNot(NotUnary node, AstNodeVisitorContext ctx) {
+    return visit(node.getValue(), ctx);
   }
 
   @Override
-  public EnReferedTypes visitNegate(NegateUnary node) {
-    return visit(node.getValue());
+  public EnReferedTypes visitNegate(NegateUnary node, AstNodeVisitorContext ctx) {
+    return visit(node.getValue(), ctx);
   }
 
   @Override
-  public EnReferedTypes visitPositive(PositiveUnary node) {
-    return visit(node.getValue());
+  public EnReferedTypes visitPositive(PositiveUnary node, AstNodeVisitorContext ctx) {
+    return visit(node.getValue(), ctx);
   }
 
   @Override
-  public EnReferedTypes visitPreIncrement(PreIncrementUnary node) {
-    return visit(node.getValue());
+  public EnReferedTypes visitPreIncrement(PreIncrementUnary node, AstNodeVisitorContext ctx) {
+    return visit(node.getValue(), ctx);
   }
 
   @Override
-  public EnReferedTypes visitPreDecrement(PreDecrementUnary node) {
-    return visit(node.getValue());
+  public EnReferedTypes visitPreDecrement(PreDecrementUnary node, AstNodeVisitorContext ctx) {
+    return visit(node.getValue(), ctx);
   }
 
   @Override
-  public EnReferedTypes visitPostIncrement(PostIncrementUnary node) {
-    return visit(node.getValue());
+  public EnReferedTypes visitPostIncrement(PostIncrementUnary node, AstNodeVisitorContext ctx) {
+    return visit(node.getValue(), ctx);
   }
 
   @Override
-  public EnReferedTypes visitPostDecrement(PostDecrementUnary node) {
-    return visit(node.getValue());
+  public EnReferedTypes visitPostDecrement(PostDecrementUnary node, AstNodeVisitorContext ctx) {
+    return visit(node.getValue(), ctx);
   }
 
   @Override
-  public EnReferedTypes visitEquality(EqualityOperation node) {
+  public EnReferedTypes visitEquality(EqualityOperation node, AstNodeVisitorContext ctx) {
     return ImmutableEnReferedTypes.builder()
-        .addAllValues(visit(node.getLeft()).getValues())
-        .addAllValues(visit(node.getRight()).getValues())
+        .addAllValues(visit(node.getLeft(), ctx).getValues())
+        .addAllValues(visit(node.getRight(), ctx).getValues())
         .build();
   }
 
   @Override
-  public EnReferedTypes visitAnd(AndExpression node) {
+  public EnReferedTypes visitAnd(AndExpression node, AstNodeVisitorContext ctx) {
     return ImmutableEnReferedTypes.builder()
-        .addAllValues(visit(node.getLeft()).getValues())
-        .addAllValues(visit(node.getRight()).getValues())
+        .addAllValues(visit(node.getLeft(), ctx).getValues())
+        .addAllValues(visit(node.getRight(), ctx).getValues())
         .build();
   }
 
   @Override
-  public EnReferedTypes visitOr(OrExpression node) {
+  public EnReferedTypes visitOr(OrExpression node, AstNodeVisitorContext ctx) {
     return ImmutableEnReferedTypes.builder()
-        .addAllValues(visit(node.getLeft()).getValues())
-        .addAllValues(visit(node.getRight()).getValues())
+        .addAllValues(visit(node.getLeft(), ctx).getValues())
+        .addAllValues(visit(node.getRight(), ctx).getValues())
         .build();
   }
 
   @Override
-  public EnReferedTypes visitConditional(ConditionalExpression node) {
+  public EnReferedTypes visitConditional(ConditionalExpression node, AstNodeVisitorContext ctx) {
     return ImmutableEnReferedTypes.builder()
-        .addAllValues(visit(node.getLeft()).getValues())
-        .addAllValues(visit(node.getRight()).getValues())
+        .addAllValues(visit(node.getLeft(), ctx).getValues())
+        .addAllValues(visit(node.getRight(), ctx).getValues())
         .build();
   }
 
   @Override
-  public EnReferedTypes visitBetween(BetweenExpression node) {
+  public EnReferedTypes visitBetween(BetweenExpression node, AstNodeVisitorContext ctx) {
     return ImmutableEnReferedTypes.builder()
-        .addAllValues(visit(node.getLeft()).getValues())
-        .addAllValues(visit(node.getRight()).getValues())
-        .addAllValues(visit(node.getValue()).getValues())
+        .addAllValues(visit(node.getLeft(), ctx).getValues())
+        .addAllValues(visit(node.getRight(), ctx).getValues())
+        .addAllValues(visit(node.getValue(), ctx).getValues())
         .build();
   }
 
   @Override
-  public EnReferedTypes visitAdditive(AdditiveExpression node) {
+  public EnReferedTypes visitAdditive(AdditiveExpression node, AstNodeVisitorContext ctx) {
     return ImmutableEnReferedTypes.builder()
-        .addAllValues(visit(node.getLeft()).getValues())
-        .addAllValues(visit(node.getRight()).getValues())
+        .addAllValues(visit(node.getLeft(), ctx).getValues())
+        .addAllValues(visit(node.getRight(), ctx).getValues())
         .build();
   }
 
   @Override
-  public EnReferedTypes visitMultiplicative(MultiplicativeExpression node) {
+  public EnReferedTypes visitMultiplicative(MultiplicativeExpression node, AstNodeVisitorContext ctx) {
     return ImmutableEnReferedTypes.builder()
-        .addAllValues(visit(node.getLeft()).getValues())
-        .addAllValues(visit(node.getRight()).getValues())
+        .addAllValues(visit(node.getLeft(), ctx).getValues())
+        .addAllValues(visit(node.getRight(), ctx).getValues())
         .build();
   }
 
-  private EnReferedTypes visit(AstNode node) {
+  private EnReferedTypes visit(AstNode node, AstNodeVisitorContext parent) {
+    AstNodeVisitorContext ctx = ImmutableAstNodeVisitorContext.builder().parent(parent).value(node).build();
+
     if (node instanceof TypeInvocation) {
-      return visitTypeInvocation((TypeInvocation) node);
+      return visitTypeInvocation((TypeInvocation) node, ctx);
     } else if (node instanceof Literal) {
-      return visitLiteral((Literal) node);
+      return visitLiteral((Literal) node, ctx);
     } else if (node instanceof NotUnary) {
-      return visitNot((NotUnary) node);
+      return visitNot((NotUnary) node, ctx);
     } else if (node instanceof NegateUnary) {
-      return visitNegate((NegateUnary) node);
+      return visitNegate((NegateUnary) node, ctx);
     } else if (node instanceof PositiveUnary) {
-      return visitPositive((PositiveUnary) node);
+      return visitPositive((PositiveUnary) node, ctx);
     } else if (node instanceof PreIncrementUnary) {
-      return visitPreIncrement((PreIncrementUnary) node);
+      return visitPreIncrement((PreIncrementUnary) node, ctx);
     } else if (node instanceof PreDecrementUnary) {
-      return visitPreDecrement((PreDecrementUnary) node);
+      return visitPreDecrement((PreDecrementUnary) node, ctx);
     } else if (node instanceof PostIncrementUnary) {
-      return visitPostIncrement((PostIncrementUnary) node);
+      return visitPostIncrement((PostIncrementUnary) node, ctx);
     } else if (node instanceof PostDecrementUnary) {
-      return visitPostDecrement((PostDecrementUnary) node);
+      return visitPostDecrement((PostDecrementUnary) node, ctx);
     } else if (node instanceof MethodInvocation) {
-      return visitMethod((MethodInvocation) node);
+      return visitMethod((MethodInvocation) node, ctx);
     } else if (node instanceof EqualityOperation) {
-      return visitEquality((EqualityOperation) node);
+      return visitEquality((EqualityOperation) node, ctx);
     } else if (node instanceof AndExpression) {
-      return visitAnd((AndExpression) node);
+      return visitAnd((AndExpression) node, ctx);
     } else if (node instanceof OrExpression) {
-      return visitOr((OrExpression) node);
+      return visitOr((OrExpression) node, ctx);
     } else if (node instanceof ConditionalExpression) {
-      return visitConditional((ConditionalExpression) node);
+      return visitConditional((ConditionalExpression) node, ctx);
     } else if (node instanceof BetweenExpression) {
-      return visitBetween((BetweenExpression) node);
+      return visitBetween((BetweenExpression) node, ctx);
     } else if (node instanceof AdditiveExpression) {
-      return visitAdditive((AdditiveExpression) node);
+      return visitAdditive((AdditiveExpression) node, ctx);
     } else if (node instanceof MultiplicativeExpression) {
-      return visitMultiplicative((MultiplicativeExpression) node);
+      return visitMultiplicative((MultiplicativeExpression) node, ctx);
     } else if(node instanceof LambdaExpression) {
-      return visitLambda((LambdaExpression) node);
+      return visitLambda((LambdaExpression) node, ctx);
     }
     throw new HdesCompilerException(HdesCompilerException.builder().unknownDTExpressionNode(node));
   }

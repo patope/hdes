@@ -1,6 +1,9 @@
 package io.resys.hdes.ast.api.nodes;
 
 import java.util.List;
+import java.util.Optional;
+
+import org.immutables.value.Value;
 
 import io.resys.hdes.ast.api.nodes.AstNode.Headers;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
@@ -64,98 +67,104 @@ import io.resys.hdes.ast.api.nodes.ManualTaskNode.WhenAction;
 
 public interface AstNodeVisitor<T, R> {
   // basic
-  T visitTypeInvocation(TypeInvocation node);
-  T visitLiteral(Literal node);
+  T visitTypeInvocation(TypeInvocation node, AstNodeVisitorContext ctx);
+  T visitLiteral(Literal node, AstNodeVisitorContext ctx);
 
   interface TypeDefVisitor<T, R> extends AstNodeVisitor<T, R> {
-    T visitObjectDef(ObjectDef node);
-    T visitScalarDef(ScalarDef node);
+    T visitObjectDef(ObjectDef node, AstNodeVisitorContext ctx);
+    T visitScalarDef(ScalarDef node, AstNodeVisitorContext ctx);
+  }
+  
+  @Value.Immutable
+  public interface AstNodeVisitorContext {
+    Optional<AstNodeVisitorContext> getParent();
+    AstNode getValue();
   }
   
   // expression
   interface ExpressionAstNodeVisitor<T, R> extends AstNodeVisitor<T, R> { 
-    R visitBody(ExpressionBody node);
-    T visitNot(NotUnary node);
-    T visitNegate(NegateUnary node);
-    T visitPositive(PositiveUnary node);
-    T visitPreIncrement(PreIncrementUnary node);
-    T visitPreDecrement(PreDecrementUnary node);
-    T visitPostIncrement(PostIncrementUnary node);
-    T visitPostDecrement(PostDecrementUnary node);
-    T visitMethod(MethodInvocation node);
-    T visitEquality(EqualityOperation node);
-    T visitAnd(AndExpression node);
-    T visitOr(OrExpression node);
-    T visitConditional(ConditionalExpression node);
-    T visitBetween(BetweenExpression node);
-    T visitAdditive(AdditiveExpression node);
-    T visitMultiplicative(MultiplicativeExpression node);
-    T visitLambda(LambdaExpression node);
+    R visitBody(ExpressionBody node, AstNodeVisitorContext ctx);
+    T visitNot(NotUnary node, AstNodeVisitorContext ctx);
+    T visitNegate(NegateUnary node, AstNodeVisitorContext ctx);
+    T visitPositive(PositiveUnary node, AstNodeVisitorContext ctx);
+    T visitPreIncrement(PreIncrementUnary node, AstNodeVisitorContext ctx);
+    T visitPreDecrement(PreDecrementUnary node, AstNodeVisitorContext ctx);
+    T visitPostIncrement(PostIncrementUnary node, AstNodeVisitorContext ctx);
+    T visitPostDecrement(PostDecrementUnary node, AstNodeVisitorContext ctx);
+    T visitMethod(MethodInvocation node, AstNodeVisitorContext ctx);
+    T visitEquality(EqualityOperation node, AstNodeVisitorContext ctx);
+    T visitAnd(AndExpression node, AstNodeVisitorContext ctx);
+    T visitOr(OrExpression node, AstNodeVisitorContext ctx);
+    T visitConditional(ConditionalExpression node, AstNodeVisitorContext ctx);
+    T visitBetween(BetweenExpression node, AstNodeVisitorContext ctx);
+    T visitAdditive(AdditiveExpression node, AstNodeVisitorContext ctx);
+    T visitMultiplicative(MultiplicativeExpression node, AstNodeVisitorContext ctx);
+    T visitLambda(LambdaExpression node, AstNodeVisitorContext ctx);
   }
   
   // dt
   interface DtAstNodeVisitor<T, R> extends TypeDefVisitor<T, R> {
-    R visitBody(DecisionTableBody node);
-    T visitHeaders(Headers node);
-    T visitHeader(TypeDef node);
-    T visitHitPolicyAll(HitPolicyAll node);
-    T visitHitPolicyMatrix(HitPolicyMatrix node);
-    T visitHitPolicyFirst(HitPolicyFirst node);
-    T visitRuleRow(RuleRow node);
-    T visitRule(Rule node);
-    T visitMatrixRow(MatrixRow node);
-    T visitFormula(Headers node);
+    R visitBody(DecisionTableBody node, AstNodeVisitorContext ctx);
+    T visitHeaders(Headers node, AstNodeVisitorContext ctx);
+    T visitHeader(TypeDef node, AstNodeVisitorContext ctx);
+    T visitHitPolicyAll(HitPolicyAll node, AstNodeVisitorContext ctx);
+    T visitHitPolicyMatrix(HitPolicyMatrix node, AstNodeVisitorContext ctx);
+    T visitHitPolicyFirst(HitPolicyFirst node, AstNodeVisitorContext ctx);
+    T visitRuleRow(RuleRow node, AstNodeVisitorContext ctx);
+    T visitRule(Rule node, AstNodeVisitorContext ctx);
+    T visitMatrixRow(MatrixRow node, AstNodeVisitorContext ctx);
+    T visitFormula(Headers node, AstNodeVisitorContext ctx);
     
-    T visitUndefinedValue(UndefinedValue node);
-    T visitLiteralValue(LiteralValue node);
-    T visitNegateLiteralValue(NegateLiteralValue node);
+    T visitUndefinedValue(UndefinedValue node, AstNodeVisitorContext ctx);
+    T visitLiteralValue(LiteralValue node, AstNodeVisitorContext ctx);
+    T visitNegateLiteralValue(NegateLiteralValue node, AstNodeVisitorContext ctx);
     
-    T visitExpressionValue(ExpressionValue node);
-    T visitEquality(EqualityOperation node);
-    T visitBetween(BetweenExpression node);
-    T visitAnd(AndExpression node);
-    T visitOr(OrExpression node);
-    T visitIn(InOperation node);
-    T visitNot(NotUnary node);
-    T visitHeaderIndex(HeaderIndex node);
+    T visitExpressionValue(ExpressionValue node, AstNodeVisitorContext ctx);
+    T visitEquality(EqualityOperation node, AstNodeVisitorContext ctx);
+    T visitBetween(BetweenExpression node, AstNodeVisitorContext ctx);
+    T visitAnd(AndExpression node, AstNodeVisitorContext ctx);
+    T visitOr(OrExpression node, AstNodeVisitorContext ctx);
+    T visitIn(InOperation node, AstNodeVisitorContext ctx);
+    T visitNot(NotUnary node, AstNodeVisitorContext ctx);
+    T visitHeaderIndex(HeaderIndex node, AstNodeVisitorContext ctx);
   }
   
   // flow
   interface FlowAstNodeVisitor<T, R> extends TypeDefVisitor<T, R> {
-    R visitBody(FlowBody node);
-    T visitInputs(List<TypeDef> node);
-    T visitOutputs(List<TypeDef> node);
-    T visitTask(FlowTaskNode node);
+    R visitBody(FlowBody node, AstNodeVisitorContext ctx);
+    T visitInputs(List<TypeDef> node, AstNodeVisitorContext ctx);
+    T visitOutputs(List<TypeDef> node, AstNodeVisitorContext ctx);
+    T visitTask(FlowTaskNode node, AstNodeVisitorContext ctx);
     
-    T visitTaskPointer(FlowTaskNode parent, FlowTaskPointer node);
-    T visitWhenThenPointer(FlowTaskNode parent, WhenThenPointer node);
-    T visitThenPointer(FlowTaskNode parent, ThenPointer node);
-    T visitEndPointer(FlowTaskNode parent, EndPointer node);
+    T visitTaskPointer(FlowTaskNode parent, FlowTaskPointer node, AstNodeVisitorContext ctx);
+    T visitWhenThenPointer(FlowTaskNode parent, WhenThenPointer node, AstNodeVisitorContext ctx);
+    T visitThenPointer(FlowTaskNode parent, ThenPointer node, AstNodeVisitorContext ctx);
+    T visitEndPointer(FlowTaskNode parent, EndPointer node, AstNodeVisitorContext ctx);
     
-    T visitLoop(FlowLoop node);
-    T visitWhenThen(WhenThen node);
-    T visitWhen(ExpressionBody node);
-    T visitMapping(FlowTaskNode node);
-    T visitMappingValue(MappingValue node);
-    T visitTaskRef(FlowTaskNode node);
+    T visitLoop(FlowLoop node, AstNodeVisitorContext ctx);
+    T visitWhenThen(WhenThen node, AstNodeVisitorContext ctx);
+    T visitWhen(ExpressionBody node, AstNodeVisitorContext ctx);
+    T visitMapping(FlowTaskNode node, AstNodeVisitorContext ctx);
+    T visitMappingValue(MappingValue node, AstNodeVisitorContext ctx);
+    T visitTaskRef(FlowTaskNode node, AstNodeVisitorContext ctx);
   }
   
   // mt
   interface MtAstNodeVisitor<T, R> extends TypeDefVisitor<T, R> {
-    R visitManualTaskBody(ManualTaskBody node);
-    T visitManualTaskInputs(List<TypeDef> node);
-    T visitManualTaskDropdowns(ManualTaskDropdowns node);
-    T visitManualTaskStatements(ManualTaskActions node);
-    T visitManualTaskForm(ManualTaskForm node);
-    T visitDropdown(Dropdown node);
-    T visitStatement(ManualTaskAction node);
-    T visitWhenStatement(WhenAction node);
-    T visitThenStatement(ThenAction node);
-    T visitGroup(Group node);
-    T visitGroups(Groups node);
-    T visitFields(Fields node);
-    T visitFormField(FormField node);
-    T visitDropdownField(DropdownField node);
-    T visitLiteralField(LiteralField node);
+    R visitManualTaskBody(ManualTaskBody node, AstNodeVisitorContext ctx);
+    T visitManualTaskInputs(List<TypeDef> node, AstNodeVisitorContext ctx);
+    T visitManualTaskDropdowns(ManualTaskDropdowns node, AstNodeVisitorContext ctx);
+    T visitManualTaskStatements(ManualTaskActions node, AstNodeVisitorContext ctx);
+    T visitManualTaskForm(ManualTaskForm node, AstNodeVisitorContext ctx);
+    T visitDropdown(Dropdown node, AstNodeVisitorContext ctx);
+    T visitStatement(ManualTaskAction node, AstNodeVisitorContext ctx);
+    T visitWhenStatement(WhenAction node, AstNodeVisitorContext ctx);
+    T visitThenStatement(ThenAction node, AstNodeVisitorContext ctx);
+    T visitGroup(Group node, AstNodeVisitorContext ctx);
+    T visitGroups(Groups node, AstNodeVisitorContext ctx);
+    T visitFields(Fields node, AstNodeVisitorContext ctx);
+    T visitFormField(FormField node, AstNodeVisitorContext ctx);
+    T visitDropdownField(DropdownField node, AstNodeVisitorContext ctx);
+    T visitLiteralField(LiteralField node, AstNodeVisitorContext ctx);
   }
 }

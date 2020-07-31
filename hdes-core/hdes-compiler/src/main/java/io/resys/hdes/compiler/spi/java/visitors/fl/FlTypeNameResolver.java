@@ -26,6 +26,7 @@ import java.util.Optional;
 import io.resys.hdes.ast.api.AstEnvir;
 import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
+import io.resys.hdes.ast.api.nodes.AstNode.Invocation;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
@@ -37,9 +38,9 @@ import io.resys.hdes.ast.api.nodes.FlowNode.ThenPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedTypeResolver;
+import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.InvocationResolver;
 
-public class FlTypeNameResolver implements EnReferedTypeResolver {
+public class FlTypeNameResolver implements InvocationResolver {
   private final FlowBody body;
   private final AstEnvir astEnvir;
 
@@ -50,6 +51,14 @@ public class FlTypeNameResolver implements EnReferedTypeResolver {
   }
 
   @Override
+  public TypeDef accept(Invocation invocation) {
+    if(invocation instanceof TypeInvocation) {
+      return accept((TypeInvocation) invocation);
+    }
+    return accept((MethodInvocation) invocation);
+  }
+  
+  
   public TypeDef accept(TypeInvocation typeName) {
     String[] pathName = typeName.getValue().split("\\.");
     
@@ -138,7 +147,7 @@ public class FlTypeNameResolver implements EnReferedTypeResolver {
     
   }
 
-  @Override
+
   public TypeDef accept(MethodInvocation name) {
     // TODO Auto-generated method stub
     return null;

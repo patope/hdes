@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
+import io.resys.hdes.ast.api.nodes.AstNode.Invocation;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
@@ -48,16 +49,24 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodInvocation;
 import io.resys.hdes.ast.api.nodes.ImmutableObjectDef;
 import io.resys.hdes.ast.api.nodes.ImmutableScalarDef;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedTypeResolver;
+import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.InvocationResolver;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor;
 import io.resys.hdes.executor.api.DecisionTableMeta.DecisionTableStaticValue;
 
-public class DtParameterResolver implements EnReferedTypeResolver {
+public class DtParameterResolver implements InvocationResolver {
   private final DecisionTableBody body;
 
   public DtParameterResolver(DecisionTableBody body) {
     super();
     this.body = body;
+  }
+  
+  @Override
+  public TypeDef accept(Invocation invocation) {
+    if(invocation instanceof TypeInvocation) {
+      return accept((TypeInvocation) invocation);
+    }
+    return accept((MethodInvocation) invocation);
   }
   
   /*
@@ -87,8 +96,8 @@ public class DtParameterResolver implements EnReferedTypeResolver {
     }
    */
 
-  @Override
-  public TypeDef accept(TypeInvocation typeName) {
+
+  private TypeDef accept(TypeInvocation typeName) {
     String[] pathName = typeName.getValue().split("\\.");
         
     // static data access
@@ -192,8 +201,7 @@ public class DtParameterResolver implements EnReferedTypeResolver {
     return Optional.empty();
   }
 
-  @Override
-  public TypeDef accept(MethodInvocation method) {
+  private TypeDef accept(MethodInvocation method) {
     
     final boolean isGlobal = method.getType().isEmpty();
     

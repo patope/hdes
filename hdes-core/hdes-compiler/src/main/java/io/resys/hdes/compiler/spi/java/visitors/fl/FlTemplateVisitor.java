@@ -21,92 +21,92 @@ import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 
 public class FlTemplateVisitor<T, R> implements FlowAstNodeVisitor<T, R> {
   @Override
-  public T visitTypeInvocation(TypeInvocation node) {
+  public T visitTypeInvocation(TypeInvocation node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public T visitLiteral(Literal node) {
+  public T visitLiteral(Literal node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public T visitObjectDef(ObjectDef node) {
+  public T visitObjectDef(ObjectDef node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
   
   @Override
-  public T visitScalarDef(ScalarDef node) {
+  public T visitScalarDef(ScalarDef node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public R visitBody(FlowBody node) {
+  public R visitBody(FlowBody node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public T visitTask(FlowTaskNode node) {
+  public T visitTask(FlowTaskNode node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public T visitWhenThenPointer(FlowTaskNode parent, WhenThenPointer node) {
+  public T visitWhenThenPointer(FlowTaskNode parent, WhenThenPointer node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public T visitThenPointer(FlowTaskNode parent, ThenPointer node) {
+  public T visitThenPointer(FlowTaskNode parent, ThenPointer node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public T visitWhenThen(WhenThen node) {
+  public T visitWhenThen(WhenThen node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public T visitWhen(ExpressionBody node) {
+  public T visitWhen(ExpressionBody node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public T visitMapping(FlowTaskNode node) {
+  public T visitMapping(FlowTaskNode node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public T visitTaskRef(FlowTaskNode node) {
+  public T visitTaskRef(FlowTaskNode node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public T visitTaskPointer(FlowTaskNode parent, FlowTaskPointer node) {
+  public T visitTaskPointer(FlowTaskNode parent, FlowTaskPointer node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public T visitEndPointer(FlowTaskNode parent, EndPointer node) {
+  public T visitEndPointer(FlowTaskNode parent, EndPointer node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public T visitMappingValue(MappingValue node) {
+  public T visitMappingValue(MappingValue node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public T visitLoop(FlowLoop node) {
+  public T visitLoop(FlowLoop node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public T visitInputs(List<TypeDef> node) {
+  public T visitInputs(List<TypeDef> node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public T visitOutputs(List<TypeDef> node) {
+  public T visitOutputs(List<TypeDef> node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 }

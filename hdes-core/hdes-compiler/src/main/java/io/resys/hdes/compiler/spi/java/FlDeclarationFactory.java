@@ -32,9 +32,6 @@ import io.resys.hdes.compiler.api.HdesCompiler.Resource;
 import io.resys.hdes.compiler.api.ImmutableResource;
 import io.resys.hdes.compiler.api.ImmutableTypeDeclaration;
 import io.resys.hdes.compiler.api.ImmutableTypeName;
-import io.resys.hdes.compiler.spi.java.visitors.fl.FlImplementationVisitor;
-import io.resys.hdes.compiler.spi.java.visitors.fl.FlInterfaceVisitor;
-import io.resys.hdes.compiler.spi.java.visitors.fl.FlSwitchVisitor;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.HdesExecutable;
@@ -68,9 +65,9 @@ public class FlDeclarationFactory {
     Assertions.notNull(envir, () -> "envir can't be null");
     Assertions.notNull(body, () -> "body can't be null");
 
-    TypeSpec api = new FlInterfaceVisitor(naming).visitBody(body);
-    TypeSpec impl = new FlImplementationVisitor(naming).visitBody(body);
-    List<TypeSpec> switches = new FlSwitchVisitor(naming).visitBody(body);
+    TypeSpec api = null; //new FlInterfaceVisitor(naming).visitBody(body);
+    TypeSpec impl = null; // new FlImplementationVisitor(naming).visitBody(body);
+    List<TypeSpec> switches = null;// new FlSwitchVisitor(naming).visitBody(body);
     
 
     String pkg = naming.fl().pkg(body); 
