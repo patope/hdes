@@ -1,16 +1,47 @@
 package io.resys.hdes.compiler.spi.java.en;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.immutables.value.Value;
+
 import io.resys.hdes.ast.api.nodes.AstNode.Body;
+import io.resys.hdes.ast.api.nodes.AstNode.Invocation;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.AstNodeVisitorContext;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
+import io.resys.hdes.ast.api.nodes.ExpressionNode;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodInvocation;
 import io.resys.hdes.ast.api.nodes.ImmutableAstNodeVisitorContext;
 import io.resys.hdes.ast.spi.Assertions;
-import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.InvocationResolver;
-import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor.EnScalarCodeSpec;
 
-public class ExpressionSpec {
-  
+public class ExpressionInvocationSpec {
+
+  @Value.Immutable
+  public interface InvocationSpecParams {
+    List<InvocationSpecParam> getValues();
+    Set<UsageSource> getUsageSources();
+    TypeDef getReturnType();
+  }
+
+  @Value.Immutable
+  public interface InvocationSpecParam {
+    TypeDef getNode();
+    UsageSource getUsageSource();
+    Optional<TypeInvocation> getTypeName();
+    Optional<MethodInvocation> getMethodRef();
+  }
+
+  public interface InvocationResolver {
+    TypeDef accept(Invocation name, AstNodeVisitorContext ctx);
+  }
+
+  public static enum UsageSource {
+    INSTANCE, STATIC, IN, OUT
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -23,13 +54,13 @@ public class ExpressionSpec {
       this.node = node;
       return this;
     }
-    
+
     public Builder ctx(AstNodeVisitorContext ctx) {
       this.ctx = ctx;
       return this;
     }
-    
-    public EnScalarCodeSpec build(ExpressionBody value) {
+
+    public InvocationSpecParams build(ExpressionNode value) {
       Assertions.isTrue(node != null || ctx != null, () -> "node or context can't be null!");
 
       // find body node
@@ -55,8 +86,7 @@ public class ExpressionSpec {
       } 
       
       Assertions.notNull(resolver, () -> "can't create resolver for node: " + node + " ctx: " + ctx);
-      
-      return new ExpressionVisitor(resolver).visitBody(value, ctx);
+      return new ExpressionInvocationVisitor(resolver).visit(value, ctx);
     }
   }
 }

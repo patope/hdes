@@ -64,7 +64,7 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnary;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnary;
 import io.resys.hdes.ast.api.nodes.ImmutableAstNodeVisitorContext;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.InvocationResolver;
+import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.InvocationResolver;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor.EnJavaSpec;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor.EnScalarCodeSpec;
 import io.resys.hdes.compiler.spi.java.en.TypeConverter.EnConvertionSpec;
@@ -115,7 +115,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
 
   @Override
   public EnScalarCodeSpec visitTypeInvocation(TypeInvocation node, AstNodeVisitorContext ctx) {
-    TypeDef typeDefNode = resolver.accept(node);
+    TypeDef typeDefNode = resolver.accept(node, ctx);
     if (!(typeDefNode instanceof ScalarDef)) {
       throw new HdesCompilerException(HdesCompilerException.builder().incompatibleScalarType(node, typeDefNode));
     }
@@ -272,7 +272,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
           .type(returnType).build();
     }
 
-    TypeDef typeDef = this.resolver.accept(node);
+    TypeDef typeDef = this.resolver.accept(node, ctx);
     if (typeDef instanceof ScalarDef) {
       return ImmutableEnScalarCodeSpec.builder()
           .value(CodeBlock.builder().add("input.").add(JavaSpecUtil.methodCall(node.getName())).build())

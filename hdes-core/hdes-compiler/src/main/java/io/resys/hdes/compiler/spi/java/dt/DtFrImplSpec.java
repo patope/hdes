@@ -38,7 +38,6 @@ public class DtFrImplSpec {
   public static class Builder {
     private final Namings namings;
     private DecisionTableBody body;
-    private DtParameterResolver resolver;
     
     private Builder(Namings namings) {
       super();
@@ -47,7 +46,6 @@ public class DtFrImplSpec {
 
     public Builder body(DecisionTableBody body) {
       this.body = body;
-      resolver = new DtParameterResolver(body);
       return this;
     }
     
@@ -57,7 +55,7 @@ public class DtFrImplSpec {
       Assertions.isTrue(formula.getFormula().isPresent(), () -> "formula must be present!");
       
       ClassName outputType = namings.fr().outputValue(body, formula);
-      EnScalarCodeSpec formulaSpec = ExpressionSpec.builder(resolver).body(formula.getFormula().get()).build();
+      EnScalarCodeSpec formulaSpec = ExpressionSpec.builder().parent(body).build(formula.getFormula().get());
       if(formula.getArray() != formulaSpec.getArray().orElse(false)) {
         throw new HdesCompilerException(HdesCompilerException.builder().dtFormulaContainsIncorectArrayType(formula, formulaSpec.getArray().orElse(false)));
       }

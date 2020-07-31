@@ -23,9 +23,9 @@ import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyAll;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyFirst;
 import io.resys.hdes.ast.spi.Assertions;
-import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec;
-import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedScope;
-import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedTypes;
+import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec;
+import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.InvocationSpecParams;
+import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.UsageSource;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
@@ -62,7 +62,6 @@ public class DtImplSpec {
         .build();
     
     private DecisionTableBody body;
-    private DtParameterResolver resolver;
     
     public Builder(Namings namings) {
       super();
@@ -71,7 +70,6 @@ public class DtImplSpec {
     
     public Builder body(DecisionTableBody body) {
       this.body = body;
-      this.resolver = new DtParameterResolver(body);
       return this;
     }
 
@@ -84,15 +82,18 @@ public class DtImplSpec {
       CodeBlock.Builder formulaInput = CodeBlock.builder()
           .add("$T.builder()",  JavaSpecUtil.immutable(namings.fr().inputValue(body, scalarDef)));
       
-      EnReferedTypes referedTypes = ExpressionRefsSpec.builder(resolver).body(scalarDef.getFormula().get()).build();
-      for(EnReferedScope scope : referedTypes.getScopes()) {
+      InvocationSpecParams referedTypes = ExpressionInvocationSpec.builder().parent(body).build(scalarDef.getFormula().get());
+      for(UsageSource scope : referedTypes.getUsageSources()) {
         switch (scope) {
         case IN:
           formulaInput.add("\r\n").add("  .$L(input)", ExpressionVisitor.ACCESS_INPUT_VALUE);
           break;
         case OUT:
           formulaInput.add("\r\n").add("  .$L(output)", ExpressionVisitor.ACCESS_OUTPUT_VALUE);
+        case INSTANCE:
+          continue;
         case STATIC:
+          continue;
         default: throw new IllegalArgumentException("Scope: " + scope + " parameter: " + scalarDef + " not implemented!"); 
         }
       }

@@ -4,8 +4,8 @@ import java.util.List;
 
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
@@ -187,6 +187,18 @@ public class HdesCompilerException extends RuntimeException {
           .append("Expected same type for both expressions but was: ").append(was1).append(was2).append("!").append(System.lineSeparator())
           .append(" AST: ").append(ast.getClass()).append(System.lineSeparator())
           .append("  - ").append(ast).append("!")
+          .toString();
+    }
+    
+
+    public String incompatibleConditionalReturnType(AstNode ast, AstNode was1, AstNode was2) {
+      return new StringBuilder()
+          .append("Incompatible type used in expression!").append(System.lineSeparator())
+          .append("Expected same type for both expressions but was: ")
+          .append(" value 1 - ").append(was1).append(System.lineSeparator())
+          .append(" value 1 - ").append(was2).append(System.lineSeparator())
+          .append(" AST: ").append(ast.getClass()).append(System.lineSeparator())
+          .append("   - ").append(ast).append("!")
           .toString();
     }
     

@@ -16,9 +16,9 @@ import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec;
-import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedScope;
-import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedTypes;
+import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec;
+import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.InvocationSpecParams;
+import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.UsageSource;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
@@ -34,7 +34,6 @@ public class DtFrApiSpec {
   public static class Builder {
     private final Namings namings;
     private DecisionTableBody body;
-    private DtParameterResolver resolver;
     
     private Builder(Namings namings) {
       super();
@@ -43,7 +42,6 @@ public class DtFrApiSpec {
 
     public Builder body(DecisionTableBody body) {
       this.body = body;
-      this.resolver = new DtParameterResolver(body);
       return this;
     }
     
@@ -60,17 +58,16 @@ public class DtFrApiSpec {
     }
     
     private TypeSpec inputType(ScalarDef scalar) {
-      EnReferedTypes referedTypes = ExpressionRefsSpec.builder(resolver).body(scalar.getFormula().get()).build();
-    
-      if(scalar.getDirection() == DirectionType.IN && referedTypes.getScopes().contains(EnReferedScope.OUT)) {
+      InvocationSpecParams referedTypes = ExpressionInvocationSpec.builder().parent(body).build(scalar.getFormula().get());
+      if(scalar.getDirection() == DirectionType.IN && referedTypes.getUsageSources().contains(UsageSource.OUT)) {
         List<String> unusables = referedTypes.getValues().stream()
-            .filter(e -> e.getScope() == EnReferedScope.OUT)
+            .filter(e -> e.getUsageSource() == UsageSource.OUT)
             .map(e -> e.getNode().getName()).collect(Collectors.toList());
         throw new HdesCompilerException(HdesCompilerException.builder().dtFormulaContainsIncorectScopeParameters(scalar, unusables));
       }
       
       List<MethodSpec> methods = new ArrayList<>();
-      for(EnReferedScope scope : referedTypes.getScopes()) {
+      for(UsageSource scope : referedTypes.getUsageSources()) {
         switch (scope) {
         case IN:
           methods.add(MethodSpec.methodBuilder(JavaSpecUtil.methodName(ExpressionVisitor.ACCESS_INPUT_VALUE))
@@ -88,6 +85,8 @@ public class DtFrApiSpec {
               .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
               .returns(namings.dt().staticValue(body))
               .build());
+        case INSTANCE:
+          continue;
         default: throw new IllegalArgumentException("Scope: " + scope + " parameter: " + scalar + " not implemented!"); 
         }
       }
