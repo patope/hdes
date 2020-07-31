@@ -18,7 +18,7 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyAll;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyFirst;
@@ -27,7 +27,6 @@ import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec;
 import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedScope;
 import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedTypes;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor;
-import io.resys.hdes.compiler.spi.java.visitors.dt.DtEnReferedTypeResolver;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.DecisionTableMeta;
@@ -63,7 +62,7 @@ public class DtImplSpec {
         .build();
     
     private DecisionTableBody body;
-    private DtEnReferedTypeResolver resolver;
+    private DtParameterResolver resolver;
     
     public Builder(Namings namings) {
       super();
@@ -72,11 +71,11 @@ public class DtImplSpec {
     
     public Builder body(DecisionTableBody body) {
       this.body = body;
-      this.resolver = new DtEnReferedTypeResolver(body);
+      this.resolver = new DtParameterResolver(body);
       return this;
     }
 
-    public CodeBlock formula(ScalarTypeDefNode scalarDef) {
+    public CodeBlock formula(ScalarDef scalarDef) {
       ClassName typeName = scalarDef.getDirection() == DirectionType.IN ? 
           namings.dt().inputValue(body) :
           namings.dt().outputValueMono(body);
@@ -130,7 +129,7 @@ public class DtImplSpec {
       
       // Create formula on input
       List<CodeBlock> inputFormulas = body.getHeaders().getValues().stream()
-        .filter(v -> v.getDirection() == DirectionType.IN).map(v -> (ScalarTypeDefNode) v)
+        .filter(v -> v.getDirection() == DirectionType.IN).map(v -> (ScalarDef) v)
         .filter(v -> v.getFormula().isPresent()).map(v -> formula(v))
         .collect(Collectors.toList());
       if(!inputFormulas.isEmpty()) {
@@ -165,7 +164,7 @@ public class DtImplSpec {
       
       // Create formula on output
       List<CodeBlock> outputFormulas = body.getHeaders().getValues().stream()
-        .filter(v -> v.getDirection() == DirectionType.OUT).map(v -> (ScalarTypeDefNode) v)
+        .filter(v -> v.getDirection() == DirectionType.OUT).map(v -> (ScalarDef) v)
         .filter(v -> v.getFormula().isPresent()).map(v -> formula(v))
         .collect(Collectors.toList());
       if(!outputFormulas.isEmpty()) {

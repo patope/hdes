@@ -3,7 +3,7 @@ package io.resys.hdes.compiler.spi.java.dt;
 import com.squareup.javapoet.CodeBlock;
 
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyMatrix;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.MatrixRow;
@@ -45,7 +45,7 @@ public class HitPolicyMatrixSpec {
         int index = 0;
         for (Literal literal : matrixRow.getValues()) {
 
-          ScalarTypeDefNode header = (ScalarTypeDefNode) body.getHeaders().getValues().stream()
+          ScalarDef header = (ScalarDef) body.getHeaders().getValues().stream()
               .filter(t -> t.getName().equals(matrixRow.getTypeName().getValue())).findFirst().get();
           Rule rule = matrix.getRules().get(index);
 

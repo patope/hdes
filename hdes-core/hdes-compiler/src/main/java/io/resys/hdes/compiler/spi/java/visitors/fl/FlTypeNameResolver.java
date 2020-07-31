@@ -24,12 +24,12 @@ import java.util.Arrays;
 import java.util.Optional;
 
 import io.resys.hdes.ast.api.AstEnvir;
-import io.resys.hdes.ast.api.nodes.AstNode.BodyNode;
+import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
-import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodRefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodInvocation;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskPointer;
@@ -50,11 +50,11 @@ public class FlTypeNameResolver implements EnReferedTypeResolver {
   }
 
   @Override
-  public TypeDefNode accept(TypeName typeName) {
+  public TypeDef accept(TypeInvocation typeName) {
     String[] pathName = typeName.getValue().split("\\.");
     
     // Find from inputs
-    Optional<TypeDefNode> typeDef = body.getHeaders().getValues().stream()
+    Optional<TypeDef> typeDef = body.getHeaders().getValues().stream()
         .filter(f -> f.getDirection() == DirectionType.IN)
         .map(f -> getTypeDefNode(f, pathName))
         .filter(f -> f.isPresent())
@@ -72,7 +72,7 @@ public class FlTypeNameResolver implements EnReferedTypeResolver {
     throw new HdesCompilerException(HdesCompilerException.builder().unknownExpressionParameter(typeName));
   }
 
-  private Optional<TypeDefNode> getTypeDefNode(FlowTaskNode node, String[] pathName) {
+  private Optional<TypeDef> getTypeDefNode(FlowTaskNode node, String[] pathName) {
     String taskName = pathName[0];
     if(node.getId().equals(taskName)) {
       
@@ -80,9 +80,9 @@ public class FlTypeNameResolver implements EnReferedTypeResolver {
       if(node.getRef().isEmpty()) {
         return Optional.empty();
       }
-      BodyNode bodyNode = astEnvir.getByAstId(node.getRef().get().getValue());
+      Body bodyNode = astEnvir.getByAstId(node.getRef().get().getValue());
       String[] nextPath = Arrays.copyOfRange(pathName, 1, pathName.length - 1);
-      Optional<TypeDefNode> typeDef = bodyNode.getHeaders().getValues().stream()
+      Optional<TypeDef> typeDef = bodyNode.getHeaders().getValues().stream()
           .filter(f -> f.getDirection() == DirectionType.OUT)
           .map(f -> getTypeDefNode(f, nextPath))
           .filter(f -> f.isPresent())
@@ -109,7 +109,7 @@ public class FlTypeNameResolver implements EnReferedTypeResolver {
     return Optional.empty();
   }
   
-  private Optional<TypeDefNode> getTypeDefNode(TypeDefNode node, String[] pathName) {
+  private Optional<TypeDef> getTypeDefNode(TypeDef node, String[] pathName) {
     String path = pathName[0];
     if (!node.getName().equals(path)) {
       return Optional.empty();
@@ -121,11 +121,11 @@ public class FlTypeNameResolver implements EnReferedTypeResolver {
     String[] nextPath = Arrays.copyOfRange(pathName, 1, pathName.length - 1);
     
     // Nested structure
-    if(node instanceof ObjectTypeDefNode) {
-      ObjectTypeDefNode objectDefNode = (ObjectTypeDefNode) node;
+    if(node instanceof ObjectDef) {
+      ObjectDef objectDefNode = (ObjectDef) node;
       
-      for(TypeDefNode nextNode : objectDefNode.getValues()) {
-        Optional<TypeDefNode> nextResult = getTypeDefNode(nextNode, nextPath);
+      for(TypeDef nextNode : objectDefNode.getValues()) {
+        Optional<TypeDef> nextResult = getTypeDefNode(nextNode, nextPath);
         if(nextResult.isPresent()) {
           return nextResult;
         }
@@ -139,7 +139,7 @@ public class FlTypeNameResolver implements EnReferedTypeResolver {
   }
 
   @Override
-  public TypeDefNode accept(MethodRefNode name) {
+  public TypeDef accept(MethodInvocation name) {
     // TODO Auto-generated method stub
     return null;
   }

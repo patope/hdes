@@ -22,9 +22,9 @@ package io.resys.hdes.ast.spi.validators;
 
 import java.util.List;
 
-import io.resys.hdes.ast.api.nodes.AstNode.BodyNode;
+import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.ast.api.nodes.AstNode.ErrorNode;
 
 public interface BodyNodeValidator {
-  List<ErrorNode> validate(BodyNode node);
+  List<ErrorNode> validate(Body node);
 }

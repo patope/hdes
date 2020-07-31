@@ -75,7 +75,8 @@ public class HdesRuntimeTest {
         "headers: {\n" + 
         "  name STRING required IN,\n" + 
         "  lastName STRING required IN,\n" + 
-        "  value INTEGER required OUT\n" + 
+        "  value INTEGER required OUT,\n" + 
+        "  totalHit INTEGER optional OUT formula: sum(static.map(row -> row.value)) \n" + 
         "} FIRST: {\n" + 
         "  {         'sam',         ?,   20 },\n" + 
         "  {         'bob',   'woman', 4570 },\n" + 
@@ -154,7 +155,7 @@ public class HdesRuntimeTest {
         "  lastName STRING required IN,\n" +  
 //        "  total    INTEGER required OUT formula: sum(instance), // total score of hit columns\n" + 
 //        "  avg      INTEGER required OUT formula: avg(instance), // avg score hit columns\n" + 
-        "  max      INTEGER required OUT formula: sum(static.map(row -> max(row))) // sum max possible score of defined fields\n" + 
+        "  max      INTEGER optional OUT formula: sum(static.map(row -> max(row))) // sum max possible score of defined fields\n" + 
         "\n" + 
         "} MATRIX from STRING to INTEGER: {\n" + 
         "          { 'BOB', 'SAM', ? },\n" + 

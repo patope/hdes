@@ -30,7 +30,7 @@ public interface DecisionTableNode extends AstNode {
   interface RuleValue extends DecisionTableNode {}
   
   @Value.Immutable
-  interface DecisionTableBody extends DecisionTableNode, BodyNode {
+  interface DecisionTableBody extends DecisionTableNode, Body {
     HitPolicy getHitPolicy();
   }
  
@@ -49,7 +49,7 @@ public interface DecisionTableNode extends AstNode {
 
   @Value.Immutable
   interface MatrixRow extends DecisionTableNode {
-    TypeName getTypeName();
+    TypeInvocation getTypeName();
     List<Literal> getValues();
   }
 
@@ -92,7 +92,7 @@ public interface DecisionTableNode extends AstNode {
   }
   
   @Value.Immutable
-  interface HeaderRefValue extends DecisionTableNode {
+  interface HeaderIndex extends DecisionTableNode {
     Integer getIndex();
   }
   

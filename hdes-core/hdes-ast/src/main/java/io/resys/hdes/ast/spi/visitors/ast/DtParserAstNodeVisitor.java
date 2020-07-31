@@ -56,9 +56,9 @@ import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
 import io.resys.hdes.ast.api.nodes.AstNode.Headers;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicy;
@@ -71,12 +71,13 @@ import io.resys.hdes.ast.api.nodes.DecisionTableNode.RuleRow;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.RuleValue;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.UndefinedValue;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityType;
-import io.resys.hdes.ast.api.nodes.ImmutableAndOperation;
+import io.resys.hdes.ast.api.nodes.ImmutableAndExpression;
 import io.resys.hdes.ast.api.nodes.ImmutableBetweenExpression;
+import io.resys.hdes.ast.api.nodes.ImmutableBodyId;
 import io.resys.hdes.ast.api.nodes.ImmutableDecisionTableBody;
 import io.resys.hdes.ast.api.nodes.ImmutableEqualityOperation;
 import io.resys.hdes.ast.api.nodes.ImmutableExpressionValue;
-import io.resys.hdes.ast.api.nodes.ImmutableHeaderRefValue;
+import io.resys.hdes.ast.api.nodes.ImmutableHeaderIndex;
 import io.resys.hdes.ast.api.nodes.ImmutableHitPolicyAll;
 import io.resys.hdes.ast.api.nodes.ImmutableHitPolicyFirst;
 import io.resys.hdes.ast.api.nodes.ImmutableHitPolicyMatrix;
@@ -84,8 +85,8 @@ import io.resys.hdes.ast.api.nodes.ImmutableInOperation;
 import io.resys.hdes.ast.api.nodes.ImmutableLiteralValue;
 import io.resys.hdes.ast.api.nodes.ImmutableMatrixRow;
 import io.resys.hdes.ast.api.nodes.ImmutableNegateLiteralValue;
-import io.resys.hdes.ast.api.nodes.ImmutableNotUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ImmutableOrOperation;
+import io.resys.hdes.ast.api.nodes.ImmutableNotUnary;
+import io.resys.hdes.ast.api.nodes.ImmutableOrExpression;
 import io.resys.hdes.ast.api.nodes.ImmutableRule;
 import io.resys.hdes.ast.api.nodes.ImmutableRuleRow;
 import io.resys.hdes.ast.api.nodes.ImmutableUndefinedValue;
@@ -162,9 +163,10 @@ public class DtParserAstNodeVisitor extends EnParserAstNodeVisitor {
       hitPolicy = ImmutableHitPolicyFirst.builder().from(first).rows(rulerows).build();
     }
     
+    TypeInvocation id = children.of(TypeInvocation.class).get();
     return ImmutableDecisionTableBody.builder()
         .token(token(ctx))
-        .id(children.of(TypeName.class).get())
+        .id(ImmutableBodyId.builder().token(id.getToken()).value(id.getValue()).build())
         .description(children.of(RedundentDescription.class).map(e -> e.getValue()))
         .headers(headers)
         .hitPolicy(hitPolicy)
@@ -174,13 +176,13 @@ public class DtParserAstNodeVisitor extends EnParserAstNodeVisitor {
   private int getHeaderIndex(final Headers headers, final int ruleIndex) {
     int result = -1;
     int headerIndex = 0;
-    for(TypeDefNode node : headers.getValues()) {
+    for(TypeDef node : headers.getValues()) {
       result++;
       
-      if(!(node instanceof ScalarTypeDefNode)) {
+      if(!(node instanceof ScalarDef)) {
         continue;
       }
-      ScalarTypeDefNode scalar = (ScalarTypeDefNode) node;
+      ScalarDef scalar = (ScalarDef) node;
       if(!scalar.getFormula().isEmpty() && scalar.getDirection() == DirectionType.OUT) {
         continue;
       }
@@ -223,7 +225,7 @@ public class DtParserAstNodeVisitor extends EnParserAstNodeVisitor {
     ParseTree tree = ctx.getChild(0);
     if(tree instanceof TerminalNode && 
         ((TerminalNode) tree).getSymbol().getType() == HdesParser.NOT_OP) {
-      return ImmutableNotUnaryOperation.builder()
+      return ImmutableNotUnary.builder()
           .value(nodes(ctx).of(AstNode.class).get())
           .token(token(ctx))
           .build();
@@ -256,7 +258,7 @@ public class DtParserAstNodeVisitor extends EnParserAstNodeVisitor {
       AstNode.Token token = token(ctx);
       return ImmutableBetweenExpression.builder()
           .token(token)
-          .value(ImmutableHeaderRefValue.builder().token(token).index(index).build())
+          .value(ImmutableHeaderIndex.builder().token(token).index(index).build())
           .left(ctx.getChild(1).accept(this)).right(ctx.getChild(3).accept(this))
           .build();
     }
@@ -266,8 +268,8 @@ public class DtParserAstNodeVisitor extends EnParserAstNodeVisitor {
     AstNode right = ctx.getChild(2).accept(this);
     
     return v.getSymbol().getType() == HdesParser.AND ? 
-        ImmutableAndOperation.builder().token(token(ctx)).left(left).right(right).build() : 
-        ImmutableOrOperation.builder().token(token(ctx)).left(left).right(right).build();
+        ImmutableAndExpression.builder().token(token(ctx)).left(left).right(right).build() : 
+        ImmutableOrExpression.builder().token(token(ctx)).left(left).right(right).build();
   }
 
   @Override
@@ -303,7 +305,7 @@ public class DtParserAstNodeVisitor extends EnParserAstNodeVisitor {
     return ImmutableEqualityOperation.builder()
       .type(type)
       .token(token)
-      .left(ImmutableHeaderRefValue.builder().token(token).index(index).build())
+      .left(ImmutableHeaderIndex.builder().token(token).index(index).build())
       .right(right)
       .build();
   }
@@ -371,7 +373,7 @@ public class DtParserAstNodeVisitor extends EnParserAstNodeVisitor {
   @Override
   public MatrixRow visitMatrixRuleset(MatrixRulesetContext ctx) {
     // type name : { rules }
-    TypeName typeName = (TypeName) ctx.getChild(0).accept(this);
+    TypeInvocation typeName = (TypeInvocation) ctx.getChild(0).accept(this);
     List<Literal> values = new ArrayList<>();
     
     for (int i = 1; i < ctx.getChildCount(); i++) {

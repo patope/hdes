@@ -28,33 +28,31 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 
 public interface AstNode {
   Token getToken();
+
+  enum DirectionType { IN, OUT }
+  enum TypeNameScope { VAR, STATIC, INSTANCE }
+  enum ScalarType {
+    STRING, INTEGER, BOOLEAN, DECIMAL,
+    DATE, DATE_TIME, TIME,
+  }
   
-  interface BodyNode extends AstNode {
-    TypeName getId();
+  interface Invociation extends AstNode { }
+  
+  interface Body extends AstNode {
+    BodyId getId();
     Optional<String> getDescription();
     Headers getHeaders();
   }
   
-  @Value.Immutable
-  interface EmptyBodyNode extends BodyNode {
+  interface TypeDef extends AstNode {
+    Boolean getRequired();
+    DirectionType getDirection();
+    String getName();
+    Boolean getArray();
   }
   
   @Value.Immutable
-  interface TypeName extends AstNode {
-    String getValue();
-    TypeNameScope getScope();
-  }
-  
-  @Value.Immutable
-  interface Literal extends AstNode {
-    ScalarType getType();
-    String getValue();
-  }
-  
-  @Value.Immutable
-  interface EmptyNode extends AstNode { 
-    Optional<String> getValue();
-  }
+  interface EmptyNode extends AstNode { }
   
   @Value.Immutable
   interface ErrorNode {
@@ -73,60 +71,50 @@ public interface AstNode {
     int getEndLine();
     int getEndCol();
   }
+
+  @Value.Immutable
+  interface EmptyBody extends Body { }
   
-  interface DataTypeConversion extends ExpressionNode {
-    ExpressionNode getValue();
-    ScalarType getToType();
+  
+  @Value.Immutable
+  interface BodyId extends AstNode {
+    String getValue();
+  }
+  
+  @Value.Immutable
+  interface TypeInvocation extends Invociation {
+    String getValue();
+    TypeNameScope getScope();
+  }
+  
+  @Value.Immutable
+  interface Literal extends AstNode {
+    ScalarType getType();
+    String getValue();
+  }
+  
+  @Value.Immutable
+  interface Headers extends AstNode {
+    List<TypeDef> getValues();
+  }
+  
+  @Value.Immutable
+  interface ObjectDef extends TypeDef {
+    List<TypeDef> getValues();
   }
 
   @Value.Immutable
-  interface DateConversion extends DataTypeConversion { }
-
-  @Value.Immutable
-  interface DateTimeConversion extends DataTypeConversion { }
-
-  @Value.Immutable
-  interface TimeConversion extends DataTypeConversion { }
-
-  @Value.Immutable
-  interface DecimalConversion extends DataTypeConversion { }
-
+  interface ScalarDef extends TypeDef {
+    Optional<String> getDebugValue();
+    Optional<ExpressionBody> getFormula();
+    ScalarType getType();
+  }
+  
   @Value.Immutable
   interface CompilationUnit extends AstNode {
     List<FlowNode> getFlows();
     List<ManualTaskNode> getManualTasks();
     List<DecisionTableNode> getDecisionTables();
     List<AstNode> getServices();
-  }
-  
-  @Value.Immutable
-  interface Headers extends AstNode {
-    List<TypeDefNode> getValues();
-  }
-  
-  interface TypeDefNode extends AstNode {
-    Boolean getRequired();
-    DirectionType getDirection();
-    String getName();
-    Boolean getArray();
-  }
-  
-  @Value.Immutable
-  interface ObjectTypeDefNode extends TypeDefNode {
-    List<TypeDefNode> getValues();
-  }
-
-  @Value.Immutable
-  interface ScalarTypeDefNode extends TypeDefNode {
-    Optional<String> getDebugValue();
-    Optional<ExpressionBody> getFormula();
-    ScalarType getType();
-  }
-  
-  enum DirectionType { IN, OUT }
-  enum TypeNameScope { VAR, STATIC, INSTANCE }
-  enum ScalarType {
-    STRING, INTEGER, BOOLEAN, DECIMAL,
-    DATE, DATE_TIME, TIME,
   }
 }

@@ -26,8 +26,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import io.resys.hdes.ast.api.nodes.AstNode.BodyNode;
-import io.resys.hdes.ast.api.nodes.AstNode.EmptyBodyNode;
+import io.resys.hdes.ast.api.nodes.AstNode.Body;
+import io.resys.hdes.ast.api.nodes.AstNode.EmptyBody;
 import io.resys.hdes.ast.api.nodes.AstNode.ErrorNode;
 import io.resys.hdes.ast.spi.validators.delegates.BodyNodeIdValidator;
 
@@ -38,11 +38,11 @@ public class BodyValidatorVisitor {
       new BodyNodeIdValidator()
   );
   
-  public static void validate(Map<String, BodyNode> body, Map<String, List<ErrorNode>> errors) {
+  public static void validate(Map<String, Body> body, Map<String, List<ErrorNode>> errors) {
     for(BodyNodeValidator delegate : DELEGATES) {
       
-      for(Map.Entry<String, BodyNode> entry : body.entrySet()) {
-        if(entry.getValue() instanceof EmptyBodyNode) {
+      for(Map.Entry<String, Body> entry : body.entrySet()) {
+        if(entry.getValue() instanceof EmptyBody) {
           continue;
         }
         

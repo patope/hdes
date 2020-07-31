@@ -4,13 +4,13 @@ import java.util.List;
 
 import io.resys.hdes.ast.api.nodes.AstNode.Headers;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
-import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
+import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.ExpressionValue;
-import io.resys.hdes.ast.api.nodes.DecisionTableNode.HeaderRefValue;
+import io.resys.hdes.ast.api.nodes.DecisionTableNode.HeaderIndex;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyAll;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyFirst;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyMatrix;
@@ -21,23 +21,23 @@ import io.resys.hdes.ast.api.nodes.DecisionTableNode.NegateLiteralValue;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.Rule;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.RuleRow;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.UndefinedValue;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.AndOperation;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveExpression;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.AndExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.BetweenExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ConditionalExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.LambdaExpression;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodRefNode;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.MultiplicativeOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.NegateUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.NotUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.OrOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.PositiveUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.PostDecrementUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.PostIncrementUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnaryOperation;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodInvocation;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.MultiplicativeExpression;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.NegateUnary;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.NotUnary;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.OrExpression;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.PositiveUnary;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.PostDecrementUnary;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.PostIncrementUnary;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnary;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnary;
 import io.resys.hdes.ast.api.nodes.FlowNode.EndPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowLoop;
@@ -63,53 +63,41 @@ import io.resys.hdes.ast.api.nodes.ManualTaskNode.ThenAction;
 import io.resys.hdes.ast.api.nodes.ManualTaskNode.WhenAction;
 
 public interface AstNodeVisitor<T, R> {
-  @FunctionalInterface
-  interface TypeNameRef {
-    String get(TypeName node);
-  }
-  
   // basic
-  T visitTypeName(TypeName node);
+  T visitTypeInvocation(TypeInvocation node);
   T visitLiteral(Literal node);
 
-  /* conversions
-  T visitDateConversion(DateConversion node);
-  T visitDateTimeConversion(DateTimeConversion node);
-  T visitTimeConversion(TimeConversion node);
-  T visitDecimalConversion(DecimalConversion node);
-  */
-  
   interface TypeDefVisitor<T, R> extends AstNodeVisitor<T, R> {
-    T visitObjectDef(ObjectTypeDefNode node);
-    T visitScalarDef(ScalarTypeDefNode node);
+    T visitObjectDef(ObjectDef node);
+    T visitScalarDef(ScalarDef node);
   }
   
   // expression
   interface ExpressionAstNodeVisitor<T, R> extends AstNodeVisitor<T, R> { 
-    R visitExpressionBody(ExpressionBody node);
-    T visitNotUnaryOperation(NotUnaryOperation node);
-    T visitNegateUnaryOperation(NegateUnaryOperation node);
-    T visitPositiveUnaryOperation(PositiveUnaryOperation node);
-    T visitPreIncrementUnaryOperation(PreIncrementUnaryOperation node);
-    T visitPreDecrementUnaryOperation(PreDecrementUnaryOperation node);
-    T visitPostIncrementUnaryOperation(PostIncrementUnaryOperation node);
-    T visitPostDecrementUnaryOperation(PostDecrementUnaryOperation node);
-    T visitMethodRefNode(MethodRefNode node);
-    T visitEqualityOperation(EqualityOperation node);
-    T visitAndOperation(AndOperation node);
-    T visitOrOperation(OrOperation node);
-    T visitConditionalExpression(ConditionalExpression node);
-    T visitBetweenExpression(BetweenExpression node);
-    T visitAdditiveOperation(AdditiveOperation node);
-    T visitMultiplicativeOperation(MultiplicativeOperation node);
-    T visitLambdaExpression(LambdaExpression node);
+    R visitBody(ExpressionBody node);
+    T visitNot(NotUnary node);
+    T visitNegate(NegateUnary node);
+    T visitPositive(PositiveUnary node);
+    T visitPreIncrement(PreIncrementUnary node);
+    T visitPreDecrement(PreDecrementUnary node);
+    T visitPostIncrement(PostIncrementUnary node);
+    T visitPostDecrement(PostDecrementUnary node);
+    T visitMethod(MethodInvocation node);
+    T visitEquality(EqualityOperation node);
+    T visitAnd(AndExpression node);
+    T visitOr(OrExpression node);
+    T visitConditional(ConditionalExpression node);
+    T visitBetween(BetweenExpression node);
+    T visitAdditive(AdditiveExpression node);
+    T visitMultiplicative(MultiplicativeExpression node);
+    T visitLambda(LambdaExpression node);
   }
   
   // dt
   interface DtAstNodeVisitor<T, R> extends TypeDefVisitor<T, R> {
-    R visitDecisionTableBody(DecisionTableBody node);
+    R visitBody(DecisionTableBody node);
     T visitHeaders(Headers node);
-    T visitHeader(TypeDefNode node);
+    T visitHeader(TypeDef node);
     T visitHitPolicyAll(HitPolicyAll node);
     T visitHitPolicyMatrix(HitPolicyMatrix node);
     T visitHitPolicyFirst(HitPolicyFirst node);
@@ -123,20 +111,20 @@ public interface AstNodeVisitor<T, R> {
     T visitNegateLiteralValue(NegateLiteralValue node);
     
     T visitExpressionValue(ExpressionValue node);
-    T visitEqualityOperation(EqualityOperation node);
-    T visitBetweenExpression(BetweenExpression node);
-    T visitAndOperation(AndOperation node);
-    T visitOrOperation(OrOperation node);
-    T visitInOperation(InOperation node);
-    T visitNotOperation(NotUnaryOperation node);
-    T visitHeaderRefValue(HeaderRefValue node);
+    T visitEquality(EqualityOperation node);
+    T visitBetween(BetweenExpression node);
+    T visitAnd(AndExpression node);
+    T visitOr(OrExpression node);
+    T visitIn(InOperation node);
+    T visitNot(NotUnary node);
+    T visitHeaderIndex(HeaderIndex node);
   }
   
   // flow
   interface FlowAstNodeVisitor<T, R> extends TypeDefVisitor<T, R> {
     R visitBody(FlowBody node);
-    T visitInputs(List<TypeDefNode> node);
-    T visitOutputs(List<TypeDefNode> node);
+    T visitInputs(List<TypeDef> node);
+    T visitOutputs(List<TypeDef> node);
     T visitTask(FlowTaskNode node);
     
     T visitTaskPointer(FlowTaskNode parent, FlowTaskPointer node);
@@ -155,7 +143,7 @@ public interface AstNodeVisitor<T, R> {
   // mt
   interface MtAstNodeVisitor<T, R> extends TypeDefVisitor<T, R> {
     R visitManualTaskBody(ManualTaskBody node);
-    T visitManualTaskInputs(List<TypeDefNode> node);
+    T visitManualTaskInputs(List<TypeDef> node);
     T visitManualTaskDropdowns(ManualTaskDropdowns node);
     T visitManualTaskStatements(ManualTaskActions node);
     T visitManualTaskForm(ManualTaskForm node);

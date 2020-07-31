@@ -48,7 +48,7 @@ import io.resys.hdes.ast.api.AstNodeException;
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.Headers;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.FlowNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.EndPointer;
@@ -62,6 +62,7 @@ import io.resys.hdes.ast.api.nodes.FlowNode.RefTaskType;
 import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
+import io.resys.hdes.ast.api.nodes.ImmutableBodyId;
 import io.resys.hdes.ast.api.nodes.ImmutableEndPointer;
 import io.resys.hdes.ast.api.nodes.ImmutableFlowBody;
 import io.resys.hdes.ast.api.nodes.ImmutableFlowLoop;
@@ -112,10 +113,12 @@ public class FwParserAstNodeVisitor extends MtParserAstNodeVisitor {
     }
     
     Headers headers = children.of(Headers.class).get();
+    TypeInvocation id = children.of(TypeInvocation.class).get();
+    
     return ImmutableFlowBody.builder()
         .headers(headers)
         .token(token(ctx))
-        .id(children.of(TypeName.class).get())
+        .id(ImmutableBodyId.builder().token(id.getToken()).value(id.getValue()).build())
         .description(children.of(RedundentDescription.class).map(e -> e.getValue()).orElse(null))
         .task(tasks.getFirst())
         .unreachableTasks(tasks.getUnclaimed())
@@ -154,7 +157,7 @@ public class FwParserAstNodeVisitor extends MtParserAstNodeVisitor {
     Nodes nodes = nodes(ctx);
     return ImmutableFlowTaskNode.builder()
         .token(token(ctx))
-        .id(nodes.of(TypeName.class).get().getValue())
+        .id(nodes.of(TypeInvocation.class).get().getValue())
         .next(nodes.of(FlowTaskPointer.class).get())
         .ref(nodes.of(TaskRef.class))
         .loop(nodes.of(FlowLoop.class))
@@ -165,7 +168,7 @@ public class FwParserAstNodeVisitor extends MtParserAstNodeVisitor {
     Nodes nodes = nodes(ctx);
     return ImmutableFlowLoop.builder()
         .token(token(ctx))
-        .arrayName(nodes.of(TypeName.class).get())
+        .arrayName(nodes.of(TypeInvocation.class).get())
         .next(nodes.of(FlowTaskPointer.class).get())
         .build();
   }
@@ -203,7 +206,7 @@ public class FwParserAstNodeVisitor extends MtParserAstNodeVisitor {
     }
     return ImmutableThenPointer.builder()
       .token(token(ctx))
-      .name(nodes.of(TypeName.class).map(e -> e.getValue()).get())
+      .name(nodes.of(TypeInvocation.class).map(e -> e.getValue()).get())
       .build();
   }
   
@@ -214,7 +217,7 @@ public class FwParserAstNodeVisitor extends MtParserAstNodeVisitor {
     return ImmutableTaskRef.builder()
         .token(token(ctx))
         .type(nodes.of(FwRedundentRefTaskType.class).get().getValue())
-        .value(nodes.of(TypeName.class).get().getValue())
+        .value(nodes.of(TypeInvocation.class).get().getValue())
         .mapping(nodes.of(FwRedundentMapping.class).get().getValues())
         .build();
   }
@@ -240,7 +243,7 @@ public class FwParserAstNodeVisitor extends MtParserAstNodeVisitor {
     Nodes nodes = nodes(ctx);
     return ImmutableMapping.builder()
         .token(token(ctx))
-        .left(nodes.of(TypeName.class).get().getValue())
+        .left(nodes.of(TypeInvocation.class).get().getValue())
         .right(nodes.of(MappingValue.class).get())
         .build();
   }
@@ -252,8 +255,8 @@ public class FwParserAstNodeVisitor extends MtParserAstNodeVisitor {
     
     if(nodes.of(Literal.class).isPresent()) {
       return ImmutableMappingLiteral.builder().token(token).value(nodes.of(Literal.class).get()).build();
-    } else if(nodes.of(TypeName.class).isPresent()) {
-      return ImmutableMappingTypeName.builder().token(token).value(nodes.of(TypeName.class).get()).build();
+    } else if(nodes.of(TypeInvocation.class).isPresent()) {
+      return ImmutableMappingTypeName.builder().token(token).value(nodes.of(TypeInvocation.class).get()).build();
     } else if(nodes.of(FwRedundentMapping.class).isPresent()) {
       return ImmutableMappingArray.builder().token(token).values(nodes.of(FwRedundentMapping.class).get().getValues()).build();
     } else {

@@ -6,7 +6,7 @@ import com.squareup.javapoet.CodeBlock;
 
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.ExpressionValue;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyFirst;
@@ -16,14 +16,13 @@ import io.resys.hdes.ast.api.nodes.DecisionTableNode.RuleRow;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.RuleValue;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.UndefinedValue;
 import io.resys.hdes.ast.spi.Assertions;
-import io.resys.hdes.compiler.spi.java.visitors.dt.DtJavaSpec;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.ImmutableDecisionTableMetaEntry;
 
 public class HitPolicyFirstSpec {
 
   @Value.Immutable
-  public interface DtFirstControlStatement extends DtJavaSpec {
+  public interface DtFirstControlStatement {
     CodeBlock getControl();
     CodeBlock getValue();
   }
@@ -58,7 +57,7 @@ public class HitPolicyFirstSpec {
           continue;
         }
 
-        final ScalarTypeDefNode header = (ScalarTypeDefNode) body.getHeaders().getValues().get(rule.getHeader());
+        final ScalarDef header = (ScalarDef) body.getHeaders().getValues().get(rule.getHeader());
 
         if (header.getDirection() == DirectionType.IN) {
           CodeBlock ruleCode = DtRuleSpec.builder(body).build(header, rule).getValue();

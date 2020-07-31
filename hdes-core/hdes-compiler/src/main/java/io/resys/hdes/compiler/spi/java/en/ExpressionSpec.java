@@ -27,7 +27,7 @@ public class ExpressionSpec {
     }
     
     public EnScalarCodeSpec build() {
-      return new ExpressionVisitor(resolver).visitExpressionBody(body);
+      return new ExpressionVisitor(resolver).visitBody(body);
     }
   }
 }

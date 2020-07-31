@@ -3,9 +3,11 @@ package io.resys.hdes.compiler.api;
 import java.util.List;
 
 import io.resys.hdes.ast.api.nodes.AstNode;
+import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
@@ -140,8 +142,18 @@ public class HdesCompilerException extends RuntimeException {
           .toString();
     }
     public String unknownExpressionParameter(AstNode ast) {
+      String value;
+      if(ast instanceof TypeInvocation) {
+        value = ((TypeInvocation) ast).getValue();
+      } else if(ast instanceof Literal) {
+        value = ((Literal) ast).getValue();
+      } else {
+        value = "";
+      }
       return new StringBuilder()
-          .append("Unknown EXPRESSION parameter AST: ").append(ast.getClass()).append(System.lineSeparator())
+          .append("Unknown parameter in EXPRESSION!").append(System.lineSeparator())
+          .append(" parameter: ").append(value).append(System.lineSeparator())
+          .append(" AST: ").append(ast.getClass()).append(System.lineSeparator())
           .append("  - ").append(ast).append("!")
           .toString();
     }
@@ -187,7 +199,7 @@ public class HdesCompilerException extends RuntimeException {
           .toString();
     }
     
-    public String incompatibleScalarType(AstNode ast, TypeDefNode was) {
+    public String incompatibleScalarType(AstNode ast, TypeDef was) {
       return new StringBuilder()
           .append("Incompatible type used in expression!").append(System.lineSeparator())
           .append("Expected type on of: ").append(ScalarType.values()).append(" but was: ").append(was).append("!").append(System.lineSeparator())
@@ -268,7 +280,7 @@ public class HdesCompilerException extends RuntimeException {
           .toString();
     }
     
-    public String dtHeaderOutputMatrixCantBeRequired(TypeDefNode header) {
+    public String dtHeaderOutputMatrixCantBeRequired(TypeDef header) {
       return new StringBuilder()
           .append("Decision table with hit policy matrix can't have REQUIRED output!").append(System.lineSeparator())
           .append("Header name: ").append(header.getName()).append(" !").append(System.lineSeparator())
@@ -277,7 +289,7 @@ public class HdesCompilerException extends RuntimeException {
           .toString();
     }
     
-    public String dtHeaderOutputMatrixHasToHaveFormula(TypeDefNode header) {
+    public String dtHeaderOutputMatrixHasToHaveFormula(TypeDef header) {
       return new StringBuilder()
           .append("Decision table with hit policy matrix can't have output without FORMULA!").append(System.lineSeparator())
           .append("Header name: ").append(header.getName()).append(" !").append(System.lineSeparator())
@@ -286,7 +298,7 @@ public class HdesCompilerException extends RuntimeException {
           .toString();
     }
     
-    public String dtFormulaContainsIncorectScopeParameters(TypeDefNode header, List<String> unusables) {
+    public String dtFormulaContainsIncorectScopeParameters(TypeDef header, List<String> unusables) {
       return new StringBuilder()
           .append("Decision table FORMULA contains parameters that can't be used!").append(System.lineSeparator())
           .append("Header name: ").append(header.getName()).append(" !").append(System.lineSeparator())
@@ -296,7 +308,7 @@ public class HdesCompilerException extends RuntimeException {
           .toString();
     }
         
-    public String dtFormulaContainsIncorectArrayType(TypeDefNode header, boolean was) {
+    public String dtFormulaContainsIncorectArrayType(TypeDef header, boolean was) {
       return new StringBuilder()
           .append("Decision table FORMULA array type is incorrect!").append(System.lineSeparator())
           .append("Header name: ").append(header.getName()).append(" !").append(System.lineSeparator())
@@ -306,7 +318,7 @@ public class HdesCompilerException extends RuntimeException {
           .toString();
     }
     
-    public String dtFormulaContainsIncorectScalarTypes(ScalarTypeDefNode header, ScalarType was) {
+    public String dtFormulaContainsIncorectScalarTypes(ScalarDef header, ScalarType was) {
       return new StringBuilder()
           .append("Decision table FORMULA declaration and formula evaluation types do not match!").append(System.lineSeparator())
           .append("Header name: ").append(header.getName()).append(" !").append(System.lineSeparator())

@@ -54,39 +54,38 @@ import io.resys.hdes.ast.HdesParser.UnaryExpressionNotPlusMinusContext;
 import io.resys.hdes.ast.HdesParserBaseVisitor;
 import io.resys.hdes.ast.api.AstNodeException;
 import io.resys.hdes.ast.api.nodes.AstNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveType;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityType;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.LambdaExpression;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodRefNode;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodInvocation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MultiplicativeType;
-import io.resys.hdes.ast.api.nodes.ImmutableAdditiveOperation;
-import io.resys.hdes.ast.api.nodes.ImmutableAndOperation;
+import io.resys.hdes.ast.api.nodes.ImmutableAdditiveExpression;
+import io.resys.hdes.ast.api.nodes.ImmutableAndExpression;
 import io.resys.hdes.ast.api.nodes.ImmutableBetweenExpression;
 import io.resys.hdes.ast.api.nodes.ImmutableConditionalExpression;
 import io.resys.hdes.ast.api.nodes.ImmutableEqualityOperation;
 import io.resys.hdes.ast.api.nodes.ImmutableExpressionBody;
 import io.resys.hdes.ast.api.nodes.ImmutableLambdaExpression;
-import io.resys.hdes.ast.api.nodes.ImmutableMethodRefNode;
-import io.resys.hdes.ast.api.nodes.ImmutableMultiplicativeOperation;
-import io.resys.hdes.ast.api.nodes.ImmutableNegateUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ImmutableNotUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ImmutableOrOperation;
-import io.resys.hdes.ast.api.nodes.ImmutablePositiveUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ImmutablePostDecrementUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ImmutablePostIncrementUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ImmutablePreDecrementUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ImmutablePreIncrementUnaryOperation;
+import io.resys.hdes.ast.api.nodes.ImmutableMethodInvocation;
+import io.resys.hdes.ast.api.nodes.ImmutableMultiplicativeExpression;
+import io.resys.hdes.ast.api.nodes.ImmutableNegateUnary;
+import io.resys.hdes.ast.api.nodes.ImmutableNotUnary;
+import io.resys.hdes.ast.api.nodes.ImmutableOrExpression;
+import io.resys.hdes.ast.api.nodes.ImmutablePositiveUnary;
+import io.resys.hdes.ast.api.nodes.ImmutablePostDecrementUnary;
+import io.resys.hdes.ast.api.nodes.ImmutablePostIncrementUnary;
+import io.resys.hdes.ast.api.nodes.ImmutablePreDecrementUnary;
+import io.resys.hdes.ast.api.nodes.ImmutablePreIncrementUnary;
 import io.resys.hdes.ast.spi.visitors.ast.util.Nodes;
 import io.resys.hdes.ast.spi.visitors.ast.util.Nodes.TokenIdGenerator;
 
 public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
 
   protected final TokenIdGenerator tokenIdGenerator;
-  //private final ScalarType evalType;
 
   // Internal only
   @Value.Immutable
@@ -101,7 +100,7 @@ public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
   
   @Value.Immutable
   public interface RedundentLambdaParams extends ExpressionNode {
-    List<TypeName> getValues();
+    List<TypeInvocation> getValues();
   }
 
   @Value.Immutable
@@ -115,12 +114,12 @@ public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
   }
 
   @Override
-  public MethodRefNode visitMethodInvocation(MethodInvocationContext ctx) {
+  public MethodInvocation visitMethodInvocation(MethodInvocationContext ctx) {
     Nodes nodes = nodes(ctx);
-    return ImmutableMethodRefNode.builder()
+    return ImmutableMethodInvocation.builder()
         .token(token(ctx))
         .name(nodes.of(RedundentMethodName.class).get().getValue())
-        .type(nodes.of(TypeName.class))
+        .type(nodes.of(TypeInvocation.class))
         .values(nodes.of(RedundentArgs.class).map(a -> a.getValues()).orElse(Collections.emptyList()))
         .build();
   }
@@ -165,7 +164,7 @@ public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
     Nodes nodes = nodes(ctx);
     return ImmutableRedundentLambdaParams.builder()
         .token(token(ctx))
-        .values(nodes.list(TypeName.class))
+        .values(nodes.list(TypeInvocation.class))
         .build();
   }
   
@@ -244,7 +243,7 @@ public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
     }
     AstNode left = ctx.getChild(0).accept(this);
     AstNode right = ctx.getChild(2).accept(this);
-    return ImmutableOrOperation.builder()
+    return ImmutableOrExpression.builder()
         .token(token(ctx))
         .left(left)
         .right(right).build();
@@ -271,7 +270,7 @@ public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
     }
     AstNode left = ctx.getChild(0).accept(this);
     AstNode right = ctx.getChild(2).accept(this);
-    return ImmutableAndOperation.builder()
+    return ImmutableAndExpression.builder()
         .token(token(ctx))
         .left(left).right(right).build();
   }
@@ -337,7 +336,7 @@ public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
     AstNode left = ctx.getChild(0).accept(this);
     AstNode right = ctx.getChild(2).accept(this);
     TerminalNode sign = (TerminalNode) ctx.getChild(1);
-    return ImmutableAdditiveOperation.builder()
+    return ImmutableAdditiveExpression.builder()
         .token(token(ctx))
         .type(sign.getSymbol().getType() == HdesParser.ADD ? AdditiveType.ADD : AdditiveType.SUBSTRACT)
         .left(left).right(right).build();
@@ -353,7 +352,7 @@ public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
     AstNode left = ctx.getChild(0).accept(this);
     AstNode right = ctx.getChild(2).accept(this);
     TerminalNode sign = (TerminalNode) ctx.getChild(1);
-    return ImmutableMultiplicativeOperation.builder()
+    return ImmutableMultiplicativeExpression.builder()
         .token(token(ctx))
         .type(sign.getSymbol().getType() == HdesParser.MULTIPLY ? MultiplicativeType.MULTIPLY : MultiplicativeType.DIVIDE)
         .left(left).right(right).build();
@@ -379,11 +378,11 @@ public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
     }
     
     if(terminalNode.getSymbol().getType() == HdesParser.ADD) {
-      return ImmutablePositiveUnaryOperation.builder()
+      return ImmutablePositiveUnary.builder()
           .token(token(ctx))
           .value(childResult).build();
     }
-    return ImmutableNegateUnaryOperation.builder()
+    return ImmutableNegateUnary.builder()
         .token(token(ctx))
         .value(childResult).build();
   }
@@ -404,7 +403,7 @@ public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
       childResult = c.accept(this);
     }
     
-    return ImmutablePreIncrementUnaryOperation.builder()
+    return ImmutablePreIncrementUnary.builder()
         .token(token(ctx))
         .value(childResult).build();
   }
@@ -425,7 +424,7 @@ public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
       childResult = c.accept(this);
     }
     
-    return ImmutablePreDecrementUnaryOperation.builder()
+    return ImmutablePreDecrementUnary.builder()
         .token(token(ctx))
         .value(childResult).build();
   }
@@ -445,7 +444,7 @@ public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
       }
       childResult = c.accept(this);
     }
-    return ImmutableNotUnaryOperation.builder()
+    return ImmutableNotUnary.builder()
         .token(token(ctx))
         .value(childResult).build();
   }
@@ -468,11 +467,11 @@ public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
       childResult = c.accept(this);
     }
     if(terminalNode.getSymbol().getType() == HdesParser.INCREMENT) {
-      return ImmutablePostIncrementUnaryOperation.builder()
+      return ImmutablePostIncrementUnary.builder()
         .token(token(ctx))
         .value(childResult).build();
     } 
-    return ImmutablePostDecrementUnaryOperation.builder()
+    return ImmutablePostDecrementUnary.builder()
         .token(token(ctx))
         .value(childResult).build();
   }

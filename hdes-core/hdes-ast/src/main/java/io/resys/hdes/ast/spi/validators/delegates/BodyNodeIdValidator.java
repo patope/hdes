@@ -25,7 +25,7 @@ import java.util.List;
 
 import javax.lang.model.SourceVersion;
 
-import io.resys.hdes.ast.api.nodes.AstNode.BodyNode;
+import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.ast.api.nodes.AstNode.ErrorNode;
 import io.resys.hdes.ast.api.nodes.ImmutableErrorNode;
 import io.resys.hdes.ast.spi.validators.BodyNodeValidator;
@@ -35,7 +35,7 @@ public class BodyNodeIdValidator implements BodyNodeValidator {
   private final String VALID_NAME = "Name must start with capital letter followed by lower/upper letters or numbers.";
   
   @Override
-  public List<ErrorNode> validate(BodyNode node) {
+  public List<ErrorNode> validate(Body node) {
     String id = node.getId().getValue();
     List<ErrorNode> result = new ArrayList<>();
     

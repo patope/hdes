@@ -26,6 +26,7 @@ import java.util.Optional;
 import org.immutables.value.Value;
 
 public interface ExpressionNode extends AstNode {
+  
   enum AdditiveType { ADD, SUBSTRACT }
   enum MultiplicativeType { DIVIDE, MULTIPLY }
   enum EqualityType { 
@@ -51,43 +52,43 @@ public interface ExpressionNode extends AstNode {
   
   @Value.Immutable
   interface LambdaExpression extends ExpressionNode {
-    List<TypeName> getParams();
+    List<TypeInvocation> getParams();
     AstNode getBody();
   }
 
   /*
    * Unary operation
    */
-  interface UnaryOperation extends ExpressionNode {
+  interface Unary extends ExpressionNode {
     AstNode getValue();
   }
   @Value.Immutable
-  interface NotUnaryOperation extends UnaryOperation { }
+  interface NotUnary extends Unary { }
 
   @Value.Immutable
-  interface NegateUnaryOperation extends UnaryOperation { }
+  interface NegateUnary extends Unary { }
   
   @Value.Immutable
-  interface PositiveUnaryOperation extends UnaryOperation { }
+  interface PositiveUnary extends Unary { }
   
   @Value.Immutable
-  interface PreIncrementUnaryOperation extends UnaryOperation { }
+  interface PreIncrementUnary extends Unary { }
   
   @Value.Immutable
-  interface PreDecrementUnaryOperation extends UnaryOperation { }
+  interface PreDecrementUnary extends Unary { }
 
   @Value.Immutable
-  interface PostIncrementUnaryOperation extends UnaryOperation { }
+  interface PostIncrementUnary extends Unary { }
   
   @Value.Immutable
-  interface PostDecrementUnaryOperation extends UnaryOperation { }
+  interface PostDecrementUnary extends Unary { }
   
   /*
    * Ref nodes
    */
   @Value.Immutable
-  interface MethodRefNode extends ExpressionNode {
-    Optional<TypeName> getType();
+  interface MethodInvocation extends Invociation, ExpressionNode {
+    Optional<TypeInvocation> getType();
     String getName();
     List<AstNode> getValues();
   }
@@ -102,6 +103,7 @@ public interface ExpressionNode extends AstNode {
     AstNode getRight();
   }
 
+  // operation ? val1 : val2 
   @Value.Immutable
   interface ConditionalExpression extends ExpressionNode {
     EqualityOperation getOperation();
@@ -117,26 +119,26 @@ public interface ExpressionNode extends AstNode {
   }
 
   @Value.Immutable
-  interface AndOperation extends ExpressionNode {
+  interface AndExpression extends ExpressionNode {
     AstNode getLeft();
     AstNode getRight();
   }
 
   @Value.Immutable
-  interface OrOperation extends ExpressionNode {
+  interface OrExpression extends ExpressionNode {
     AstNode getLeft();
     AstNode getRight();
   }
 
   @Value.Immutable
-  interface AdditiveOperation extends ExpressionNode {
+  interface AdditiveExpression extends ExpressionNode {
     AdditiveType getType();
     AstNode getLeft();
     AstNode getRight();
   }
 
   @Value.Immutable
-  interface MultiplicativeOperation extends ExpressionNode {
+  interface MultiplicativeExpression extends ExpressionNode {
     MultiplicativeType getType();
     AstNode getLeft();
     AstNode getRight();

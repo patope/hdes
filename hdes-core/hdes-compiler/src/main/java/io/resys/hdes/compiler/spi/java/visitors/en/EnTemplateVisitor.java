@@ -21,29 +21,29 @@ package io.resys.hdes.compiler.spi.java.visitors.en;
  */
 
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.ExpressionAstNodeVisitor;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.AndOperation;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveExpression;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.AndExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.BetweenExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ConditionalExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.LambdaExpression;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodRefNode;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.MultiplicativeOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.NegateUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.NotUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.OrOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.PositiveUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.PostDecrementUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.PostIncrementUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnaryOperation;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodInvocation;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.MultiplicativeExpression;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.NegateUnary;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.NotUnary;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.OrExpression;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.PositiveUnary;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.PostDecrementUnary;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.PostIncrementUnary;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnary;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnary;
 
 public class EnTemplateVisitor<R, T> implements ExpressionAstNodeVisitor<R, T> {
   @Override
-  public R visitTypeName(TypeName node) {
+  public R visitTypeInvocation(TypeInvocation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
@@ -53,87 +53,87 @@ public class EnTemplateVisitor<R, T> implements ExpressionAstNodeVisitor<R, T> {
   }
 
   @Override
-  public T visitExpressionBody(ExpressionBody node) {
+  public T visitBody(ExpressionBody node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public R visitNotUnaryOperation(NotUnaryOperation node) {
+  public R visitNot(NotUnary node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public R visitNegateUnaryOperation(NegateUnaryOperation node) {
+  public R visitNegate(NegateUnary node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public R visitPositiveUnaryOperation(PositiveUnaryOperation node) {
+  public R visitPositive(PositiveUnary node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public R visitPreIncrementUnaryOperation(PreIncrementUnaryOperation node) {
+  public R visitPreIncrement(PreIncrementUnary node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public R visitPreDecrementUnaryOperation(PreDecrementUnaryOperation node) {
+  public R visitPreDecrement(PreDecrementUnary node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public R visitPostIncrementUnaryOperation(PostIncrementUnaryOperation node) {
+  public R visitPostIncrement(PostIncrementUnary node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public R visitPostDecrementUnaryOperation(PostDecrementUnaryOperation node) {
+  public R visitPostDecrement(PostDecrementUnary node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public R visitMethodRefNode(MethodRefNode node) {
+  public R visitMethod(MethodInvocation node) {
     throw new IllegalArgumentException("Not implemented");
   }
   
   @Override
-  public R visitEqualityOperation(EqualityOperation node) {
+  public R visitEquality(EqualityOperation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public R visitAndOperation(AndOperation node) {
+  public R visitAnd(AndExpression node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public R visitOrOperation(OrOperation node) {
+  public R visitOr(OrExpression node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public R visitConditionalExpression(ConditionalExpression node) {
+  public R visitConditional(ConditionalExpression node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public R visitBetweenExpression(BetweenExpression node) {
+  public R visitBetween(BetweenExpression node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public R visitAdditiveOperation(AdditiveOperation node) {
+  public R visitAdditive(AdditiveExpression node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public R visitMultiplicativeOperation(MultiplicativeOperation node) {
+  public R visitMultiplicative(MultiplicativeExpression node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public R visitLambdaExpression(LambdaExpression node) {
+  public R visitLambda(LambdaExpression node) {
     throw new IllegalArgumentException("Not implemented");
   }
 }

@@ -12,21 +12,21 @@ import com.squareup.javapoet.CodeBlock;
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.ExpressionValue;
-import io.resys.hdes.ast.api.nodes.DecisionTableNode.HeaderRefValue;
+import io.resys.hdes.ast.api.nodes.DecisionTableNode.HeaderIndex;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.InOperation;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.LiteralValue;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.NegateLiteralValue;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.Rule;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.RuleValue;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.UndefinedValue;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.AndOperation;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.AndExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.BetweenExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.NotUnaryOperation;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.NotUnary;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.spi.java.en.TypeConverter;
@@ -49,7 +49,7 @@ public class DtRuleSpec {
 
   public static class Builder {
     private final DecisionTableBody body;
-    private TypeDefNode header;
+    private TypeDef header;
     
     private Builder(DecisionTableBody body) {
       super();
@@ -57,7 +57,7 @@ public class DtRuleSpec {
     }
 
 
-    public DtExpressionCodeSpec build(TypeDefNode header, AstNode node) {
+    public DtExpressionCodeSpec build(TypeDef header, AstNode node) {
       Assertions.notNull(node, () -> "node must be defined!");
       Assertions.notNull(header, () -> "header must be defined!");
       this.header = header;
@@ -162,14 +162,14 @@ public class DtRuleSpec {
           .type(ScalarType.BOOLEAN).build();
     }
 
-    private DtExpressionCodeSpec not(NotUnaryOperation node) {
+    private DtExpressionCodeSpec not(NotUnary node) {
       CodeBlock child = accept(node.getValue()).getValue();
       return ImmutableDtExpressionCodeSpec.builder().value(CodeBlock.builder().add("!").add(child).build())
           .type(ScalarType.BOOLEAN).build();
     }
 
-    private DtExpressionCodeSpec headerRef(HeaderRefValue node) {
-      ScalarTypeDefNode header = (ScalarTypeDefNode) body.getHeaders().getValues().get(node.getIndex());
+    private DtExpressionCodeSpec headerRef(HeaderIndex node) {
+      ScalarDef header = (ScalarDef) body.getHeaders().getValues().get(node.getIndex());
       return ImmutableDtExpressionCodeSpec.builder().value(CodeBlock.builder().add(HEADER_REF).build())
           .type(header.getType()).build();
     }
@@ -183,7 +183,7 @@ public class DtRuleSpec {
           .type(ScalarType.BOOLEAN).build();
     }
 
-    private DtExpressionCodeSpec and(AndOperation node) {
+    private DtExpressionCodeSpec and(AndExpression node) {
       CodeBlock left = accept(node.getLeft()).getValue();
       CodeBlock right = accept(node.getRight()).getValue();
       return ImmutableDtExpressionCodeSpec.builder()
@@ -224,16 +224,16 @@ public class DtRuleSpec {
     private DtExpressionCodeSpec accept(AstNode node) {
       if (node instanceof Literal) {
         return literal((Literal) node);
-      } else if (node instanceof HeaderRefValue) {
-        return headerRef((HeaderRefValue) node);
+      } else if (node instanceof HeaderIndex) {
+        return headerRef((HeaderIndex) node);
       } else if (node instanceof InOperation) {
         return in((InOperation) node);
-      } else if (node instanceof NotUnaryOperation) {
-        return not((NotUnaryOperation) node);
+      } else if (node instanceof NotUnary) {
+        return not((NotUnary) node);
       } else if (node instanceof EqualityOperation) {
         return equality((EqualityOperation) node);
-      } else if (node instanceof AndOperation) {
-        return and((AndOperation) node);
+      } else if (node instanceof AndExpression) {
+        return and((AndExpression) node);
       } else if (node instanceof BetweenExpression) {
         return between((BetweenExpression) node);
       } else if (node instanceof NegateLiteralValue) {

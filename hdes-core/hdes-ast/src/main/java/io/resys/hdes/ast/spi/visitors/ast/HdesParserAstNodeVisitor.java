@@ -49,17 +49,17 @@ import io.resys.hdes.ast.HdesParser.TypeNameContext;
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
-import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeNameScope;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.ImmutableHeaders;
-import io.resys.hdes.ast.api.nodes.ImmutableObjectTypeDefNode;
-import io.resys.hdes.ast.api.nodes.ImmutableScalarTypeDefNode;
-import io.resys.hdes.ast.api.nodes.ImmutableTypeName;
+import io.resys.hdes.ast.api.nodes.ImmutableObjectDef;
+import io.resys.hdes.ast.api.nodes.ImmutableScalarDef;
+import io.resys.hdes.ast.api.nodes.ImmutableTypeInvocation;
 import io.resys.hdes.ast.api.nodes.ManualTaskNode;
 import io.resys.hdes.ast.spi.visitors.ast.util.Nodes;
 import io.resys.hdes.ast.spi.visitors.ast.util.Nodes.TokenIdGenerator;
@@ -91,7 +91,7 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
   }
   @Value.Immutable
   public interface RedundentTypeDefArgs extends ManualTaskNode {
-    List<TypeDefNode> getValues();
+    List<TypeDef> getValues();
   }
   
   public HdesParserAstNodeVisitor(TokenIdGenerator tokenIdGenerator) {
@@ -118,7 +118,7 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
   }
 
   @Override
-  public TypeName visitTypeName(TypeNameContext ctx) {
+  public TypeInvocation visitTypeName(TypeNameContext ctx) {
     final TypeNameScope scope;    
     
     ParseTree child = ctx.getChild(0);
@@ -132,7 +132,7 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
       scope = TypeNameScope.VAR;
     }
   
-    return ImmutableTypeName.builder()
+    return ImmutableTypeInvocation.builder()
         .token(token(ctx))
         .value(ctx.getText())
         .scope(scope)
@@ -172,7 +172,7 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
   public AstNode visitTypeDefArgs(TypeDefArgsContext ctx) {
     return ImmutableRedundentTypeDefArgs.builder()
         .token(token(ctx))
-        .values(nodes(ctx).list(TypeDefNode.class))
+        .values(nodes(ctx).list(TypeDef.class))
         .build();
   }
 
@@ -190,11 +190,11 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
   }
   
   @Override
-  public ScalarTypeDefNode visitSimpleType(SimpleTypeContext ctx) {
+  public ScalarDef visitSimpleType(SimpleTypeContext ctx) {
     TerminalNode requirmentType = (TerminalNode) ctx.getChild(1);
     Nodes nodes = nodes(ctx);
     
-    return ImmutableScalarTypeDefNode.builder()
+    return ImmutableScalarDef.builder()
         .token(token(ctx.getParent()))
         .required(requirmentType.getSymbol().getText().equalsIgnoreCase("required"))
         .name(getDefTypeName(ctx).getValue())
@@ -207,25 +207,25 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
   }
   
   @Override
-  public TypeDefNode visitArrayType(ArrayTypeContext ctx) {
+  public TypeDef visitArrayType(ArrayTypeContext ctx) {
     Nodes nodes = nodes(ctx);
-    TypeDefNode input = nodes.of(TypeDefNode.class).get();
-    if(input instanceof ObjectTypeDefNode) {
-      ObjectTypeDefNode def = (ObjectTypeDefNode) input;
-      return ImmutableObjectTypeDefNode.builder().from(def).array(true).build();
+    TypeDef input = nodes.of(TypeDef.class).get();
+    if(input instanceof ObjectDef) {
+      ObjectDef def = (ObjectDef) input;
+      return ImmutableObjectDef.builder().from(def).array(true).build();
     }
-    ScalarTypeDefNode def = (ScalarTypeDefNode) input;
-    return ImmutableScalarTypeDefNode.builder().from(def).array(true).build();
+    ScalarDef def = (ScalarDef) input;
+    return ImmutableScalarDef.builder().from(def).array(true).build();
   }
 
   @Override
-  public ObjectTypeDefNode visitObjectType(ObjectTypeContext ctx) {
+  public ObjectDef visitObjectType(ObjectTypeContext ctx) {
     Nodes nodes = nodes(ctx);
-    List<TypeDefNode> values = nodes.of(RedundentTypeDefArgs.class).map((RedundentTypeDefArgs i)-> i.getValues())
+    List<TypeDef> values = nodes.of(RedundentTypeDefArgs.class).map((RedundentTypeDefArgs i)-> i.getValues())
         .orElse(Collections.emptyList());
     TerminalNode requirmentType = (TerminalNode) ctx.getChild(1);
     
-    return ImmutableObjectTypeDefNode.builder()
+    return ImmutableObjectDef.builder()
         .token(token(ctx))
         .required(requirmentType.getSymbol().getType() == HdesParser.REQUIRED)
         .name(getDefTypeName(ctx).getValue())
@@ -244,10 +244,10 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
         .build();
   }
   
-  protected final TypeName getDefTypeName(ParserRuleContext ctx) {
+  protected final TypeInvocation getDefTypeName(ParserRuleContext ctx) {
     if(ctx.getParent() instanceof TypeDefContext) {
-      return (TypeName) ctx.getParent().getChild(0).accept(this);
+      return (TypeInvocation) ctx.getParent().getChild(0).accept(this);
     }
-    return (TypeName) ctx.getParent().getParent().getChild(0).accept(this);
+    return (TypeInvocation) ctx.getParent().getParent().getChild(0).accept(this);
   }
 }

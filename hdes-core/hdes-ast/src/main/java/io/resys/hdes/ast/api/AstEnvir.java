@@ -24,17 +24,17 @@ import java.util.List;
 
 import java.util.Map;
 
-import io.resys.hdes.ast.api.nodes.AstNode.BodyNode;
+import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.ast.api.nodes.AstNode.ErrorNode;
 
 public interface AstEnvir {
-  Map<String, BodyNode> getBody();
+  Map<String, Body> getBody();
   
   // internal or external id depends how the source was build
-  BodyNode getBody(String id);
+  Body getBody(String id);
   
   // internal id parsed from ast structure
-  BodyNode getByAstId(String bodyId);
+  Body getByAstId(String bodyId);
   
   String getSrc(String id);
   Map<String, List<ErrorNode>> getErrors();

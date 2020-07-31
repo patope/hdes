@@ -38,13 +38,13 @@ import io.resys.hdes.ast.HdesLexer;
 import io.resys.hdes.ast.HdesParser;
 import io.resys.hdes.ast.api.AstEnvir;
 import io.resys.hdes.ast.api.AstNodeException;
-import io.resys.hdes.ast.api.nodes.AstNode.BodyNode;
+import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.ast.api.nodes.AstNode.ErrorNode;
 import io.resys.hdes.ast.api.nodes.AstNode.Token;
-import io.resys.hdes.ast.api.nodes.ImmutableEmptyBodyNode;
+import io.resys.hdes.ast.api.nodes.ImmutableBodyId;
+import io.resys.hdes.ast.api.nodes.ImmutableEmptyBody;
 import io.resys.hdes.ast.api.nodes.ImmutableHeaders;
 import io.resys.hdes.ast.api.nodes.ImmutableToken;
-import io.resys.hdes.ast.api.nodes.ImmutableTypeName;
 import io.resys.hdes.ast.spi.errors.HdesAntlrErrorListener;
 import io.resys.hdes.ast.spi.validators.BodyValidatorVisitor;
 import io.resys.hdes.ast.spi.visitors.ast.HdesParserAstNodeVisitor;
@@ -52,22 +52,22 @@ import io.resys.hdes.ast.spi.visitors.ast.util.Nodes.TokenIdGenerator;
 
 public class ImmutableAstEnvir implements AstEnvir {
   
-  private final Map<String, BodyNode> body;
+  private final Map<String, Body> body;
   private final Map<String, String> src;
   private final Map<String, List<ErrorNode>> errors;
 
-  public ImmutableAstEnvir(Map<String, BodyNode> body, Map<String, String> src,  Map<String, List<ErrorNode>> errors) {
+  public ImmutableAstEnvir(Map<String, Body> body, Map<String, String> src,  Map<String, List<ErrorNode>> errors) {
     super();
     this.body = body;
     this.src = src;
     this.errors = errors;
   }
   @Override
-  public Map<String, BodyNode> getBody() {
+  public Map<String, Body> getBody() {
     return body;
   }
   @Override
-  public BodyNode getBody(String id) {
+  public Body getBody(String id) {
     Assertions.isTrue(body.containsKey(id), () ->
       new StringBuilder("No node by given identifier: ").append(id).append("!").append(System.lineSeparator())
       .append("Known identifiers: ").append(body.keySet()).toString()
@@ -93,8 +93,8 @@ public class ImmutableAstEnvir implements AstEnvir {
   }
   
   @Override
-  public BodyNode getByAstId(String bodyId) {
-    Optional<BodyNode> result = body.values().stream().filter(b -> b.getId().getValue().equals(bodyId)).findFirst();
+  public Body getByAstId(String bodyId) {
+    Optional<Body> result = body.values().stream().filter(b -> b.getId().getValue().equals(bodyId)).findFirst();
     Assertions.isTrue(result.isPresent(), () -> 
       new StringBuilder("No body node by given identifier: ").append(bodyId).append("!").append(System.lineSeparator())
       .append("Known identifiers: ").append(body.values().stream().map(b -> b.getId().getValue()).collect(Collectors.toList())).toString());
@@ -112,7 +112,7 @@ public class ImmutableAstEnvir implements AstEnvir {
   
   public static class GenericBuilder implements Builder {
 
-    private final Map<String, BodyNode> body = new HashMap<>();
+    private final Map<String, Body> body = new HashMap<>();
     private final Map<String, String> src = new HashMap<>();
     private final Map<String, List<ErrorNode>> errors = new HashMap<>();
     private final List<String> toBeRemoved = new ArrayList<>();
@@ -172,7 +172,7 @@ public class ImmutableAstEnvir implements AstEnvir {
         private String value;
         
         @Override
-        protected Builder parent(BodyNode node) {
+        protected Builder parent(Body node) {
           String id = externalId == null ? node.getId().getValue() : externalId;
           body.put(id, node);
           src.put(id, value);
@@ -198,7 +198,7 @@ public class ImmutableAstEnvir implements AstEnvir {
     
     protected String externalId;
     protected abstract HdesAntlrErrorListener errorListener();
-    protected abstract Builder parent(BodyNode node);
+    protected abstract Builder parent(Body node);
     
     @Override
     public SourceBuilder<Builder> externalId(String externalId) {
@@ -213,9 +213,9 @@ public class ImmutableAstEnvir implements AstEnvir {
       parser.addErrorListener(errorListener());
       ParseTree tree = parser.hdesBody();
       
-      BodyNode result;
+      Body result;
       try {
-        result = (BodyNode) tree.accept(new HdesParserAstNodeVisitor(new TokenIdGenerator()));
+        result = (Body) tree.accept(new HdesParserAstNodeVisitor(new TokenIdGenerator()));
       } catch(Exception e) {
         errorListener().add(e);
         
@@ -226,8 +226,9 @@ public class ImmutableAstEnvir implements AstEnvir {
           .text(e.getMessage() == null ? "" : e.getMessage())
           .build();
         
-        result = ImmutableEmptyBodyNode.builder()
-            .id(ImmutableTypeName.builder().value(externalId == null ? UUID.randomUUID().toString() : externalId).token(exceptionToken).build())
+        result = ImmutableEmptyBody.builder()
+            .id(ImmutableBodyId.builder().value(externalId == null ? UUID.randomUUID().toString() : externalId).token(exceptionToken)
+                .build())
             .headers(ImmutableHeaders.builder().token(exceptionToken).build())
             .token(exceptionToken)
             .build();

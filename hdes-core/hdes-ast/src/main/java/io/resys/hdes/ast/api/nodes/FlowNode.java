@@ -34,7 +34,7 @@ public interface FlowNode extends AstNode {
   interface FlowTaskPointer extends FlowNode {}
   
   @Value.Immutable
-  interface FlowBody extends FlowNode, BodyNode { 
+  interface FlowBody extends FlowNode, Body { 
     List<FlowTaskNode> getUnreachableTasks();
     Optional<FlowTaskNode> getTask();
   }
@@ -49,7 +49,7 @@ public interface FlowNode extends AstNode {
   
   @Value.Immutable
   interface FlowLoop extends FlowNode {
-    TypeName getArrayName();
+    TypeInvocation getArrayName();
     FlowTaskPointer getNext();
   } 
   
@@ -97,7 +97,7 @@ public interface FlowNode extends AstNode {
 
   @Value.Immutable  
   interface MappingTypeName extends MappingValue {
-    TypeName getValue();    
+    TypeInvocation getValue();    
   }
   
   @Value.Immutable

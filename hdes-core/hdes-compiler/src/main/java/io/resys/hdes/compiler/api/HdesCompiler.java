@@ -24,7 +24,7 @@ import java.util.List;
 
 import org.immutables.value.Value;
 
-import io.resys.hdes.ast.api.nodes.AstNode.BodyNode;
+import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.executor.api.HdesExecutable.SourceType;
 
 public interface HdesCompiler {
@@ -41,7 +41,7 @@ public interface HdesCompiler {
     String getName();
     SourceType getType();
     String getSource();
-    BodyNode getAst();
+    Body getAst();
     
     TypeName getInput();
     TypeName getOutput();

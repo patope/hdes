@@ -9,14 +9,13 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.spi.java.en.ExpressionSpec;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor.EnScalarCodeSpec;
-import io.resys.hdes.compiler.spi.java.visitors.dt.DtEnReferedTypeResolver;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.FormulaMeta;
@@ -39,7 +38,7 @@ public class DtFrImplSpec {
   public static class Builder {
     private final Namings namings;
     private DecisionTableBody body;
-    private DtEnReferedTypeResolver resolver;
+    private DtParameterResolver resolver;
     
     private Builder(Namings namings) {
       super();
@@ -48,11 +47,11 @@ public class DtFrImplSpec {
 
     public Builder body(DecisionTableBody body) {
       this.body = body;
-      resolver = new DtEnReferedTypeResolver(body);
+      resolver = new DtParameterResolver(body);
       return this;
     }
     
-    public TypeSpec build(ScalarTypeDefNode formula) {
+    public TypeSpec build(ScalarDef formula) {
       Assertions.notNull(body, () -> "body must be defined!");
       Assertions.notNull(formula, () -> "formula must be defined!");
       Assertions.isTrue(formula.getFormula().isPresent(), () -> "formula must be present!");

@@ -25,7 +25,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
 import io.resys.hdes.ast.api.AstEnvir;
-import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
@@ -92,12 +92,12 @@ public class JavaFlNaming implements FlNaming {
   } 
   
   @Override
-  public ClassName inputValue(FlowBody node, ObjectTypeDefNode object) {
+  public ClassName inputValue(FlowBody node, ObjectDef object) {
     return ClassName.get(api(node).simpleName(), node.getId().getValue() + JavaSpecUtil.capitalize(object.getName()) + "In");
   }
   
   @Override
-  public ClassName outputValue(FlowBody node, ObjectTypeDefNode object) {
+  public ClassName outputValue(FlowBody node, ObjectDef object) {
     return ClassName.get(api(node).simpleName(), node.getId().getValue() + JavaSpecUtil.capitalize(object.getName()) + "Out");
   }
 

@@ -35,33 +35,33 @@ import com.squareup.javapoet.CodeBlock;
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
-import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeNameScope;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.ExpressionAstNodeVisitor;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveOperation;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveType;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.AndOperation;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.AndExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.BetweenExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ConditionalExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityType;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.LambdaExpression;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodRefNode;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.MultiplicativeOperation;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodInvocation;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.MultiplicativeExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MultiplicativeType;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.NegateUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.NotUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.OrOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.PositiveUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.PostDecrementUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.PostIncrementUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnaryOperation;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnaryOperation;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.NegateUnary;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.NotUnary;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.OrExpression;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.PositiveUnary;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.PostDecrementUnary;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.PostIncrementUnary;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnary;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnary;
 import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedTypeResolver;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor.EnJavaSpec;
@@ -71,15 +71,17 @@ import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.executor.spi.HdesMath;
 
 public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, EnScalarCodeSpec> {
-  public static String ACCESS_INPUT_VALUE = "inputValue";
-  public static String ACCESS_OUTPUT_VALUE = "outputValue";
-  public static String ACCESS_STATIC_VALUE = "staticValue";
-  public static String ACCESS_INSTANCE_VALUE = "instanceValue";
-  public static String ACCESS_SRC_VALUE = "src";
+  public final static String ACCESS_INPUT_VALUE = "inputValue";
+  public final static String ACCESS_OUTPUT_VALUE = "outputValue";
+  public final static String ACCESS_STATIC_VALUE = "staticValue";
+  public final static String ACCESS_STATIC_VALUES = "values";
+  public final static String ACCESS_INSTANCE_VALUE = "instanceValue";
+  public final static String ACCESS_SRC_VALUE = "src";
+  public final static List<String> GLOBAL_METHODS = Arrays.asList("min", "max", "sum", "avg");
+  public final static List<String> LAMBDA_METHODS = Arrays.asList("map");
   
-  private final static List<String> GLOBAL_METHODS = Arrays.asList("min", "max", "sum", "avg");
-  private final EnReferedTypeResolver resolver;
   public interface EnJavaSpec { }
+  private final EnReferedTypeResolver resolver;
 
   @Value.Immutable
   public interface EnRefSpec extends EnJavaSpec {
@@ -97,7 +99,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
   public interface EnObjectCodeSpec extends EnJavaSpec {
     CodeBlock getValue();
     Optional<Boolean> getArray();
-    ObjectTypeDefNode getType();
+    ObjectDef getType();
   }
 
   public ExpressionVisitor(EnReferedTypeResolver resolver) {
@@ -106,14 +108,14 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
   }
 
   @Override
-  public EnScalarCodeSpec visitExpressionBody(ExpressionBody node) {
+  public EnScalarCodeSpec visitBody(ExpressionBody node) {
     return visitScalar(node.getValue());
   }
 
   @Override
-  public EnScalarCodeSpec visitTypeName(TypeName node) {
-    TypeDefNode typeDefNode = resolver.accept(node);
-    if (!(typeDefNode instanceof ScalarTypeDefNode)) {
+  public EnScalarCodeSpec visitTypeInvocation(TypeInvocation node) {
+    TypeDef typeDefNode = resolver.accept(node);
+    if (!(typeDefNode instanceof ScalarDef)) {
       throw new HdesCompilerException(HdesCompilerException.builder().incompatibleScalarType(node, typeDefNode));
     }
     final String scope;
@@ -127,7 +129,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
       scope = ACCESS_OUTPUT_VALUE;
     }
     String name = scope + "." + typeDefNode.getName();
-    ScalarTypeDefNode scalarNode = (ScalarTypeDefNode) typeDefNode;
+    ScalarDef scalarNode = (ScalarDef) typeDefNode;
     return ImmutableEnScalarCodeSpec.builder()
         .value(CodeBlock.builder().add("$L.$L", ACCESS_SRC_VALUE, 
             JavaSpecUtil.methodCall(name) + (typeDefNode.getRequired() ? "" : ".get()")
@@ -168,7 +170,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
   }
 
   @Override
-  public EnScalarCodeSpec visitNotUnaryOperation(NotUnaryOperation node) {
+  public EnScalarCodeSpec visitNot(NotUnary node) {
     EnScalarCodeSpec children = visitScalar(node.getValue());
 
     if (children.getType() != ScalarType.BOOLEAN) {
@@ -181,7 +183,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
   }
 
   @Override
-  public EnScalarCodeSpec visitNegateUnaryOperation(NegateUnaryOperation node) {
+  public EnScalarCodeSpec visitNegate(NegateUnary node) {
     EnScalarCodeSpec spec = visitScalar(node.getValue());
 
     CodeBlock.Builder value = CodeBlock.builder();
@@ -198,7 +200,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
   }
 
   @Override
-  public EnScalarCodeSpec visitPositiveUnaryOperation(PositiveUnaryOperation node) {
+  public EnScalarCodeSpec visitPositive(PositiveUnary node) {
     EnScalarCodeSpec spec = visitScalar(node.getValue());
 
     CodeBlock.Builder value = CodeBlock.builder();
@@ -215,7 +217,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
   }
 
   @Override
-  public EnJavaSpec visitMethodRefNode(MethodRefNode node) {
+  public EnJavaSpec visitMethod(MethodInvocation node) {
 
     if (node.getType().isEmpty()) {
 
@@ -243,11 +245,11 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
 
         // Object based ref
         EnObjectCodeSpec runningValue = (EnObjectCodeSpec) spec;
-        for (TypeDefNode typeDefNode : runningValue.getType().getValues()) {
-          if (typeDefNode instanceof ScalarTypeDefNode) {
+        for (TypeDef typeDefNode : runningValue.getType().getValues()) {
+          if (typeDefNode instanceof ScalarDef) {
             continue;
           }
-          ScalarType scalar = ((ScalarTypeDefNode) typeDefNode).getType();
+          ScalarType scalar = ((ScalarDef) typeDefNode).getType();
           String name = JavaSpecUtil.methodCall(typeDefNode.getName());
           if (scalar == ScalarType.INTEGER) {
             params.add(".integer($L.$L)", runningValue.getValue(), name);
@@ -269,22 +271,22 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
           .type(returnType).build();
     }
 
-    TypeDefNode typeDef = this.resolver.accept(node);
-    if (typeDef instanceof ScalarTypeDefNode) {
+    TypeDef typeDef = this.resolver.accept(node);
+    if (typeDef instanceof ScalarDef) {
       return ImmutableEnScalarCodeSpec.builder()
           .value(CodeBlock.builder().add("input.").add(JavaSpecUtil.methodCall(node.getName())).build())
-          .array(typeDef.getArray()).type(((ScalarTypeDefNode) typeDef).getType()).build();
+          .array(typeDef.getArray()).type(((ScalarDef) typeDef).getType()).build();
 
     } else {
       return ImmutableEnObjectCodeSpec.builder()
           .value(CodeBlock.builder().add("input.").add(JavaSpecUtil.methodCall(node.getName())).build())
-          .array(typeDef.getArray()).type((ObjectTypeDefNode) typeDef).build();
+          .array(typeDef.getArray()).type((ObjectDef) typeDef).build();
 
     }
   }
 
   @Override
-  public EnScalarCodeSpec visitEqualityOperation(EqualityOperation node) {
+  public EnScalarCodeSpec visitEquality(EqualityOperation node) {
 
     EnConvertionSpec betweenSpec = new TypeConverter().src(node).value1(visitScalar(node.getLeft()))
         .value2(visitScalar(node.getRight())).build();
@@ -344,7 +346,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
   }
 
   @Override
-  public EnScalarCodeSpec visitMultiplicativeOperation(MultiplicativeOperation node) {
+  public EnScalarCodeSpec visitMultiplicative(MultiplicativeExpression node) {
 
     EnScalarCodeSpec left = visitScalar(node.getLeft());
     EnScalarCodeSpec right = visitScalar(node.getRight());
@@ -370,7 +372,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
   }
 
   @Override
-  public EnScalarCodeSpec visitAdditiveOperation(AdditiveOperation node) {
+  public EnScalarCodeSpec visitAdditive(AdditiveExpression node) {
 
     EnScalarCodeSpec left = visitScalar(node.getLeft());
     EnScalarCodeSpec right = visitScalar(node.getRight());
@@ -393,7 +395,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
   }
 
   @Override
-  public EnScalarCodeSpec visitAndOperation(AndOperation node) {
+  public EnScalarCodeSpec visitAnd(AndExpression node) {
     EnScalarCodeSpec left = visitScalar(node.getLeft());
     if (left.getType() != ScalarType.BOOLEAN) {
       throw new HdesCompilerException(
@@ -411,7 +413,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
   }
 
   @Override
-  public EnScalarCodeSpec visitOrOperation(OrOperation node) {
+  public EnScalarCodeSpec visitOr(OrExpression node) {
     EnScalarCodeSpec left = visitScalar(node.getLeft());
     if (left.getType() != ScalarType.BOOLEAN) {
       throw new HdesCompilerException(
@@ -429,7 +431,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
   }
 
   @Override
-  public EnScalarCodeSpec visitConditionalExpression(ConditionalExpression node) {
+  public EnScalarCodeSpec visitConditional(ConditionalExpression node) {
     EnScalarCodeSpec condition = visitScalar(node.getOperation());
     if (condition.getType() != ScalarType.BOOLEAN) {
       throw new HdesCompilerException(
@@ -443,7 +445,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
   }
 
   @Override
-  public EnScalarCodeSpec visitBetweenExpression(BetweenExpression node) {
+  public EnScalarCodeSpec visitBetween(BetweenExpression node) {
 
     EnConvertionSpec betweenSpec = new TypeConverter().src(node).value1(visitScalar(node.getLeft()))
         .value2(visitScalar(node.getRight())).build();
@@ -509,66 +511,66 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
   }
 
   private EnJavaSpec visitAny(AstNode node) {
-    if (node instanceof TypeName) {
-      return visitTypeName((TypeName) node);
+    if (node instanceof TypeInvocation) {
+      return visitTypeInvocation((TypeInvocation) node);
     } else if (node instanceof Literal) {
       return visitLiteral((Literal) node);
-    } else if (node instanceof NotUnaryOperation) {
-      return visitNotUnaryOperation((NotUnaryOperation) node);
-    } else if (node instanceof NegateUnaryOperation) {
-      return visitNegateUnaryOperation((NegateUnaryOperation) node);
-    } else if (node instanceof PositiveUnaryOperation) {
-      return visitPositiveUnaryOperation((PositiveUnaryOperation) node);
+    } else if (node instanceof NotUnary) {
+      return visitNot((NotUnary) node);
+    } else if (node instanceof NegateUnary) {
+      return visitNegate((NegateUnary) node);
+    } else if (node instanceof PositiveUnary) {
+      return visitPositive((PositiveUnary) node);
     } else if (node instanceof EqualityOperation) {
-      return visitEqualityOperation((EqualityOperation) node);
-    } else if (node instanceof AndOperation) {
-      return visitAndOperation((AndOperation) node);
-    } else if (node instanceof OrOperation) {
-      return visitOrOperation((OrOperation) node);
+      return visitEquality((EqualityOperation) node);
+    } else if (node instanceof AndExpression) {
+      return visitAnd((AndExpression) node);
+    } else if (node instanceof OrExpression) {
+      return visitOr((OrExpression) node);
     } else if (node instanceof ConditionalExpression) {
-      return visitConditionalExpression((ConditionalExpression) node);
+      return visitConditional((ConditionalExpression) node);
     } else if (node instanceof BetweenExpression) {
-      return visitBetweenExpression((BetweenExpression) node);
-    } else if (node instanceof AdditiveOperation) {
-      return visitAdditiveOperation((AdditiveOperation) node);
-    } else if (node instanceof MultiplicativeOperation) {
-      return visitMultiplicativeOperation((MultiplicativeOperation) node);
-    } else if (node instanceof MethodRefNode) {
-      return visitMethodRefNode((MethodRefNode) node);
-    } else if (node instanceof PreIncrementUnaryOperation) {
-      return visitPreIncrementUnaryOperation((PreIncrementUnaryOperation) node);
-    } else if (node instanceof PreDecrementUnaryOperation) {
-      return visitPreDecrementUnaryOperation((PreDecrementUnaryOperation) node);
-    } else if (node instanceof PostIncrementUnaryOperation) {
-      return visitPostIncrementUnaryOperation((PostIncrementUnaryOperation) node);
-    } else if (node instanceof PostDecrementUnaryOperation) {
-      return visitPostDecrementUnaryOperation((PostDecrementUnaryOperation) node);
+      return visitBetween((BetweenExpression) node);
+    } else if (node instanceof AdditiveExpression) {
+      return visitAdditive((AdditiveExpression) node);
+    } else if (node instanceof MultiplicativeExpression) {
+      return visitMultiplicative((MultiplicativeExpression) node);
+    } else if (node instanceof MethodInvocation) {
+      return visitMethod((MethodInvocation) node);
+    } else if (node instanceof PreIncrementUnary) {
+      return visitPreIncrement((PreIncrementUnary) node);
+    } else if (node instanceof PreDecrementUnary) {
+      return visitPreDecrement((PreDecrementUnary) node);
+    } else if (node instanceof PostIncrementUnary) {
+      return visitPostIncrement((PostIncrementUnary) node);
+    } else if (node instanceof PostDecrementUnary) {
+      return visitPostDecrement((PostDecrementUnary) node);
     }
     throw new HdesCompilerException(HdesCompilerException.builder().unknownDTExpressionNode(node));
   }
 
   @Override
-  public EnJavaSpec visitPreIncrementUnaryOperation(PreIncrementUnaryOperation node) {
+  public EnJavaSpec visitPreIncrement(PreIncrementUnary node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnJavaSpec visitPreDecrementUnaryOperation(PreDecrementUnaryOperation node) {
+  public EnJavaSpec visitPreDecrement(PreDecrementUnary node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnJavaSpec visitPostIncrementUnaryOperation(PostIncrementUnaryOperation node) {
+  public EnJavaSpec visitPostIncrement(PostIncrementUnary node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnJavaSpec visitPostDecrementUnaryOperation(PostDecrementUnaryOperation node) {
+  public EnJavaSpec visitPostDecrement(PostDecrementUnary node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public EnJavaSpec visitLambdaExpression(LambdaExpression node) {
+  public EnJavaSpec visitLambda(LambdaExpression node) {
     throw new IllegalArgumentException("Not implemented");
   }
 }

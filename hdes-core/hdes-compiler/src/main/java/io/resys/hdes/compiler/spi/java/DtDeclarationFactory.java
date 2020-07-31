@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import com.squareup.javapoet.TypeSpec;
 
 import io.resys.hdes.ast.api.AstEnvir;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompiler.Resource;
@@ -58,7 +58,7 @@ public class DtDeclarationFactory {
     
     final List<TypeSpec> formulas = new ArrayList<>();
     body.getHeaders().getValues().stream()
-        .map(h -> (ScalarTypeDefNode) h)
+        .map(h -> (ScalarDef) h)
         .filter(h -> h.getFormula().isPresent())
         .forEach(f -> {
           formulas.add(DtFrApiSpec.builder(naming).body(body).build(f));

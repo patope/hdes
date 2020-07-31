@@ -3,10 +3,10 @@ package io.resys.hdes.compiler.spi.java.visitors.fl;
 import java.util.List;
 
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
-import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
+import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.FlowAstNodeVisitor;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.EndPointer;
@@ -21,7 +21,7 @@ import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 
 public class FlTemplateVisitor<T, R> implements FlowAstNodeVisitor<T, R> {
   @Override
-  public T visitTypeName(TypeName node) {
+  public T visitTypeInvocation(TypeInvocation node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
@@ -31,12 +31,12 @@ public class FlTemplateVisitor<T, R> implements FlowAstNodeVisitor<T, R> {
   }
 
   @Override
-  public T visitObjectDef(ObjectTypeDefNode node) {
+  public T visitObjectDef(ObjectDef node) {
     throw new IllegalArgumentException("Not implemented");
   }
   
   @Override
-  public T visitScalarDef(ScalarTypeDefNode node) {
+  public T visitScalarDef(ScalarDef node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
@@ -101,12 +101,12 @@ public class FlTemplateVisitor<T, R> implements FlowAstNodeVisitor<T, R> {
   }
 
   @Override
-  public T visitInputs(List<TypeDefNode> node) {
+  public T visitInputs(List<TypeDef> node) {
     throw new IllegalArgumentException("Not implemented");
   }
 
   @Override
-  public T visitOutputs(List<TypeDefNode> node) {
+  public T visitOutputs(List<TypeDef> node) {
     throw new IllegalArgumentException("Not implemented");
   }
 }

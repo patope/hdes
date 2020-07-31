@@ -38,9 +38,9 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
-import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskPointer;
@@ -127,14 +127,14 @@ public class FlInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> 
   }
 
   @Override
-  public FlTypesSpec visitInputs(List<TypeDefNode> node) {
+  public FlTypesSpec visitInputs(List<TypeDef> node) {
     TypeSpec.Builder inputBuilder = TypeSpec
         .interfaceBuilder(naming.fl().inputValue(body))
         .addSuperinterface(HdesExecutable.InputValue.class)
         .addAnnotation(Immutable.class)
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
     List<TypeSpec> nested = new ArrayList<>();
-    for (TypeDefNode input : node) {
+    for (TypeDef input : node) {
       FlHeaderSpec spec = visitTypeDef(input);
       nested.addAll(spec.getChildren());
       inputBuilder.addMethod(spec.getValue());
@@ -146,14 +146,14 @@ public class FlInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> 
   }
 
   @Override
-  public FlTypesSpec visitOutputs(List<TypeDefNode> node) {
+  public FlTypesSpec visitOutputs(List<TypeDef> node) {
     TypeSpec.Builder outputBuilder = TypeSpec
         .interfaceBuilder(naming.fl().outputValue(body))
         .addSuperinterface(HdesExecutable.OutputValue.class)
         .addAnnotation(Immutable.class)
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
     List<TypeSpec> nested = new ArrayList<>();
-    for (TypeDefNode output : node) {
+    for (TypeDef output : node) {
       FlHeaderSpec spec = visitTypeDef(output);
       nested.addAll(spec.getChildren());
       outputBuilder.addMethod(spec.getValue());
@@ -164,17 +164,17 @@ public class FlInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> 
         .build();
   }
 
-  private FlHeaderSpec visitTypeDef(TypeDefNode node) {
-    if (node instanceof ScalarTypeDefNode) {
-      return visitScalarDef((ScalarTypeDefNode) node);
-    } else if (node instanceof ObjectTypeDefNode) {
-      return visitObjectDef((ObjectTypeDefNode) node);
+  private FlHeaderSpec visitTypeDef(TypeDef node) {
+    if (node instanceof ScalarDef) {
+      return visitScalarDef((ScalarDef) node);
+    } else if (node instanceof ObjectDef) {
+      return visitObjectDef((ObjectDef) node);
     }
     throw new HdesCompilerException(HdesCompilerException.builder().unknownFlInputRule(node));
   }
 
   @Override
-  public FlHeaderSpec visitScalarDef(ScalarTypeDefNode node) {
+  public FlHeaderSpec visitScalarDef(ScalarDef node) {
     Class<?> returnType = JavaSpecUtil.type(node.getType());
     
     final com.squareup.javapoet.TypeName returnTypeName;
@@ -194,7 +194,7 @@ public class FlInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> 
   }
 
   @Override
-  public FlHeaderSpec visitObjectDef(ObjectTypeDefNode node) {
+  public FlHeaderSpec visitObjectDef(ObjectDef node) {
     ClassName typeName = node.getDirection() == DirectionType.IN ? naming.fl().inputValue(body, node) : naming.fl().outputValue(body, node);
     TypeSpec.Builder objectBuilder = TypeSpec
         .interfaceBuilder(typeName)
@@ -202,7 +202,7 @@ public class FlInterfaceVisitor extends FlTemplateVisitor<FlJavaSpec, TypeSpec> 
         .addAnnotation(Immutable.class)
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
     List<TypeSpec> nested = new ArrayList<>();
-    for (TypeDefNode input : node.getValues()) {
+    for (TypeDef input : node.getValues()) {
       FlHeaderSpec spec = visitTypeDef(input);
       nested.addAll(spec.getChildren());
       objectBuilder.addMethod(spec.getValue());

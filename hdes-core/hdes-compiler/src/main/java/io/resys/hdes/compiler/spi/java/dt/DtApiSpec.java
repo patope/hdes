@@ -13,15 +13,15 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicy;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyAll;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyFirst;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyMatrix;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.MatrixRow;
-import io.resys.hdes.ast.api.nodes.ImmutableScalarTypeDefNode;
+import io.resys.hdes.ast.api.nodes.ImmutableScalarDef;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
@@ -102,7 +102,7 @@ public class DtApiSpec {
           .addSuperinterface(HdesExecutable.OutputValue.class);
 
       // normal input/outputs
-      for (TypeDefNode header : body.getHeaders().getValues()) {        
+      for (TypeDef header : body.getHeaders().getValues()) {        
         MethodSpec method = header(header);
         if (header.getDirection() == DirectionType.IN) {
           inputBuilder.addMethod(method);
@@ -113,7 +113,7 @@ public class DtApiSpec {
           if (header.getRequired()) {
             throw new HdesCompilerException(HdesCompilerException.builder().dtHeaderOutputMatrixCantBeRequired(header));
           }
-          final boolean isFormulaEmpty = ((ScalarTypeDefNode) header).getFormula().isEmpty();
+          final boolean isFormulaEmpty = ((ScalarDef) header).getFormula().isEmpty();
           if (isFormulaEmpty) {
             throw new HdesCompilerException(
                 HdesCompilerException.builder().dtHeaderOutputMatrixHasToHaveFormula(header));
@@ -128,10 +128,10 @@ public class DtApiSpec {
         HitPolicyMatrix matrix = (HitPolicyMatrix) body.getHitPolicy();
         for (MatrixRow row : matrix.getRows()) {
           String headerName = row.getTypeName().getValue();
-          ScalarTypeDefNode scalar = (ScalarTypeDefNode) body.getHeaders().getValues().stream()
+          ScalarDef scalar = (ScalarDef) body.getHeaders().getValues().stream()
               .filter(t -> t.getName().equals(headerName)).findFirst().get();
           MethodSpec method = header(
-              ImmutableScalarTypeDefNode.builder().from(scalar).token(row.getToken()).type(matrix.getToType()).build());
+              ImmutableScalarDef.builder().from(scalar).token(row.getToken()).type(matrix.getToType()).build());
           outputBuilder.addMethod(method);
         }
 
@@ -154,8 +154,8 @@ public class DtApiSpec {
     /**
      * @return entity field get method
      */
-    private MethodSpec header(TypeDefNode node) {
-      ScalarTypeDefNode scalar = (ScalarTypeDefNode) node;
+    private MethodSpec header(TypeDef node) {
+      ScalarDef scalar = (ScalarDef) node;
       return MethodSpec.methodBuilder(JavaSpecUtil.methodName(node.getName()))
           .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
           .returns(

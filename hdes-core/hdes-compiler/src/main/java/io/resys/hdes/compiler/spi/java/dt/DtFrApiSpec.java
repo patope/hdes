@@ -12,7 +12,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompilerException;
@@ -20,7 +20,6 @@ import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec;
 import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedScope;
 import io.resys.hdes.compiler.spi.java.en.ExpressionRefsSpec.EnReferedTypes;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor;
-import io.resys.hdes.compiler.spi.java.visitors.dt.DtEnReferedTypeResolver;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.HdesExecutable;
@@ -35,7 +34,7 @@ public class DtFrApiSpec {
   public static class Builder {
     private final Namings namings;
     private DecisionTableBody body;
-    private DtEnReferedTypeResolver resolver;
+    private DtParameterResolver resolver;
     
     private Builder(Namings namings) {
       super();
@@ -44,11 +43,11 @@ public class DtFrApiSpec {
 
     public Builder body(DecisionTableBody body) {
       this.body = body;
-      this.resolver = new DtEnReferedTypeResolver(body);
+      this.resolver = new DtParameterResolver(body);
       return this;
     }
     
-    private TypeSpec returnType(ScalarTypeDefNode scalar) {
+    private TypeSpec returnType(ScalarDef scalar) {
       MethodSpec method = MethodSpec.methodBuilder(JavaSpecUtil.methodName(scalar.getName()))
         .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
         .returns(JavaSpecUtil.typeName(scalar.getType()))
@@ -60,7 +59,7 @@ public class DtFrApiSpec {
         .build();
     }
     
-    private TypeSpec inputType(ScalarTypeDefNode scalar) {
+    private TypeSpec inputType(ScalarDef scalar) {
       EnReferedTypes referedTypes = ExpressionRefsSpec.builder(resolver).body(scalar.getFormula().get()).build();
     
       if(scalar.getDirection() == DirectionType.IN && referedTypes.getScopes().contains(EnReferedScope.OUT)) {
@@ -99,7 +98,7 @@ public class DtFrApiSpec {
           .build();
     }
     
-    public TypeSpec build(ScalarTypeDefNode formula) {
+    public TypeSpec build(ScalarDef formula) {
       Assertions.notNull(body, () -> "body must be defined!");
       Assertions.notNull(formula, () -> "formula must be defined!");
       Assertions.isTrue(formula.getFormula().isPresent(), () -> "formula must be present!");

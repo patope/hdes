@@ -40,8 +40,9 @@ import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.Headers;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode;
+import io.resys.hdes.ast.api.nodes.ImmutableBodyId;
 import io.resys.hdes.ast.api.nodes.ImmutableDropdown;
 import io.resys.hdes.ast.api.nodes.ImmutableDropdownField;
 import io.resys.hdes.ast.api.nodes.ImmutableFields;
@@ -139,10 +140,11 @@ public class MtParserAstNodeVisitor extends DtParserAstNodeVisitor {
   public ManualTaskBody visitMtBody(MtBodyContext ctx) {
     Nodes nodes = nodes(ctx);
     Headers headers = nodes.of(Headers.class).get();
+    TypeInvocation id = nodes.of(TypeInvocation.class).get();
     
     return ImmutableManualTaskBody.builder()
         .token(token(ctx))
-        .id(nodes.of(TypeName.class).get())
+        .id(ImmutableBodyId.builder().token(id.getToken()).value(id.getValue()).build())
         .description(nodes.of(RedundentDescription.class).get().getValue())
         .form(nodes.of(ManualTaskForm.class).get())
         .dropdowns(nodes.of(ManualTaskDropdowns.class).get())
@@ -185,7 +187,7 @@ public class MtParserAstNodeVisitor extends DtParserAstNodeVisitor {
     Nodes nodes = nodes(ctx);
     return ImmutableDropdown.builder()
         .token(token(ctx))
-        .name(nodes.of(TypeName.class).get().getValue())
+        .name(nodes.of(TypeInvocation.class).get().getValue())
         .values(nodes.of(MtRedundentDropdownKeysAndValues.class).get().getValues())
         .build();
   }
@@ -249,7 +251,7 @@ public class MtParserAstNodeVisitor extends DtParserAstNodeVisitor {
   @Override
   public Group visitGroup(GroupContext ctx) {
     Nodes nodes = nodes(ctx);
-    String id = nodes.of(TypeName.class).get().getValue();
+    String id = nodes.of(TypeInvocation.class).get().getValue();
     
     Optional<Fields> fields = nodes.of(Fields.class);
     if(fields.isPresent()) {
@@ -272,7 +274,7 @@ public class MtParserAstNodeVisitor extends DtParserAstNodeVisitor {
     Nodes nodes = nodes(ctx);
     boolean required = ((TerminalNode) ctx.getChild(2)).getSymbol().getType() == HdesParser.REQUIRED;
     ScalarType scalarType = nodes.of(RedundentScalarType.class).get().getValue();
-    String typeName = nodes.of(TypeName.class).get().getValue();
+    String typeName = nodes.of(TypeInvocation.class).get().getValue();
     Optional<MtRedundentDropdown> dropdown = nodes.of(MtRedundentDropdown.class);
     Optional<String> defaultValue = nodes.of(MtRedundentDefaultValue.class).map(e -> e.getValue());
     Optional<String> cssClasses = nodes.of(MtRedundentCssClass.class).map(e -> e.getValue());
@@ -304,7 +306,7 @@ public class MtParserAstNodeVisitor extends DtParserAstNodeVisitor {
   @Override
   public MtRedundentDropdown visitDropdown(DropdownContext ctx) {
     Nodes nodes = nodes(ctx);
-    String typeName = nodes.of(TypeName.class).get().getValue();
+    String typeName = nodes.of(TypeInvocation.class).get().getValue();
     return ImmutableMtRedundentDropdown.builder()
         .token(token(ctx))
         .type(nodes.of(MtRedundentDropdownType.class).get())
@@ -346,7 +348,7 @@ public class MtParserAstNodeVisitor extends DtParserAstNodeVisitor {
     Nodes nodes = nodes(ctx);
     return ImmutableWhenAction.builder()
         .token(token(ctx))
-        .id(nodes.of(TypeName.class).get().getValue())
+        .id(nodes.of(TypeInvocation.class).get().getValue())
         .value(nodes.of(ExpressionNode.class).get())
         .build();
   }
@@ -367,7 +369,7 @@ public class MtParserAstNodeVisitor extends DtParserAstNodeVisitor {
   public ThenAction visitShowGroupOrField(ShowGroupOrFieldContext ctx) {
     AstNode.Token token = token(ctx);
     Nodes nodes = nodes(ctx);
-    String typeName = nodes.of(TypeName.class).get().getValue();
+    String typeName = nodes.of(TypeInvocation.class).get().getValue();
     
     TerminalNode node = (TerminalNode) ctx.getChild(0);
     switch (node.getSymbol().getType()) {

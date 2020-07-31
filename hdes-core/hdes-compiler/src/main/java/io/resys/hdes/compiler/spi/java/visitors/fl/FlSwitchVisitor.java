@@ -35,9 +35,9 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
-import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.FlowNode.EndPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
@@ -93,7 +93,7 @@ public class FlSwitchVisitor extends FlTemplateVisitor<FlJavaSpec, List<TypeSpec
     } else if (node instanceof WhenThenPointer) { 
      
       List<TypeSpec> values = new ArrayList<>();
-      List<TypeDefNode> switchTypes = new ArrayList<>();
+      List<TypeDef> switchTypes = new ArrayList<>();
       
       ClassName gateTypeName = naming.sw().gate(body, parent);
       
@@ -103,10 +103,10 @@ public class FlSwitchVisitor extends FlTemplateVisitor<FlJavaSpec, List<TypeSpec
         
         // Collect types used
         if(c.getWhen().isPresent()) {
-          switchTypes.addAll(new EnInterfaceVisitor(this.typeNames).visitExpressionBody(c.getWhen().get()));
+          switchTypes.addAll(new EnInterfaceVisitor(this.typeNames).visitBody(c.getWhen().get()));
           
           // Expression Body - boolean conditions
-          EnScalarCodeSpec gateBody = new EnImplementationVisitor(this.typeNames).visitExpressionBody(c.getWhen().get());
+          EnScalarCodeSpec gateBody = new EnImplementationVisitor(this.typeNames).visitBody(c.getWhen().get());
           System.out.println(gateBody);
         }
         
@@ -132,14 +132,14 @@ public class FlSwitchVisitor extends FlTemplateVisitor<FlJavaSpec, List<TypeSpec
     return ImmutableFlTypesSpec.builder().build();
   }
 
-  private FlTypesSpec visitInputs(List<TypeDefNode> node, FlowTaskNode parent) {
+  private FlTypesSpec visitInputs(List<TypeDef> node, FlowTaskNode parent) {
     TypeSpec.Builder inputBuilder = TypeSpec
         .interfaceBuilder(naming.sw().inputValue(body, parent))
         .addSuperinterface(HdesExecutable.InputValue.class)
         .addAnnotation(Immutable.class)
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
     List<TypeSpec> nested = new ArrayList<>();
-    for (TypeDefNode input : node) {
+    for (TypeDef input : node) {
       FlHeaderSpec spec = visitTypeDef(input, parent);
       nested.addAll(spec.getChildren());
       inputBuilder.addMethod(spec.getValue());
@@ -166,21 +166,21 @@ public class FlSwitchVisitor extends FlTemplateVisitor<FlJavaSpec, List<TypeSpec
         .build();
   }
 
-  private FlHeaderSpec visitTypeDef(TypeDefNode node, FlowTaskNode parent) {
+  private FlHeaderSpec visitTypeDef(TypeDef node, FlowTaskNode parent) {
     if (node.getArray()) {
       return visitArrayDef(node, parent);
 
-    } else if (node instanceof ScalarTypeDefNode) {
-      return visitScalarDef((ScalarTypeDefNode) node, parent);
+    } else if (node instanceof ScalarDef) {
+      return visitScalarDef((ScalarDef) node, parent);
     
-    } else if (node instanceof ObjectTypeDefNode) {
-      return visitObjectDef((ObjectTypeDefNode) node, parent);
+    } else if (node instanceof ObjectDef) {
+      return visitObjectDef((ObjectDef) node, parent);
     }
     throw new HdesCompilerException(HdesCompilerException.builder().unknownFlInputRule(node));
   }
 
 
-  private FlHeaderSpec visitScalarDef(ScalarTypeDefNode node, FlowTaskNode parent) {
+  private FlHeaderSpec visitScalarDef(ScalarDef node, FlowTaskNode parent) {
     Class<?> returnType = JavaSpecUtil.type(node.getType());
     MethodSpec method = MethodSpec.methodBuilder(JavaSpecUtil.methodName(node.getName()))
         .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -189,11 +189,11 @@ public class FlSwitchVisitor extends FlTemplateVisitor<FlJavaSpec, List<TypeSpec
     return ImmutableFlHeaderSpec.builder().value(method).build();
   }
 
-  private FlHeaderSpec visitArrayDef(TypeDefNode node, FlowTaskNode parent) {
+  private FlHeaderSpec visitArrayDef(TypeDef node, FlowTaskNode parent) {
     FlHeaderSpec childSpec = visitTypeDef(node, parent);
     com.squareup.javapoet.TypeName arrayType;
     
-    if (node instanceof ScalarTypeDefNode && ((ScalarTypeDefNode) node).getRequired()) {
+    if (node instanceof ScalarDef && ((ScalarDef) node).getRequired()) {
       arrayType = childSpec.getValue().returnType;
     } else {
       arrayType = ((ParameterizedTypeName) childSpec.getValue().returnType).typeArguments.get(0);
@@ -206,7 +206,7 @@ public class FlSwitchVisitor extends FlTemplateVisitor<FlJavaSpec, List<TypeSpec
         .build();
   }
 
-  private FlHeaderSpec visitObjectDef(ObjectTypeDefNode node, FlowTaskNode parent) {
+  private FlHeaderSpec visitObjectDef(ObjectDef node, FlowTaskNode parent) {
     ClassName typeName = naming.sw().inputValue(body, parent, node);
     TypeSpec.Builder objectBuilder = TypeSpec
         .interfaceBuilder(typeName)
@@ -214,7 +214,7 @@ public class FlSwitchVisitor extends FlTemplateVisitor<FlJavaSpec, List<TypeSpec
         .addAnnotation(Immutable.class)
         .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
     List<TypeSpec> nested = new ArrayList<>();
-    for (TypeDefNode input : node.getValues()) {
+    for (TypeDef input : node.getValues()) {
       FlHeaderSpec spec = visitTypeDef(input, parent);
       nested.addAll(spec.getChildren());
       objectBuilder.addMethod(spec.getValue());

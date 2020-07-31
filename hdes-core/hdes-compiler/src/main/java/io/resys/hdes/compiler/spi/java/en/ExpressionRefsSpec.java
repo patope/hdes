@@ -6,10 +6,10 @@ import java.util.Set;
 
 import org.immutables.value.Value;
 
-import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeName;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodRefNode;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodInvocation;
 import io.resys.hdes.ast.spi.Assertions;
 
 public class ExpressionRefsSpec {
@@ -22,16 +22,16 @@ public class ExpressionRefsSpec {
   
   @Value.Immutable
   public interface EnReferedType {
-    TypeDefNode getNode();
-    Optional<TypeName> getTypeName();
-    Optional<MethodRefNode> getMethodRef(); 
+    TypeDef getNode();
+    Optional<TypeInvocation> getTypeName();
+    Optional<MethodInvocation> getMethodRef(); 
     EnReferedScope getScope();
     List<EnReferedType> getChildren();
   }
   
   public interface EnReferedTypeResolver {
-    TypeDefNode accept(TypeName name);
-    TypeDefNode accept(MethodRefNode name);
+    TypeDef accept(TypeInvocation name);
+    TypeDef accept(MethodInvocation name);
   }
   
   public static enum EnReferedScope {
@@ -58,7 +58,7 @@ public class ExpressionRefsSpec {
     }
     
     public EnReferedTypes build() {
-      return new ExpressionRefsVisitor(resolver).visitExpressionBody(body);
+      return new ExpressionRefsVisitor(resolver).visitBody(body);
     }
   }
 }

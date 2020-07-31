@@ -27,9 +27,9 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
 import io.resys.hdes.ast.api.AstEnvir;
-import io.resys.hdes.ast.api.nodes.AstNode.BodyNode;
-import io.resys.hdes.ast.api.nodes.AstNode.ObjectTypeDefNode;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.Body;
+import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
@@ -44,14 +44,14 @@ public interface Namings {
   FormulaNaming fr();
   
   interface FormulaNaming {
-    String pkg(BodyNode body);
-    ClassName api(BodyNode node, ScalarTypeDefNode pointer);
-    ClassName impl(BodyNode node, ScalarTypeDefNode pointer);
-    ParameterizedTypeName executable(BodyNode node, ScalarTypeDefNode pointer);
-    ParameterizedTypeName execution(BodyNode node, ScalarTypeDefNode pointer);
+    String pkg(Body body);
+    ClassName api(Body node, ScalarDef pointer);
+    ClassName impl(Body node, ScalarDef pointer);
+    ParameterizedTypeName executable(Body node, ScalarDef pointer);
+    ParameterizedTypeName execution(Body node, ScalarDef pointer);
     
-    ClassName inputValue(BodyNode node, ScalarTypeDefNode pointer);
-    ClassName outputValue(BodyNode node, ScalarTypeDefNode pointer);
+    ClassName inputValue(Body node, ScalarDef pointer);
+    ClassName outputValue(Body node, ScalarDef pointer);
   }
   
   interface SwitchNaming {
@@ -61,7 +61,7 @@ public interface Namings {
     
     ClassName gate(FlowBody node, FlowTaskNode pointer);
     ClassName inputValue(FlowBody node, FlowTaskNode pointer);
-    ClassName inputValue(FlowBody node, FlowTaskNode pointer, ObjectTypeDefNode object);
+    ClassName inputValue(FlowBody node, FlowTaskNode pointer, ObjectDef object);
     ClassName outputValue(FlowBody node, FlowTaskNode pointer);
   }
   
@@ -95,10 +95,10 @@ public interface Namings {
     TypeName executable(FlowBody node);
     
     ClassName inputValue(FlowBody node);
-    ClassName inputValue(FlowBody node, ObjectTypeDefNode object);
+    ClassName inputValue(FlowBody node, ObjectDef object);
     
     ClassName outputValue(FlowBody node);
-    ClassName outputValue(FlowBody node, ObjectTypeDefNode object);
+    ClassName outputValue(FlowBody node, ObjectDef object);
     
     
     /*

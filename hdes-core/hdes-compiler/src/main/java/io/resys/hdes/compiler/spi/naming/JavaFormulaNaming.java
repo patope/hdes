@@ -24,8 +24,8 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
-import io.resys.hdes.ast.api.nodes.AstNode.BodyNode;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarTypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.Body;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.compiler.spi.naming.Namings.FormulaNaming;
@@ -42,7 +42,7 @@ public class JavaFormulaNaming implements FormulaNaming {
   }
 
   @Override
-  public String pkg(BodyNode body) {
+  public String pkg(Body body) {
     if(body instanceof FlowBody) {
       return parent.fl().pkg((FlowBody) body);
     } else if(body instanceof DecisionTableBody) {
@@ -52,7 +52,7 @@ public class JavaFormulaNaming implements FormulaNaming {
   }
   
   @Override
-  public ParameterizedTypeName execution(BodyNode body, ScalarTypeDefNode pointer) {
+  public ParameterizedTypeName execution(Body body, ScalarDef pointer) {
     ClassName outputName = outputValue(body, pointer);
     ParameterizedTypeName returnType = ParameterizedTypeName
         .get(ClassName.get(Execution.class), ClassName.get(FormulaMeta.class), outputName);
@@ -61,29 +61,29 @@ public class JavaFormulaNaming implements FormulaNaming {
   
 
   @Override
-  public ClassName api(BodyNode node, ScalarTypeDefNode pointer) {
+  public ClassName api(Body node, ScalarDef pointer) {
     return ClassName.get(pkg(node), node.getId().getValue() + JavaSpecUtil.capitalize(pointer.getName()) + "Formula");
   }
 
   @Override
-  public ClassName impl(BodyNode node, ScalarTypeDefNode pointer) {
+  public ClassName impl(Body node, ScalarDef pointer) {
     return ClassName.get(pkg(node), node.getId().getValue() + JavaSpecUtil.capitalize(pointer.getName()) + "FormulaGen");
   }
   
   @Override
-  public ParameterizedTypeName executable(BodyNode node, ScalarTypeDefNode pointer) {
+  public ParameterizedTypeName executable(Body node, ScalarDef pointer) {
     TypeName returnType = outputValue(node, pointer);
     return ParameterizedTypeName.get(ClassName.get(Formula.class), inputValue(node, pointer), returnType);
   }
 
   @Override
-  public ClassName inputValue(BodyNode node, ScalarTypeDefNode pointer) {
+  public ClassName inputValue(Body node, ScalarDef pointer) {
     ClassName api = api(node, pointer);
     return ClassName.get(api.canonicalName(), api.simpleName() + JavaSpecUtil.capitalize(pointer.getName()) + "In");
   }
 
   @Override
-  public ClassName outputValue(BodyNode node, ScalarTypeDefNode pointer) {
+  public ClassName outputValue(Body node, ScalarDef pointer) {
     ClassName api = api(node, pointer);
     return ClassName.get(api.canonicalName(), api.simpleName() + JavaSpecUtil.capitalize(pointer.getName()) + "Out");
   }
