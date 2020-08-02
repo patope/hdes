@@ -10,6 +10,7 @@ import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
+import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodInvocation;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
@@ -337,6 +338,15 @@ public class HdesCompilerException extends RuntimeException {
           .append("Declared type: ").append(header.getType()).append(" but was: ").append(was).append("!").append(System.lineSeparator())
           .append(" AST: ").append(header.getClass()).append(System.lineSeparator())
           .append("  - ").append(header).append("!")
+          .toString();
+    }
+    
+    public String incorrectLambdaFormula(MethodInvocation invocation) {
+      return new StringBuilder()
+          .append("Incorrect lambda formula declaration!").append(System.lineSeparator())
+          .append("Lambda name: ").append(invocation.getName()).append("!").append(System.lineSeparator())
+          .append(" AST: ").append(invocation.getClass()).append(System.lineSeparator())
+          .append("  - ").append(invocation).append("!")
           .toString();
     }
   }

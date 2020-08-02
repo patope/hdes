@@ -56,8 +56,8 @@ public class DtFrImplSpec {
       
       ClassName outputType = namings.fr().outputValue(body, formula);
       EnScalarCodeSpec formulaSpec = ExpressionSpec.builder().parent(body).build(formula.getFormula().get());
-      if(formula.getArray() != formulaSpec.getArray().orElse(false)) {
-        throw new HdesCompilerException(HdesCompilerException.builder().dtFormulaContainsIncorectArrayType(formula, formulaSpec.getArray().orElse(false)));
+      if(formula.getArray() != formulaSpec.getArray()) {
+        throw new HdesCompilerException(HdesCompilerException.builder().dtFormulaContainsIncorectArrayType(formula, formulaSpec.getArray()));
       }
       
       if(formula.getType() != formulaSpec.getType()) {

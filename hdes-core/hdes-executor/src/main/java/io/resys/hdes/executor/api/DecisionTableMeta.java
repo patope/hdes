@@ -42,7 +42,7 @@ public interface DecisionTableMeta extends HdesExecutable.Meta {
   }
   
   
-  interface DecisionTableStaticValue<T> extends Serializable, Iterable<T> {
+  interface DecisionTableStaticValue<T> extends Serializable {
     List<T> getValues();
   }
 }

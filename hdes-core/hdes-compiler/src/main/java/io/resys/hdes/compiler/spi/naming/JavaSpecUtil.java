@@ -107,6 +107,20 @@ public class JavaSpecUtil {
     return result.toString();
   }
   
+  public static String methodVarCall(String name) {
+    //turns given ref into "get + (N)ame + ()"
+    String[] src = name.split("\\.");
+    StringBuilder result = new StringBuilder();
+    for(String target : src) {
+      if(result.length() > 0) {
+        result.append(".").append("get").append(capitalize(target)).append("()");;
+      } else {
+        result.append(target);
+      }
+    }
+    return result.toString();
+  }
+  
   public static String methodName(String name) {
     //turns given ref into "get + (N)ame"
     return new StringBuilder()

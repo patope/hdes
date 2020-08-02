@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.lang.model.element.Modifier;
@@ -18,11 +19,17 @@ import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
+import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
+import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicy;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyAll;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyFirst;
+import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyMatrix;
+import io.resys.hdes.ast.api.nodes.DecisionTableNode.MatrixRow;
+import io.resys.hdes.ast.api.nodes.DecisionTableNode.RuleRow;
 import io.resys.hdes.ast.spi.Assertions;
+import io.resys.hdes.compiler.spi.java.dt.RuleRowSpec.DtControlStatement;
 import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec;
 import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.InvocationSpecParams;
 import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.UsageSource;
@@ -73,7 +80,7 @@ public class DtImplSpec {
       return this;
     }
 
-    public CodeBlock formula(ScalarDef scalarDef) {
+    private CodeBlock formula(ScalarDef scalarDef) {
       ClassName typeName = scalarDef.getDirection() == DirectionType.IN ? 
           namings.dt().inputValue(body) :
           namings.dt().outputValueMono(body);
@@ -86,13 +93,14 @@ public class DtImplSpec {
       for(UsageSource scope : referedTypes.getUsageSources()) {
         switch (scope) {
         case IN:
-          formulaInput.add("\r\n").add("  .$L(input)", ExpressionVisitor.ACCESS_INPUT_VALUE);
+          formulaInput.add("\r\n").add("  .$L($L)", ExpressionVisitor.ACCESS_INPUT_VALUE, ExpressionVisitor.ACCESS_INPUT_VALUE);
           break;
         case OUT:
-          formulaInput.add("\r\n").add("  .$L(output)", ExpressionVisitor.ACCESS_OUTPUT_VALUE);
+          formulaInput.add("\r\n").add("  .$L($L)", ExpressionVisitor.ACCESS_OUTPUT_VALUE, ExpressionVisitor.ACCESS_OUTPUT_VALUE);
         case INSTANCE:
           continue;
         case STATIC:
+          formulaInput.add("\r\n").add("  .$L($L)", ExpressionVisitor.ACCESS_STATIC_VALUE, ExpressionVisitor.ACCESS_STATIC_VALUE);
           continue;
         default: throw new IllegalArgumentException("Scope: " + scope + " parameter: " + scalarDef + " not implemented!"); 
         }
@@ -111,13 +119,127 @@ public class DtImplSpec {
           .addStatement("mutator = $T.builder().from(mutator).$L($L).build()", JavaSpecUtil.immutable(typeName), scalarDef.getName(), scalarDef.getName())
           .build();
     }
+    
+    private Optional<MethodSpec> inputFormula(DecisionTableBody body) {
+      // Create formula on input
+      final ClassName inputType = namings.dt().inputValue(body);
+      
+      List<CodeBlock> inputFormulas = body.getHeaders().getValues().stream()
+        .filter(v -> v.getDirection() == DirectionType.IN).map(v -> (ScalarDef) v)
+        .filter(v -> v.getFormula().isPresent()).map(v -> formula(v))
+        .collect(Collectors.toList());
+      
+      if(inputFormulas.isEmpty()) {
+        return Optional.empty();
+      }
+      
+      CodeBlock.Builder builder = CodeBlock.builder()
+          .addStatement("$T mutator = $L", inputType, ExpressionVisitor.ACCESS_INPUT_VALUE);
+      
+      for(CodeBlock codeBlock : inputFormulas) {
+        builder.add(codeBlock).add("\r\n");
+      }
+      
+      return Optional.of(MethodSpec
+        .methodBuilder("applyInputFormula")
+        .addModifiers(Modifier.PUBLIC)
+        .addCode(builder.addStatement("return mutator").build())
+        .addParameter(inputType, ExpressionVisitor.ACCESS_INPUT_VALUE)
+        .returns(inputType)
+        .build());
+    }
+    
+    private Optional<MethodSpec> outputFormula(DecisionTableBody body) {
+      // Create formula on output
+      List<CodeBlock> outputFormulas = body.getHeaders().getValues().stream()
+        .filter(v -> v.getDirection() == DirectionType.OUT).map(v -> (ScalarDef) v)
+        .filter(v -> v.getFormula().isPresent()).map(v -> formula(v))
+        .collect(Collectors.toList());
+      if(outputFormulas.isEmpty()) {
+        return Optional.empty();
+      }  
+      
+      final ClassName inputType = namings.dt().inputValue(body);
+      final ClassName outputType = namings.dt().outputValueMono(body);
+      
+      CodeBlock.Builder builder = CodeBlock.builder()
+          .addStatement("$T mutator = $L", outputType, ExpressionVisitor.ACCESS_OUTPUT_VALUE);
+      
+      for(CodeBlock codeBlock : outputFormulas) {
+        builder.add(codeBlock).add("\r\n");
+      }
+      
+      return Optional.of(MethodSpec
+        .methodBuilder("applyOutputFormula")
+        .addModifiers(Modifier.PUBLIC)
+        .addCode(builder.addStatement("return mutator").build())
+        .addParameter(inputType, ExpressionVisitor.ACCESS_INPUT_VALUE)
+        .addParameter(outputType, ExpressionVisitor.ACCESS_OUTPUT_VALUE)
+        .returns(outputType)
+        .build());
+    }
+    
+    private Optional<CodeBlock> staticValue(DecisionTableBody body) {
+      boolean isStaticUsagePresent = body.getHeaders().getValues().stream()
+        .map(h -> (ScalarDef) h)
+        .filter(h -> h.getFormula().isPresent())
+        .map(h -> ExpressionInvocationSpec.builder().parent(body).build(h.getFormula().get()))
+        .map(h -> h.getUsageSources().contains(UsageSource.STATIC))
+        .filter(v -> v)
+        .findFirst().orElse(false);
+      
+      if(!isStaticUsagePresent) {
+        return Optional.empty();
+      }
+      
+      ClassName outputType = JavaSpecUtil.immutable(namings.dt().outputValueFlux(body));
+      final ClassName staticType = namings.dt().staticValue(body);
+      final ClassName immutableStaticType = JavaSpecUtil.immutable(staticType);
+      CodeBlock.Builder execution = CodeBlock.builder().add("$T.builder()", immutableStaticType);
+      
+      HitPolicy hitPolicy = body.getHitPolicy();
+      if(hitPolicy instanceof HitPolicyFirst || hitPolicy instanceof HitPolicyAll) {
+        
+        List<RuleRow> rows = hitPolicy instanceof HitPolicyFirst ? 
+            ((HitPolicyFirst) hitPolicy).getRows() : 
+            ((HitPolicyAll) hitPolicy).getRows();
+          
+        for (RuleRow row : rows) {
+          DtControlStatement pair = RuleRowSpec.builder(namings).body(body).build(row);
+          
+          execution.add("\r\n").add(".addValues($T.builder()$L.build())", outputType, pair.getValue());
+          
+        }
 
+        execution.add("\r\n").add(".build()");
+      } else  {
+        HitPolicyMatrix matrix = (HitPolicyMatrix) body.getHitPolicy();
+        for (MatrixRow matrixRow : matrix.getRows()) {
+
+          ScalarDef header = (ScalarDef) body.getHeaders().getValues().stream()
+              .filter(t -> t.getName().equals(matrixRow.getTypeName().getValue())).findFirst().get();
+          
+          CodeBlock.Builder values = CodeBlock.builder(); 
+          for (Literal literal : matrixRow.getValues()) {
+            if(!values.isEmpty()) {
+              values.add(", ");
+            }
+            values.add("$L", DtRuleSpec.builder(body).build(header, literal).getValue());
+          }
+          execution.add("\r\n").add(".$L($T.asList($L))", header.getName(), Arrays.class, values.build());
+          execution.add("\r\n").add(".addValues($T.asList($L))", Arrays.class, values.build());
+        }
+        execution.add("\r\n").add(".build()");
+      }
+      
+      return Optional.of(execution.build());
+    }
     
     public TypeSpec build() {
       Assertions.notNull(body, () -> "body must be defined!");
       
       final List<MethodSpec> formulas = new ArrayList<>();
-      final ClassName inputType = namings.dt().inputValue(body);
+      final ClassName staticType = namings.dt().staticValue(body);
       final ClassName outputType = namings.dt().outputValueMono(body);
       final ClassName immutableOutputName = JavaSpecUtil.immutable(outputType);
       
@@ -127,30 +249,22 @@ public class DtImplSpec {
           .addStatement("$T<Integer, $T> meta = new $T<>()", Map.class, DecisionTableMetaEntry.class, HashMap.class)
           .addStatement("$T.Builder result = $T.builder()", immutableOutputName, immutableOutputName);
       
+      // init static
+      Optional<CodeBlock> staticValue = staticValue(body);
+      if(staticValue.isPresent()) {
+        execution.addStatement("$T staticValue = $L", namings.dt().staticValue(body), staticValue.get()).add("\r\n");
+      }
       
       // Create formula on input
-      List<CodeBlock> inputFormulas = body.getHeaders().getValues().stream()
-        .filter(v -> v.getDirection() == DirectionType.IN).map(v -> (ScalarDef) v)
-        .filter(v -> v.getFormula().isPresent()).map(v -> formula(v))
-        .collect(Collectors.toList());
-      if(!inputFormulas.isEmpty()) {
-        CodeBlock.Builder builder = CodeBlock.builder()
-            .addStatement("$T mutator = input", inputType);
-        
-        for(CodeBlock codeBlock : inputFormulas) {
-          builder.add(codeBlock).add("\r\n");
+      Optional<MethodSpec> inputFormula = inputFormula(body);
+      if(inputFormula.isPresent()) {
+        if(staticValue.isPresent()) {
+          formulas.add(inputFormula.get().toBuilder().addParameter(staticType, "staticValue").build());
+          execution.addStatement("input = $L(input, staticValue)", inputFormula.get().name);
+        } else {
+          formulas.add(inputFormula.get());
+          execution.addStatement("input = $L(input)", inputFormula.get().name);
         }
-        
-        MethodSpec method = MethodSpec
-          .methodBuilder("applyInputFormula")
-          .addModifiers(Modifier.PUBLIC)
-          .addCode(builder.addStatement("return mutator").build())
-          .addParameter(inputType, "input")
-          .returns(inputType)
-          .build();
-        
-        formulas.add(method);
-        execution.addStatement("input = $L(input)", method.name);
       }
       
       if(body.getHitPolicy() instanceof HitPolicyFirst) {
@@ -164,32 +278,16 @@ public class DtImplSpec {
       execution.addStatement("$T output = result.build()", outputType);
       
       // Create formula on output
-      List<CodeBlock> outputFormulas = body.getHeaders().getValues().stream()
-        .filter(v -> v.getDirection() == DirectionType.OUT).map(v -> (ScalarDef) v)
-        .filter(v -> v.getFormula().isPresent()).map(v -> formula(v))
-        .collect(Collectors.toList());
-      if(!outputFormulas.isEmpty()) {
-        
-        CodeBlock.Builder builder = CodeBlock.builder()
-            .addStatement("$T mutator = output", outputType);
-        
-        for(CodeBlock codeBlock : outputFormulas) {
-          builder.add(codeBlock).add("\r\n");
+      Optional<MethodSpec> outputFormula = outputFormula(body);
+      if(outputFormula.isPresent()) {
+        if(staticValue.isPresent()) {
+          formulas.add(outputFormula.get().toBuilder().addParameter(staticType, "staticValue").build());
+          execution.addStatement("output = $L(input, output, staticValue)", outputFormula.get().name);
+        } else {
+          formulas.add(outputFormula.get());
+          execution.addStatement("output = $L(input, output)", outputFormula.get().name);
         }
-        
-        MethodSpec method = MethodSpec
-          .methodBuilder("applyOutputFormula")
-          .addModifiers(Modifier.PUBLIC)
-          .addCode(builder.addStatement("return mutator").build())
-          .addParameter(inputType, "input")
-          .addParameter(outputType, "output")
-          .returns(outputType)
-          .build();
-        
-        formulas.add(method);
-        execution.addStatement("output = $L(input, output)", method.name);
       }
-      
       
       execution.add("\r\n")
       .addStatement("long end = System.currentTimeMillis()")

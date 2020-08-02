@@ -56,7 +56,7 @@ public class TypeConverter {
   }
   
   public TypeConverter value1(CodeBlock value1, ScalarType type) {
-    this.value1 = ImmutableEnScalarCodeSpec.builder().value(value1).type(type).build();;
+    this.value1 = ImmutableEnScalarCodeSpec.builder().value(value1).array(false).type(type).build();;
     return this;
   }
   
@@ -66,7 +66,7 @@ public class TypeConverter {
   }
   
   public TypeConverter value2(CodeBlock value2, ScalarType type) {
-    this.value2 = ImmutableEnScalarCodeSpec.builder().value(value2).type(type).build();
+    this.value2 = ImmutableEnScalarCodeSpec.builder().value(value2).array(false).type(type).build();
     return this;      
   }
   

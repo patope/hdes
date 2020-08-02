@@ -6,13 +6,13 @@ import java.util.Set;
 
 import org.immutables.value.Value;
 
+import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.ast.api.nodes.AstNode.Invocation;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.AstNodeVisitorContext;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
-import io.resys.hdes.ast.api.nodes.ExpressionNode;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodInvocation;
 import io.resys.hdes.ast.api.nodes.ImmutableAstNodeVisitorContext;
 import io.resys.hdes.ast.spi.Assertions;
@@ -60,7 +60,7 @@ public class ExpressionInvocationSpec {
       return this;
     }
 
-    public InvocationSpecParams build(ExpressionNode value) {
+    public InvocationSpecParams build(AstNode value) {
       Assertions.isTrue(node != null || ctx != null, () -> "node or context can't be null!");
 
       // find body node

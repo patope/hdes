@@ -78,7 +78,7 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
       scalars.add(((ScalarDef) left.getReturnType()).getType());
       scalars.add(((ScalarDef) right.getReturnType()).getType());
       
-      if(scalars.size() == 1 && scalars.contains(ScalarType.INTEGER) && scalars.contains(ScalarType.DECIMAL)) {
+      if(scalars.size() == 1 && (scalars.contains(ScalarType.INTEGER) || scalars.contains(ScalarType.DECIMAL))) {
         returnScalarType = scalars.iterator().next(); 
       } else if(scalars.contains(ScalarType.INTEGER) && scalars.contains(ScalarType.DECIMAL)) {
         returnScalarType = ScalarType.DECIMAL;
@@ -93,6 +93,8 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
     return ImmutableInvocationSpecParams.builder()
         .addAllValues(left.getValues())
         .addAllValues(right.getValues())
+        .addAllUsageSources(left.getUsageSources())
+        .addAllUsageSources(right.getUsageSources())
         .returnType(ImmutableScalarDef.builder()
             .array(false).required(true)
             .token(node.getToken())
@@ -129,6 +131,8 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
     return ImmutableInvocationSpecParams.builder()
         .addAllValues(left.getValues())
         .addAllValues(right.getValues())
+        .addAllUsageSources(left.getUsageSources())
+        .addAllUsageSources(right.getUsageSources())
         .returnType(ImmutableScalarDef.builder()
             .array(false).required(true)
             .token(node.getToken())
@@ -176,6 +180,8 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
     return ImmutableInvocationSpecParams.builder()
         .addAllValues(left.getValues())
         .addAllValues(right.getValues())
+        .addAllUsageSources(left.getUsageSources())
+        .addAllUsageSources(right.getUsageSources())
         .returnType(returnTypeDef)
         .build();
   }
@@ -200,17 +206,23 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
     return ImmutableInvocationSpecParams.builder()
         .returnType(typeDef)
         .addValues(ImmutableInvocationSpecParam.builder().typeName(node).node(typeDef).usageSource(scope).build())
+        .addUsageSources(scope)
         .build();
   }
   
   @Override
   public InvocationSpecParams visitMethod(MethodInvocation node, AstNodeVisitorContext ctx) {
     final TypeDef typeDef = resolver.accept(node, ctx);
-  
     List<UsageSource> usage = new ArrayList<>();
     usage.add(UsageSource.INSTANCE);
-    
     List<InvocationSpecParam> values = new ArrayList<>();
+    
+    if(node.getType().isPresent()) {
+      InvocationSpecParams children = visit(node.getType().get(), ctx);
+      values.addAll(children.getValues());
+      usage.addAll(children.getUsageSources());
+    }
+    
     for(AstNode child : node.getValues()) {
       InvocationSpecParams children = visit(child, ctx);
       values.addAll(children.getValues());
@@ -268,9 +280,14 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
 
   @Override
   public InvocationSpecParams visitEquality(EqualityOperation node, AstNodeVisitorContext ctx) {
+    InvocationSpecParams left = visit(node.getLeft(), ctx);
+    InvocationSpecParams right = visit(node.getRight(), ctx);
+    
     return ImmutableInvocationSpecParams.builder()
-        .addAllValues(visit(node.getLeft(), ctx).getValues())
-        .addAllValues(visit(node.getRight(), ctx).getValues())
+        .addAllValues(left.getValues())
+        .addAllValues(right.getValues())
+        .addAllUsageSources(left.getUsageSources())
+        .addAllUsageSources(right.getUsageSources())
         .returnType(ImmutableScalarDef.builder()
             .array(false).required(true)
             .token(node.getToken())
@@ -283,9 +300,15 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
 
   @Override
   public InvocationSpecParams visitAnd(AndExpression node, AstNodeVisitorContext ctx) {
+    InvocationSpecParams left = visit(node.getLeft(), ctx);
+    InvocationSpecParams right = visit(node.getRight(), ctx);
+    
+    
     return ImmutableInvocationSpecParams.builder()
-        .addAllValues(visit(node.getLeft(), ctx).getValues())
-        .addAllValues(visit(node.getRight(), ctx).getValues())
+        .addAllValues(left.getValues())
+        .addAllValues(right.getValues())
+        .addAllUsageSources(left.getUsageSources())
+        .addAllUsageSources(right.getUsageSources())
         .returnType(ImmutableScalarDef.builder()
             .array(false).required(true)
             .token(node.getToken())
@@ -298,9 +321,14 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
 
   @Override
   public InvocationSpecParams visitOr(OrExpression node, AstNodeVisitorContext ctx) {
+    InvocationSpecParams left = visit(node.getLeft(), ctx);
+    InvocationSpecParams right = visit(node.getRight(), ctx);
+    
     return ImmutableInvocationSpecParams.builder()
-        .addAllValues(visit(node.getLeft(), ctx).getValues())
-        .addAllValues(visit(node.getRight(), ctx).getValues())
+        .addAllValues(left.getValues())
+        .addAllValues(right.getValues())
+        .addAllUsageSources(left.getUsageSources())
+        .addAllUsageSources(right.getUsageSources())
         .returnType(ImmutableScalarDef.builder()
             .array(false).required(true)
             .token(node.getToken())
@@ -313,10 +341,17 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
 
   @Override
   public InvocationSpecParams visitBetween(BetweenExpression node, AstNodeVisitorContext ctx) {
+    InvocationSpecParams left = visit(node.getLeft(), ctx);
+    InvocationSpecParams right = visit(node.getRight(), ctx);
+    InvocationSpecParams value = visit(node.getValue(), ctx);
+    
     return ImmutableInvocationSpecParams.builder()
-        .addAllValues(visit(node.getLeft(), ctx).getValues())
-        .addAllValues(visit(node.getRight(), ctx).getValues())
-        .addAllValues(visit(node.getValue(), ctx).getValues())
+        .addAllValues(left.getValues())
+        .addAllValues(right.getValues())
+        .addAllValues(value.getValues())
+        .addAllUsageSources(left.getUsageSources())
+        .addAllUsageSources(right.getUsageSources())
+        .addAllUsageSources(value.getUsageSources())
         .returnType(ImmutableScalarDef.builder()
             .array(false).required(true)
             .token(node.getToken())

@@ -76,10 +76,11 @@ public class DtFrApiSpec {
               .build());
           break;
         case OUT:
-          methods.add(MethodSpec.methodBuilder(JavaSpecUtil.methodName(ExpressionVisitor.ACCESS_INPUT_VALUE))
+          methods.add(MethodSpec.methodBuilder(JavaSpecUtil.methodName(ExpressionVisitor.ACCESS_OUTPUT_VALUE))
               .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
               .returns(namings.dt().outputValueMono(body))
               .build());
+          break;
         case STATIC:
           methods.add(MethodSpec.methodBuilder(JavaSpecUtil.methodName(ExpressionVisitor.ACCESS_STATIC_VALUE))
               .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)

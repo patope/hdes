@@ -1,29 +1,16 @@
 package io.resys.hdes.compiler.spi.java.dt;
 
-import org.immutables.value.Value;
-
 import com.squareup.javapoet.CodeBlock;
 
-import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyAll;
-import io.resys.hdes.ast.api.nodes.DecisionTableNode.LiteralValue;
-import io.resys.hdes.ast.api.nodes.DecisionTableNode.Rule;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.RuleRow;
-import io.resys.hdes.ast.api.nodes.DecisionTableNode.RuleValue;
-import io.resys.hdes.ast.api.nodes.DecisionTableNode.UndefinedValue;
 import io.resys.hdes.ast.spi.Assertions;
+import io.resys.hdes.compiler.spi.java.dt.RuleRowSpec.DtControlStatement;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.ImmutableDecisionTableMetaEntry;
 
 public class HitPolicyAllSpec {
-
-  @Value.Immutable
-  public interface DtAllControlStatement {
-    CodeBlock getControl();
-    CodeBlock getValue();
-  }
   
   public static Builder builder(Namings namings) {
     Assertions.notNull(namings, () -> "namings must be defined!");
@@ -44,45 +31,6 @@ public class HitPolicyAllSpec {
       return this;
     }
     
-    private DtAllControlStatement ruleRow(RuleRow node) {
-      CodeBlock.Builder key = CodeBlock.builder();
-      CodeBlock.Builder value = CodeBlock.builder().add("Immutable$T.builder()", namings.dt().outputValueFlux(body));
-      boolean and = false;
-      for (Rule rule : node.getRules()) {        
-        RuleValue ruleValue = rule.getValue();
-        if (ruleValue instanceof UndefinedValue) {
-          continue;
-        }
-
-        final ScalarDef header = (ScalarDef) body.getHeaders().getValues().get(rule.getHeader());
-
-        if (header.getDirection() == DirectionType.IN) {
-          CodeBlock ruleCode = DtRuleSpec.builder(body).build(header, rule).getValue();
-          if(ruleCode.toString().equals("true")) {
-            continue;
-          }
-          
-          if (and) {
-            key.add("\r\n  && ");
-          }
-          key.add(ruleCode);
-          and = true;
-          
-        } else {
-          CodeBlock literal = DtRuleSpec.builder(body).build(header, ((LiteralValue) rule.getValue()).getValue()).getValue();
-          CodeBlock ruleCode = CodeBlock.builder().add(".$L($L)", header.getName(), literal).build();
-          if (ruleCode.isEmpty()) {
-            continue;
-          }
-          
-          value.add(ruleCode);
-        }
-      }
-      return ImmutableDtAllControlStatement.builder()
-          .control(key.build()).value(value.add(".build()").build())
-          .build();
-    }
-    
     public CodeBlock build() {
       Assertions.notNull(body, () -> "body must be defined!");
       CodeBlock.Builder execution = CodeBlock.builder();
@@ -91,7 +39,10 @@ public class HitPolicyAllSpec {
       int rowIndex = 0;
       HitPolicyAll all = (HitPolicyAll) body.getHitPolicy();
       for (RuleRow row : all.getRows()) {
-        DtAllControlStatement pair = ruleRow(row);
+        DtControlStatement pair = RuleRowSpec.builder(namings).body(body).build(row);
+        CodeBlock value = CodeBlock.builder()
+            .add("Immutable$T.builder()$L.build()", namings.dt().outputValueFlux(body), pair.getValue()).build();
+        
         execution.add("\r\n");
         
         // control start
@@ -105,7 +56,7 @@ public class HitPolicyAllSpec {
         .add("\r\n  .index($L)", rowIndex++)
         .add("\r\n  .token($L)", DtTokenSpec.build(row, row.getText()))
         .addStatement(".build())")
-        .addStatement("result.addValues($L)", pair.getValue());
+        .addStatement("result.addValues($L)", value);
         
         // Control end
         if (!pair.getControl().isEmpty()) {

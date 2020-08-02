@@ -90,12 +90,13 @@ public class DtInvocationResolver implements InvocationResolver {
     
     if(ctx.getParent().isPresent()) {
       try {
-        AstNodeVisitorContext parentCtx = ctx.getParent().get();
-        AstNode parentNode = parentCtx.getValue();
-        if(parentNode instanceof LambdaExpression && parentCtx.getParent().isPresent()) {
-          AstNodeVisitorContext lambdaParent = parentCtx.getParent().get();
+        AstNodeVisitorContext lambdaCtx = ExpressionVisitor.getLambda(ctx).orElse(null);
+        
+        if(lambdaCtx != null) {
+          AstNodeVisitorContext lambdaParent = lambdaCtx.getParent().get();
+          
           MethodInvocation lambdaParentNode = (MethodInvocation) lambdaParent.getValue();
-          LambdaExpression expression = (LambdaExpression) parentNode;
+          LambdaExpression expression = (LambdaExpression) lambdaCtx.getValue();
           TypeInvocation lambdaName = expression.getParams().get(0);
           ObjectDef lambdaOn = (ObjectDef) accept(lambdaParentNode.getType().get(), lambdaParent);
 
@@ -146,15 +147,15 @@ public class DtInvocationResolver implements InvocationResolver {
         } else if(value instanceof MethodInvocation) {
           
           TypeDef child = accept((MethodInvocation) value, childCtx);
-          System.out.println(value);
+          
         } else if(value instanceof TypeDef) {
           
           TypeDef child = (TypeDef) value;
           
-          System.out.println(value);
+          
           
         } else {
-          System.out.println(value);
+          
         }
 
       }
