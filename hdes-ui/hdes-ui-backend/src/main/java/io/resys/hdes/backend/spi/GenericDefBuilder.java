@@ -25,11 +25,11 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import io.resys.hdes.ast.api.AstEnvir;
-import io.resys.hdes.ast.api.nodes.AstNode.BodyNode;
+import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
-import io.resys.hdes.ast.api.nodes.AstNode.EmptyBodyNode;
+import io.resys.hdes.ast.api.nodes.AstNode.EmptyBody;
 import io.resys.hdes.ast.api.nodes.AstNode.ErrorNode;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.ManualTaskNode.ManualTaskBody;
@@ -47,7 +47,7 @@ public class GenericDefBuilder {
   public void from(AstEnvir astEnvir, Consumer<Def> consumer) {
     for (String id : astEnvir.getBody().keySet()) {
       
-      BodyNode node = astEnvir.getBody(id);
+      Body node = astEnvir.getBody(id);
       String src = astEnvir.getSrc(id);
       List<ErrorNode> errors = astEnvir.getErrors(id);
       DefType type = null;
@@ -62,9 +62,9 @@ public class GenericDefBuilder {
       } else if (node instanceof ManualTaskBody) {
         type = DefType.MT;
         ast = visit((ManualTaskBody) node, astEnvir);
-      } else if (node instanceof EmptyBodyNode) {
+      } else if (node instanceof EmptyBody) {
         type = DefType.EM;
-        ast = visit((EmptyBodyNode) node, astEnvir);
+        ast = visit((EmptyBody) node, astEnvir);
       } else {
         continue;
       }
@@ -86,7 +86,7 @@ public class GenericDefBuilder {
   }
   
   private DefAst visit(DecisionTableBody body, AstEnvir envir) {
-    List<TypeDefNode> inputs = body.getHeaders().getValues().stream()
+    List<TypeDef> inputs = body.getHeaders().getValues().stream()
         .filter(n -> n.getDirection() == DirectionType.IN)
         .collect(Collectors.toList());
     
@@ -98,12 +98,12 @@ public class GenericDefBuilder {
     return ImmutableDefAst.builder().build();
   }
   
-  private DefAst visit(EmptyBodyNode body, AstEnvir envir) {
+  private DefAst visit(EmptyBody body, AstEnvir envir) {
     
     return ImmutableDefAst.builder().build();
   }
   
-  private DefError map(String key, BodyNode body, ErrorNode node) {
+  private DefError map(String key, Body body, ErrorNode node) {
     return ImmutableDefError.builder()
         .id(key)
         .name(body.getId().getValue())

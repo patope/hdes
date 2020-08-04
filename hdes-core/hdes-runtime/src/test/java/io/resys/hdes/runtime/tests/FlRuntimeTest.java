@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -46,7 +45,9 @@ public class FlRuntimeTest {
   private static final HdesCompiler compiler = JavaHdesCompiler.config().build();
   private static final ObjectMapper objectMapper = new ObjectMapper();
   
-  @Test 
+  
+  
+  //@Test 
   public void simpleFlow() {
     String src = "define flow: NameScoreFlow description: 'descriptive'\n" +
         "headers: {\n" + 
@@ -68,21 +69,21 @@ public class FlRuntimeTest {
         "}";
     
     Map<String, Serializable> data = new HashMap<>();
-    data.put("value0", 11);
-    data.put("value1", 2);
+    data.put("type", 11);
+    data.put("firstName", "BOB");
+    data.put("lastName", "SAM");
     
-    HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> output = runDT("ExpressionDT", src, data);
+    HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> output = runFlow("ExpressionDT", src, data);
     Assertions.assertEquals(output.getMeta().getValues().size(), 1);
     Assertions.assertEquals(output.getMeta().getValues().get(0).getIndex(), 0);
   }
   
   
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  private static HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> runDT(
+  private static HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> runFlow(
       String name, 
       String src, 
       Map<String, Serializable> data) {
-    
     
     String nameScoreDt = "define decision-table: NameScoreDt\n" + 
         "headers: {\n" + 
@@ -95,6 +96,7 @@ public class FlRuntimeTest {
     try {
       List<Resource> resources = compiler.parser()
           .add(name, src)
+          .add("NameScoreDt", nameScoreDt)
           .build();
       RuntimeEnvir runtime = ImmutableHdesRuntime.builder().from(resources).build();
       RuntimeTask task = runtime.get(name);

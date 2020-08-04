@@ -33,7 +33,7 @@ import org.immutables.value.Value;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import io.resys.hdes.ast.api.nodes.AstNode.TypeDefNode;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.compiler.api.HdesCompiler.Resource;
 
 public interface HdesBackend {
@@ -139,7 +139,7 @@ public interface HdesBackend {
   
   @Value.Immutable
   interface DefAst {
-    List<TypeDefNode> getInputs();
+    List<TypeDef> getInputs();
     
     //String getType();
     //String getValue();

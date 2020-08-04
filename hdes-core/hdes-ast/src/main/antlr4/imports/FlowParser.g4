@@ -24,8 +24,8 @@ taskRef: taskTypes ':' typeName 'uses' ':' mapping;
 endMapping: 'end' 'as' ':' mapping;
 
 mapping: '{' mappingArgs? '}';
-mappingArgs: mappingArg (',' mappingArg)*;
+mappingArgs: mappingArg (',' mappingArg)*; 
 
 mappingArg: typeName ':' mappingValue;
-mappingValue: mapping | typeName | literal;
+mappingValue: mapping | enBody;
 

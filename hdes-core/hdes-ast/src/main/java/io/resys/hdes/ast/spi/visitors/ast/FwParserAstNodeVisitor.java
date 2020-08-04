@@ -47,7 +47,6 @@ import io.resys.hdes.ast.HdesParser.WhenThenPointerContext;
 import io.resys.hdes.ast.api.AstNodeException;
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.Headers;
-import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.FlowNode;
@@ -69,8 +68,7 @@ import io.resys.hdes.ast.api.nodes.ImmutableFlowLoop;
 import io.resys.hdes.ast.api.nodes.ImmutableFlowTaskNode;
 import io.resys.hdes.ast.api.nodes.ImmutableMapping;
 import io.resys.hdes.ast.api.nodes.ImmutableMappingArray;
-import io.resys.hdes.ast.api.nodes.ImmutableMappingLiteral;
-import io.resys.hdes.ast.api.nodes.ImmutableMappingTypeName;
+import io.resys.hdes.ast.api.nodes.ImmutableMappingExpression;
 import io.resys.hdes.ast.api.nodes.ImmutableTaskRef;
 import io.resys.hdes.ast.api.nodes.ImmutableThenPointer;
 import io.resys.hdes.ast.api.nodes.ImmutableWhenThen;
@@ -253,10 +251,9 @@ public class FwParserAstNodeVisitor extends MtParserAstNodeVisitor {
     Nodes nodes = nodes(ctx);
     AstNode.Token token = token(ctx);
     
-    if(nodes.of(Literal.class).isPresent()) {
-      return ImmutableMappingLiteral.builder().token(token).value(nodes.of(Literal.class).get()).build();
-    } else if(nodes.of(TypeInvocation.class).isPresent()) {
-      return ImmutableMappingTypeName.builder().token(token).value(nodes.of(TypeInvocation.class).get()).build();
+    if(nodes.of(ExpressionBody.class).isPresent()) {
+      return ImmutableMappingExpression.builder().token(token).value(nodes.of(ExpressionBody.class).get()).build();
+      
     } else if(nodes.of(FwRedundentMapping.class).isPresent()) {
       return ImmutableMappingArray.builder().token(token).values(nodes.of(FwRedundentMapping.class).get().getValues()).build();
     } else {

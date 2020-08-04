@@ -91,15 +91,10 @@ public interface FlowNode extends AstNode {
   }
 
   @Value.Immutable  
-  interface MappingLiteral extends MappingValue {
-    Literal getValue();
+  interface MappingExpression extends MappingValue {
+    ExpressionBody getValue();
   }
 
-  @Value.Immutable  
-  interface MappingTypeName extends MappingValue {
-    TypeInvocation getValue();    
-  }
-  
   @Value.Immutable
   interface TaskRef extends FlowNode {
     RefTaskType getType();
