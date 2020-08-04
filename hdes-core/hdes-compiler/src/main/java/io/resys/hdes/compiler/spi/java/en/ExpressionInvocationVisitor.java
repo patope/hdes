@@ -194,7 +194,7 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
     if(node.getScope() == TypeNameScope.STATIC) {
       scope = UsageSource.STATIC;
     } else if(node.getScope() == TypeNameScope.INSTANCE) {
-      scope = UsageSource.INSTANCE;
+      scope = UsageSource.OUT;
     } else if(typeDef.getDirection() == DirectionType.IN) {
       scope = UsageSource.IN;
     } else if(typeDef.getDirection() == DirectionType.OUT) {

@@ -154,8 +154,7 @@ public class HdesRuntimeTest {
         "headers: {\n" + 
         "  name     STRING required IN,\n" + 
         "  lastName STRING required IN,\n" +  
-//        "  total    INTEGER required OUT formula: sum(instance), // total score of hit columns\n" + 
-//        "  avg      INTEGER required OUT formula: avg(instance), // avg score hit columns\n" + 
+        "  score    INTEGER optional OUT formula: sum(instance), // total score of hit columns\n" +  
         "  max      INTEGER optional OUT formula: sum(static.map(row -> max(row))) // sum max possible score of defined fields\n" + 
         "\n" + 
         "} MATRIX from STRING to INTEGER: {\n" + 
@@ -171,7 +170,7 @@ public class HdesRuntimeTest {
     
     HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> output = runDT("MatrixDT", src, data);
     Assertions.assertEquals(output.getMeta().getValues().size(), 2);
-    Assertions.assertEquals("MatrixDTOut{max=90, lastName=20, name=20}", output.getValue().toString());
+    Assertions.assertEquals("MatrixDTOut{score=40, max=90, lastName=20, name=20}", output.getValue().toString());
   }
   
   

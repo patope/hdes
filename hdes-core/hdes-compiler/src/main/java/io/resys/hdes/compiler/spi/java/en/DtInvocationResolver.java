@@ -45,10 +45,8 @@ import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyAll;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyFirst;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyMatrix;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.MatrixRow;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.LambdaExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodInvocation;
-import io.resys.hdes.ast.api.nodes.ImmutableAstNodeVisitorContext;
 import io.resys.hdes.ast.api.nodes.ImmutableObjectDef;
 import io.resys.hdes.ast.api.nodes.ImmutableScalarDef;
 import io.resys.hdes.ast.spi.Assertions;
@@ -61,10 +59,16 @@ public class DtInvocationResolver implements InvocationResolver {
 
   @Override
   public TypeDef accept(Invocation invocation, AstNodeVisitorContext ctx) {
-    if(invocation instanceof TypeInvocation) {
-      return accept((TypeInvocation) invocation, ctx);
+    try {
+      if(invocation instanceof TypeInvocation) {
+        return accept((TypeInvocation) invocation, ctx);
+      }
+      return accept((MethodInvocation) invocation, ctx);
+    } catch(HdesCompilerException e) {
+      throw e;
+    } catch(Exception e) {
+      throw new HdesCompilerException(HdesCompilerException.builder().unknownExpressionParameter(invocation), e);
     }
-    return accept((MethodInvocation) invocation, ctx);
   }
   
   private TypeDef accept(TypeInvocation typeName, AstNodeVisitorContext ctx) {
@@ -82,6 +86,13 @@ public class DtInvocationResolver implements InvocationResolver {
           .build();
       
       Optional<TypeDef> typeDef = getTypeDefNode(staticValue, pathName);
+      if(typeDef.isPresent()) {
+        return typeDef.get();
+      }
+      throw new HdesCompilerException(HdesCompilerException.builder().unknownExpressionParameter(typeName));
+    } else if(typeName.getScope() == TypeNameScope.INSTANCE) {
+      TypeDef output =  getOutputValues(typeName, ctx);
+      Optional<TypeDef> typeDef = getTypeDefNode(output, pathName);
       if(typeDef.isPresent()) {
         return typeDef.get();
       }
@@ -131,34 +142,29 @@ public class DtInvocationResolver implements InvocationResolver {
   }
 
   private TypeDef accept(MethodInvocation method, AstNodeVisitorContext ctx) {
-    
     final boolean isGlobal = method.getType().isEmpty();
     
     if(isGlobal) {
       Set<ScalarType> typesUsed = new HashSet<>();
       for(AstNode value : method.getValues()) {
-        AstNodeVisitorContext childCtx = ImmutableAstNodeVisitorContext.builder().parent(ctx).value(value).build(); 
-        
-        if(value instanceof ExpressionBody) {
-          //ExpressionRefsSpec.builder(this).body(value);        
-          InvocationSpecParams params = ExpressionInvocationSpec.builder().ctx(childCtx).build((ExpressionBody) value);
-          
-          
-        } else if(value instanceof MethodInvocation) {
-          
-          TypeDef child = accept((MethodInvocation) value, childCtx);
-          
-        } else if(value instanceof TypeDef) {
-          
-          TypeDef child = (TypeDef) value;
-          
-          
+        InvocationSpecParams params = ExpressionInvocationSpec.builder().ctx(ctx).build(value);
+        if(params.getReturnType() instanceof ObjectDef) {
+          ObjectDef objectDef = (ObjectDef) params.getReturnType();
+          for(TypeDef typeDef : objectDef.getValues()) {
+            if(typeDef instanceof ScalarDef) {
+              ScalarDef scalarDef = (ScalarDef) typeDef;
+              typesUsed.add(scalarDef.getType());
+            }
+          }
           
         } else {
-          
+          ScalarDef scalarDef = (ScalarDef) params.getReturnType();
+          typesUsed.add(scalarDef.getType());
         }
-
       }
+      
+      ScalarType scalar = typesUsed.contains(ScalarType.DECIMAL) && 
+          typesUsed.contains(ScalarType.INTEGER) ? ScalarType.DECIMAL : typesUsed.iterator().next();
       
       // figure return type
       return ImmutableScalarDef.builder()
@@ -167,22 +173,9 @@ public class DtInvocationResolver implements InvocationResolver {
           .token(method.getToken())
           .name(method.getName())
           .direction(DirectionType.IN)
-          .type(ScalarType.BOOLEAN)
+          .type(scalar)
           .build();
-      
-      /*
-      return ImmutableObjectDef.builder()
-        .array(true)
-        .required(false)
-        .values(body.getHeaders().getValues().stream()
-            .filter(h -> h.getDirection() == DirectionType.OUT)
-            .collect(Collectors.toList()))
-        .name(name)
-        .token(method.getToken())
-        .build();*/
     }
-    
-
     
     // Non global methods 
     TypeInvocation typeName = method.getType().get();
@@ -196,63 +189,63 @@ public class DtInvocationResolver implements InvocationResolver {
       throw new HdesCompilerException(HdesCompilerException.builder().unknownFunctionCall(method, method.getName()));
     }
     
-    
-    // type + lambda expression
-    if( method.getValues().size() == 1 && 
-        method.getName().equals("map") &&
-        method.getValues().get(0) instanceof LambdaExpression) {
-      
-      LambdaExpression lambda = (LambdaExpression) method.getValues().get(0);
-      InvocationSpecParams lambdaSpec = ExpressionInvocationSpec.builder().ctx(ctx).build(lambda);
-      System.out.println(lambdaSpec);
-    }
-
-    
-    // Lambda call, return type is array
-    if(method.getName().equals("map")) {
-      if(!(typeDef instanceof ObjectDef)) {
-        // TODO
-        throw new IllegalArgumentException("Not implemented!");
-      }
-      
-      ObjectDef objectType = (ObjectDef) typeDef;
-      if(objectType.getValues().size() != 1) {
-        // TODO
-        throw new IllegalArgumentException("Not implemented!");
-      }
-      
-      TypeDef values = objectType.getValues().get(0);
-      
-      
-      final String name = "staticblock.values";
-/*
-      if(body.getHitPolicy() instanceof HitPolicyMatrix) {
-        HitPolicyMatrix hitPolicy = (HitPolicyMatrix) body.getHitPolicy();
-        return ImmutableScalarDef.builder()
-            .array(true)
-            .required(false)
-            .direction(DirectionType.IN)
-            .type(hitPolicy.getToType())
-            .name(name)
-            .token(method.getToken())
-            .build();
-      }
-      
-      return ImmutableObjectDef.builder()
-          .array(true)
-          .required(false)
-          .direction(DirectionType.IN)
-          .values(body.getHeaders().getValues().stream()
-              .filter(h -> h.getDirection() == DirectionType.OUT)
-              .collect(Collectors.toList()))
-          .name(name)
-          .token(method.getToken())
-          .build();
-          */
-    }
-  
     throw new HdesCompilerException(HdesCompilerException.builder().unknownFunctionCall(method, method.getName()));
   }
+  
+  private final TypeDef getOutputValues(TypeInvocation typeName, AstNodeVisitorContext ctx) {
+    DecisionTableBody body = getBody(ctx);
+    Token token = ctx.getValue().getToken();
+    if(body.getHitPolicy() instanceof HitPolicyFirst || 
+       body.getHitPolicy() instanceof HitPolicyAll) {
+
+      List<TypeDef> fields = body.getHeaders().getValues().stream()
+          .filter(h -> h.getDirection() == DirectionType.OUT)
+          .map(h -> (ScalarDef) h)
+          .collect(Collectors.toList());
+      
+      return ImmutableObjectDef.builder()
+        .array(body.getHitPolicy() instanceof HitPolicyAll)
+        .required(true)
+        .direction(DirectionType.OUT)
+        .addAllValues(fields)
+        .name(typeName.getValue())
+        .token(typeName.getToken())
+        .build();
+    }
+    
+    
+    HitPolicyMatrix matrix = (HitPolicyMatrix) body.getHitPolicy();
+    List<TypeDef> fields = new ArrayList<>();
+
+    // matrix type
+    fields.add(ImmutableObjectDef.builder()
+      .name(ExpressionVisitor.ACCESS_OUTPUT_VALUE).token(ctx.getValue().getToken())
+      .array(true).required(true).direction(DirectionType.IN)
+      .addValues(ImmutableScalarDef.builder()
+          .name("").token(token)
+          .array(true).required(true).direction(DirectionType.OUT)
+          .type(matrix.getToType())
+          .build())
+      .build());
+    
+    for(MatrixRow row : matrix.getRows()) {
+      fields.add(ImmutableScalarDef.builder()
+          .name(row.getTypeName().getValue()).token(token)
+          .array(true).required(true).direction(DirectionType.OUT)
+          .type(matrix.getToType())
+          .build());
+    }
+  
+    return ImmutableObjectDef.builder()
+        .array(false)
+        .required(true)
+        .direction(DirectionType.OUT)
+        .addAllValues(fields)
+        .name(typeName.getValue())
+        .token(typeName.getToken())
+        .build();
+  }
+  
   
   private final List<TypeDef> getStaticValues(AstNodeVisitorContext ctx) {
 

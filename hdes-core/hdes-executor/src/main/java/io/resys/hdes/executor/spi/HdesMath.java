@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 public class HdesMath {
 
@@ -78,12 +79,22 @@ public class HdesMath {
       decimals.addAll(values);
       return this;
     }
-    
+    public Builder decimal(Optional<BigDecimal> value) {
+      if(value.isPresent()) {
+        decimals.add(value.get());
+      }
+      return this;
+    }
     public Builder integer(Collection<Integer> values) {
       integers.addAll(values);
       return this;
     }
-    
+    public Builder integer(Optional<Integer> value) {
+      if(value.isPresent()) {
+        integers.add(value.get());
+      }
+      return this;
+    }    
     public Builder integer(Integer ... values) {
       integers.addAll(Arrays.asList(values));
       return this;

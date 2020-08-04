@@ -137,7 +137,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
       value.add("$L.$L", ACCESS_SRC_VALUE, JavaSpecUtil.methodCall(name) + (typeDefNode.getRequired() ? "" : ".get()"));
       
     } else if(node.getScope() == TypeNameScope.INSTANCE) {
-      String name = JavaSpecUtil.methodCall(ACCESS_INSTANCE_VALUE + "." + typeName);
+      String name = JavaSpecUtil.methodCall(ACCESS_OUTPUT_VALUE);
       value.add("$L.$L", ACCESS_SRC_VALUE, name + (typeDefNode.getRequired() ? "" : ".get()"));
     
     } else if(typeDefNode.getDirection() == DirectionType.IN) {
