@@ -43,7 +43,7 @@ import io.resys.hdes.runtime.api.HdesRuntime.RuntimeEnvir;
 import io.resys.hdes.runtime.api.HdesRuntime.RuntimeTask;
 import io.resys.hdes.runtime.spi.ImmutableHdesRuntime;
 
-public class HdesRuntimeTest {
+public class DtRuntimeTest {
   private static final HdesCompiler compiler = JavaHdesCompiler.config().build();
   private static final ObjectMapper objectMapper = new ObjectMapper();
   
