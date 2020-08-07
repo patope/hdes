@@ -32,10 +32,17 @@ import io.resys.hdes.ast.api.nodes.AstNode.ErrorNode;
 import io.resys.hdes.ast.api.nodes.ImmutableEmptyNode;
 import io.resys.hdes.ast.api.nodes.ImmutableErrorNode;
 import io.resys.hdes.ast.api.nodes.ImmutableToken;
+import io.resys.hdes.ast.spi.Assertions;
 
 public class HdesAntlrErrorListener extends BaseErrorListener {
   private final List<ErrorNode> errors = new ArrayList<>();
   private int id = 1;
+  private final String externalId;
+  
+  public HdesAntlrErrorListener(String externalId) {
+    Assertions.notNull(externalId, () -> "externalId can't be null");
+    this.externalId = externalId;
+  }
   
   public List<ErrorNode> getErrors() {
     return errors;
@@ -53,6 +60,7 @@ public class HdesAntlrErrorListener extends BaseErrorListener {
     
     // TODO:: System.err.println("line " + line + ":" + charPositionInLine + " " + msg);
     this.errors.add(ImmutableErrorNode.builder()
+        .bodyId(externalId)
         .target(ImmutableEmptyNode.builder()
             .token(ImmutableToken.builder()
                 .id(id++)
@@ -69,8 +77,13 @@ public class HdesAntlrErrorListener extends BaseErrorListener {
   }
   
   public void add(Exception e) {
-    String msg = ExceptionUtils.getMessage(e) + "" + System.lineSeparator() + ExceptionUtils.getStackTrace(e);
+    String msg = new StringBuilder()
+        .append("Parsing error in body with id: ").append(externalId).append(System.lineSeparator())
+        .append("message: ").append(ExceptionUtils.getMessage(e)).append(System.lineSeparator())
+        .append("stack trace: ").append(ExceptionUtils.getStackTrace(e)).toString();
+  
     this.errors.add(ImmutableErrorNode.builder()
+        .bodyId(externalId)
         .target(ImmutableEmptyNode.builder()
             .token(ImmutableToken.builder()
                 .id(id++).text(msg)

@@ -168,7 +168,7 @@ public class ImmutableAstEnvir implements AstEnvir {
     public SourceBuilder<Builder> add() {
       Builder result = this;
       return new GenericSourceBuilder() {
-        private final HdesAntlrErrorListener errorListener = new HdesAntlrErrorListener();
+        private HdesAntlrErrorListener errorListener;
         private String value;
         
         @Override
@@ -182,11 +182,13 @@ public class ImmutableAstEnvir implements AstEnvir {
         @Override
         public Builder src(String value) {
           this.value = value;
-          
           return super.src(value);
         }
         @Override
-        protected HdesAntlrErrorListener errorListener() {
+        protected HdesAntlrErrorListener errorListener(String id) {
+          if(errorListener == null) {
+            errorListener = new HdesAntlrErrorListener(id);
+          }
           return errorListener;
         }
         
@@ -197,7 +199,7 @@ public class ImmutableAstEnvir implements AstEnvir {
   public static abstract class GenericSourceBuilder implements SourceBuilder<Builder> {
     
     protected String externalId;
-    protected abstract HdesAntlrErrorListener errorListener();
+    protected abstract HdesAntlrErrorListener errorListener(String externalId);
     protected abstract Builder parent(Body node);
     
     @Override
@@ -210,14 +212,14 @@ public class ImmutableAstEnvir implements AstEnvir {
       HdesLexer lexer = new HdesLexer(CharStreams.fromString(src));
       CommonTokenStream tokens = new CommonTokenStream(lexer);
       HdesParser parser = new HdesParser(tokens);
-      parser.addErrorListener(errorListener());
+      parser.addErrorListener(errorListener(externalId));
       ParseTree tree = parser.hdesBody();
       
       Body result;
       try {
         result = (Body) tree.accept(new HdesParserAstNodeVisitor(new TokenIdGenerator()));
       } catch(Exception e) {
-        errorListener().add(e);
+        errorListener(externalId).add(e);
         
         Token exceptionToken = ImmutableToken.builder()
           .id(0)

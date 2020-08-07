@@ -149,7 +149,9 @@ public class DtApiSpec {
         for (MatrixRow row : matrix.getRows()) {
           String headerName = row.getTypeName().getValue();
           ScalarDef scalar = (ScalarDef) body.getHeaders().getValues().stream()
-              .filter(t -> t.getName().equals(headerName)).findFirst().get();
+              .filter(t -> t.getName().equals(headerName)).findFirst()
+              .orElseThrow(() -> new HdesCompilerException(HdesCompilerException.builder().dtMissingHeaderForMatrixRow(row)));
+          
           MethodSpec method = header(
               ImmutableScalarDef.builder().from(scalar).token(row.getToken()).type(matrix.getToType()).build());
           outputBuilder.addMethod(method);

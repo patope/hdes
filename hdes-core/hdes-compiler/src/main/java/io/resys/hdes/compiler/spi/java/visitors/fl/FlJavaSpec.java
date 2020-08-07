@@ -33,11 +33,12 @@ import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 
 public interface FlJavaSpec {
   
+  /*
   @Value.Immutable
   public interface FlHeaderSpec extends FlJavaSpec {
     MethodSpec getValue();
     List<TypeSpec> getChildren();
-  }
+  }*/
   
   @Value.Immutable
   public interface FlTaskSpec extends FlJavaSpec {

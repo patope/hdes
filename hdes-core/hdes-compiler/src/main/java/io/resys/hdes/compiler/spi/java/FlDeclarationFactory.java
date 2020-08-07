@@ -21,7 +21,6 @@ package io.resys.hdes.compiler.spi.java;
  */
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.squareup.javapoet.TypeSpec;
 
@@ -32,6 +31,7 @@ import io.resys.hdes.compiler.api.HdesCompiler.Resource;
 import io.resys.hdes.compiler.api.ImmutableResource;
 import io.resys.hdes.compiler.api.ImmutableTypeDeclaration;
 import io.resys.hdes.compiler.api.ImmutableTypeName;
+import io.resys.hdes.compiler.spi.java.fl.FlApiSpec;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.HdesExecutable;
@@ -65,7 +65,7 @@ public class FlDeclarationFactory {
     Assertions.notNull(envir, () -> "envir can't be null");
     Assertions.notNull(body, () -> "body can't be null");
 
-    TypeSpec api = null; //new FlInterfaceVisitor(naming).visitBody(body);
+    TypeSpec api = FlApiSpec.builder(naming).body(body).build();
     TypeSpec impl = null; // new FlImplementationVisitor(naming).visitBody(body);
     List<TypeSpec> switches = null;// new FlSwitchVisitor(naming).visitBody(body);
     
@@ -81,18 +81,18 @@ public class FlDeclarationFactory {
         .input(JavaSpecUtil.typeName(naming.fl().inputValue(body)))
         .output(JavaSpecUtil.typeName(naming.fl().outputValue(body)))
 
-        .addAllDeclarations(switches.stream().map(s -> ImmutableTypeDeclaration.builder()
-            .type(ImmutableTypeName.builder().name(s.name).pkg(pkg).build())
-            .isExecutable(false).value(JavaSpecUtil.javaFile(s, pkg)).build())
-            .collect(Collectors.toList()))
-        
+//        .addAllDeclarations(switches.stream().map(s -> ImmutableTypeDeclaration.builder()
+//            .type(ImmutableTypeName.builder().name(s.name).pkg(pkg).build())
+//            .isExecutable(false).value(JavaSpecUtil.javaFile(s, pkg)).build())
+//            .collect(Collectors.toList()))
+//        
         .addDeclarations(ImmutableTypeDeclaration.builder()
             .type(ImmutableTypeName.builder().name(api.name).pkg(pkg).build())
             .isExecutable(false).value(JavaSpecUtil.javaFile(api, pkg)).build())
-        
-        .addDeclarations(ImmutableTypeDeclaration.builder()
-            .type(ImmutableTypeName.builder().name(impl.name).pkg(pkg).build())
-            .isExecutable(true).value(JavaSpecUtil.javaFile(impl, pkg)).build())
+//        
+//        .addDeclarations(ImmutableTypeDeclaration.builder()
+//            .type(ImmutableTypeName.builder().name(impl.name).pkg(pkg).build())
+//            .isExecutable(true).value(JavaSpecUtil.javaFile(impl, pkg)).build())
 
         .build();
   }

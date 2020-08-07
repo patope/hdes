@@ -1,5 +1,7 @@
 package io.resys.hdes.executor.api;
 
+import java.io.Serializable;
+
 /*-
  * #%L
  * hdes-executor
@@ -27,9 +29,13 @@ import org.immutables.value.Value;
 @Value.Immutable
 public interface FlowMeta extends HdesExecutable.Meta {
 
-  List<FlowTask> getTasks();
+  FlowState getState();  
   
-  interface FlowTask {
+  interface FlowTask extends Serializable {
+    String getId();
+  }
+  
+  interface FlowState extends Serializable {
     String getId();
   }
   

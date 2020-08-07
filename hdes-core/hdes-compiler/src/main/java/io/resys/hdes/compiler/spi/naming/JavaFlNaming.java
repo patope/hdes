@@ -55,17 +55,17 @@ public class JavaFlNaming implements FlNaming {
 
   @Override
   public ClassName api(FlowBody node) {
-    return ClassName.get(pkg, node.getId().getValue());
+    return ClassName.get(pkg(node), node.getId().getValue());
   }
 
   @Override
   public ClassName impl(FlowBody node) {
-    return ClassName.get(pkg, node.getId().getValue() + "Gen");
+    return ClassName.get(pkg(node), node.getId().getValue() + "Gen");
   }
   
   @Override
   public ClassName state(FlowBody node) {
-    return ClassName.get(pkg, node.getId().getValue() + "State");
+    return ClassName.get(pkg(node), node.getId().getValue() + "State");
   }
 
   @Override

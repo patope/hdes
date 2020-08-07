@@ -56,6 +56,7 @@ public interface AstNode {
   
   @Value.Immutable
   interface ErrorNode {
+    String getBodyId();
     AstNode getTarget();
     String getMessage();
   }

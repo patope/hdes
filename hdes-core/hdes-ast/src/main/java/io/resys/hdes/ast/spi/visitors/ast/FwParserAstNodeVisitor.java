@@ -102,16 +102,17 @@ public class FwParserAstNodeVisitor extends MtParserAstNodeVisitor {
   @Override
   public FlowBody visitFlBody(FlBodyContext ctx) {
     Nodes children = nodes(ctx);
+    Headers headers = children.of(Headers.class).get();
+    TypeInvocation id = children.of(TypeInvocation.class).get();
+    
     FwRedundentTasks redundentTasks = children.of(FwRedundentTasks.class).get();
-    FwRedundentOrderedTasks tasks = new FlowTreePointerParser().visit(redundentTasks);
+    FwRedundentOrderedTasks tasks = new FlowTreePointerParser().visit(id, redundentTasks);
     
     for(FlowTaskNode unclaimed : tasks.getUnclaimed()) {
       // TODO:: error handling
       break;
     }
     
-    Headers headers = children.of(Headers.class).get();
-    TypeInvocation id = children.of(TypeInvocation.class).get();
     
     return ImmutableFlowBody.builder()
         .headers(headers)

@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -45,9 +46,7 @@ public class FlRuntimeTest {
   private static final HdesCompiler compiler = JavaHdesCompiler.config().build();
   private static final ObjectMapper objectMapper = new ObjectMapper();
   
-  
-  
-  //@Test 
+  @Test
   public void simpleFlow() {
     String src = "define flow: NameScoreFlow description: 'descriptive'\n" +
         "headers: {\n" + 
@@ -59,12 +58,12 @@ public class FlRuntimeTest {
         "tasks: {\n" + 
         "  FirstNameTask: {\n" + 
         "    then: switch\n" + 
-        "    decision-table: NameScoreDt uses: { name: firstName } },\n" + 
+        "    decision-table: NameScoreDt uses: { value: firstName } },\n" + 
         "  switch: {\n" + 
-        "    when: FirstNameTask.score > 10 then: LastNameTask,\n" + 
-        "    when: ? then: end as: { clientScore: FirstNameTask.score } },\n" + 
+        "    when: FirstNameTask.value > 10 then: LastNameTask,\n" + 
+        "    when: ? then: end as: { clientScore: FirstNameTask.value } },\n" + 
         "  LastNameTask: {\n" + 
-        "    then: end as: { clientScore: FirstNameTask.score + LastNameTask.score }\n" + 
+        "    then: end as: { clientScore: FirstNameTask.value + LastNameTask.value }\n" + 
         "    decision-table: NameScoreDt uses: { name: lastName } }\n" + 
         "}";
     
@@ -73,7 +72,7 @@ public class FlRuntimeTest {
     data.put("firstName", "BOB");
     data.put("lastName", "SAM");
     
-    HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> output = runFlow("ExpressionDT", src, data);
+    HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> output = runFlow("NameScoreFlow", src, data);
     Assertions.assertEquals(output.getMeta().getValues().size(), 1);
     Assertions.assertEquals(output.getMeta().getValues().get(0).getIndex(), 0);
   }
@@ -87,16 +86,16 @@ public class FlRuntimeTest {
     
     String nameScoreDt = "define decision-table: NameScoreDt\n" + 
         "headers: {\n" + 
-        "  name     STRING required IN,\n" +
+        "  value     STRING required IN\n" +
         "} MATRIX from STRING to INTEGER: {\n" + 
         "         { 'BOB', 'SAM',  ?  },\n" +  
-        "  score: {    20,    50,  60 } \n" + 
+        "  value: {    20,    50,  60 } \n" + 
         "}";
     
     try {
       List<Resource> resources = compiler.parser()
           .add(name, src)
-          .add("NameScoreDt", nameScoreDt)
+          //.add("NameScoreDt", nameScoreDt)
           .build();
       RuntimeEnvir runtime = ImmutableHdesRuntime.builder().from(resources).build();
       RuntimeTask task = runtime.get(name);

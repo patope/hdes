@@ -31,8 +31,8 @@ import com.squareup.javapoet.CodeBlock;
 
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.ExpressionValue;
@@ -129,7 +129,7 @@ public class DtRuleSpec {
             .type(ScalarType.BOOLEAN).build(); 
       }
       
-      throw new HdesCompilerException(HdesCompilerException.builder().unknownDTInputRule(rule));
+      throw new HdesCompilerException(HdesCompilerException.builder().unknownHeader(rule));
     }
     
     private DtExpressionCodeSpec equality(EqualityOperation node) {

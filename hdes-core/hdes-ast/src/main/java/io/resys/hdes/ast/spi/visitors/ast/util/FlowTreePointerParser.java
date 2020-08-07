@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 import org.immutables.value.Value;
 
 import io.resys.hdes.ast.api.AstNodeException;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.FlowNode.EndPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowLoop;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
@@ -57,14 +58,15 @@ public class FlowTreePointerParser {
   private final Map<String, FlowTaskNode> createdTasks = new HashMap<>();
   private Map<String, FlowTaskNode> sourceTasks;
   
-  public FwRedundentOrderedTasks visit(FwRedundentTasks redundentTasks) {
+  public FwRedundentOrderedTasks visit(TypeInvocation idType, FwRedundentTasks redundentTasks) {
+    String id = idType.getValue();
     List<FlowTaskNode> tasks = redundentTasks.getValues();
     if (tasks.isEmpty()) {
       return ImmutableFwRedundentOrderedTasks.builder().build();
     }
     sourceTasks = redundentTasks.getValues().stream()
         .collect(Collectors.toMap(e -> e.getId(), e -> e));
-    FlowTaskNode first = visit(tasks.get(0));
+    FlowTaskNode first = visit(id, tasks.get(0));
     
     List<FlowTaskNode> unclaimed = sourceTasks.values().stream()
     .filter(src -> !createdTasks.containsKey(src.getId()))
@@ -73,14 +75,14 @@ public class FlowTreePointerParser {
     return ImmutableFwRedundentOrderedTasks.builder().first(first).unclaimed(unclaimed).build();
   }
 
-  private FlowTaskNode visit(FlowTaskNode task) {
+  private FlowTaskNode visit(String bodyId, FlowTaskNode task) {
     if (createdTasks.containsKey(task.getId())) {
       return createdTasks.get(task.getId());
     }
 
-    FlowTaskPointer next = visit(task.getNext());
+    FlowTaskPointer next = visit(bodyId, task.getNext());
     Optional<FlowLoop> loop = task.getLoop()
-        .map(l -> ImmutableFlowLoop.builder().from(l).next(visit(l.getNext())).build()); 
+        .map(l -> ImmutableFlowLoop.builder().from(l).next(visit(bodyId, l.getNext())).build()); 
     
     FlowTaskNode clone = ImmutableFlowTaskNode.builder()
         .from(task)
@@ -92,11 +94,11 @@ public class FlowTreePointerParser {
     return clone;
   }
 
-  private FlowTaskPointer visit(FlowTaskPointer pointer) {
+  private FlowTaskPointer visit(String bodyId, FlowTaskPointer pointer) {
     if(pointer instanceof WhenThenPointer) {
-      return visit((WhenThenPointer) pointer);
+      return visit(bodyId, (WhenThenPointer) pointer);
     } else if(pointer instanceof ThenPointer) {
-      return visit((ThenPointer) pointer);
+      return visit(bodyId, (ThenPointer) pointer);
     } else if(pointer instanceof EndPointer) {
       return pointer;
     }
@@ -104,10 +106,10 @@ public class FlowTreePointerParser {
     throw new AstNodeException("Unknown pointer: " + pointer + "!");
   }
   
-  private FlowTaskPointer visit(WhenThenPointer pointer) {
+  private FlowTaskPointer visit(String id, WhenThenPointer pointer) {
     List<WhenThen> values = new ArrayList<>();    
     for(WhenThen src : pointer.getValues()) {
-      WhenThen result = visit(src);
+      WhenThen result = visit(id, src);
       values.add(result);
     }
     
@@ -117,19 +119,19 @@ public class FlowTreePointerParser {
         .build();
   }
 
-  private WhenThen visit(WhenThen pointer) {
-    FlowTaskPointer then = visit(pointer.getThen());
+  private WhenThen visit(String id, WhenThen pointer) {
+    FlowTaskPointer then = visit(id, pointer.getThen());
     return ImmutableWhenThen.builder().from(pointer).then(then).build();
   }
   
-  private FlowTaskPointer visit(ThenPointer pointer) {
+  private FlowTaskPointer visit(String bodyId, ThenPointer pointer) {
     String taskName = pointer.getName();
     
     if(createdTasks.containsKey(taskName)) {
       return ImmutableThenPointer.builder().from(pointer).task(createdTasks.get(taskName)).build();
     } else if(sourceTasks.containsKey(taskName)) {
       FlowTaskNode src = sourceTasks.get(taskName);
-      FlowTaskNode result = visit(src);
+      FlowTaskNode result = visit(bodyId, src);
       return ImmutableThenPointer.builder().from(pointer).task(result).build();
     } else if(taskName.equalsIgnoreCase("end")) {
       return pointer;
@@ -147,6 +149,7 @@ public class FlowTreePointerParser {
       message.append(System.lineSeparator()).append("  - ").append(task.getId()).append(" (line: ").append(task.getToken().getStartLine()).append(")");
     }
     throw new AstNodeException(Arrays.asList(ImmutableErrorNode.builder()
+        .bodyId(bodyId)
         .message(message.toString())
         .target(pointer)
         .build()));

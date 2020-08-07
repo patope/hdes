@@ -9,6 +9,7 @@ import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
+import io.resys.hdes.ast.api.nodes.DecisionTableNode.MatrixRow;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodInvocation;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
@@ -94,15 +95,9 @@ public class HdesCompilerException extends RuntimeException {
           .append("  - ").append(ast).append("!")
           .toString();
     }
-    public String unknownDTInputRule(AstNode ast) {
+    public String unknownHeader(AstNode ast) {
       return new StringBuilder()
-          .append("Unknown DT input rule AST: ").append(ast.getClass()).append(System.lineSeparator())
-          .append("  - ").append(ast).append("!")
-          .toString();
-    }
-    public String unknownFlInputRule(AstNode ast) {
-      return new StringBuilder()
-          .append("Unknown FLOW input rule AST: ").append(ast.getClass()).append(System.lineSeparator())
+          .append("Unknown header AST: ").append(ast.getClass()).append(System.lineSeparator())
           .append("  - ").append(ast).append("!")
           .toString();
     }
@@ -338,6 +333,15 @@ public class HdesCompilerException extends RuntimeException {
           .append("Declared type: ").append(header.getType()).append(" but was: ").append(was).append("!").append(System.lineSeparator())
           .append(" AST: ").append(header.getClass()).append(System.lineSeparator())
           .append("  - ").append(header).append("!")
+          .toString();
+    }
+    
+    public String dtMissingHeaderForMatrixRow(MatrixRow row) {
+      return new StringBuilder()
+          .append("Incorrect header name defined on matrix row!").append(System.lineSeparator())
+          .append("Row name: ").append(row.getTypeName().getValue()).append("!").append(System.lineSeparator())
+          .append(" AST: ").append(row.getClass()).append(System.lineSeparator())
+          .append("  - ").append(row).append("!")
           .toString();
     }
     

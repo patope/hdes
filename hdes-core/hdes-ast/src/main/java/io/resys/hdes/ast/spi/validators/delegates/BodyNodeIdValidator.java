@@ -44,6 +44,7 @@ public class BodyNodeIdValidator implements BodyNodeValidator {
         !SourceVersion.isIdentifier(id)) {
       
       result.add(ImmutableErrorNode.builder()
+          .bodyId(id)
           .message(new StringBuilder()
               .append("Invalid resource name: '")
               .append(id)
@@ -56,6 +57,7 @@ public class BodyNodeIdValidator implements BodyNodeValidator {
     } else if(SourceVersion.isKeyword(id)) {
       
       result.add(ImmutableErrorNode.builder()
+          .bodyId(id)
           .message(new StringBuilder()
               .append("Invalid resource name: '")
               .append(id)
