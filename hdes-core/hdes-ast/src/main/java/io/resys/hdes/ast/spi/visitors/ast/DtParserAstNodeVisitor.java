@@ -56,7 +56,9 @@ import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
 import io.resys.hdes.ast.api.nodes.AstNode.Headers;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
+import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
+import io.resys.hdes.ast.api.nodes.AstNode.Token;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode;
@@ -78,6 +80,7 @@ import io.resys.hdes.ast.api.nodes.ImmutableDecisionTableBody;
 import io.resys.hdes.ast.api.nodes.ImmutableEqualityOperation;
 import io.resys.hdes.ast.api.nodes.ImmutableExpressionValue;
 import io.resys.hdes.ast.api.nodes.ImmutableHeaderIndex;
+import io.resys.hdes.ast.api.nodes.ImmutableHeaders;
 import io.resys.hdes.ast.api.nodes.ImmutableHitPolicyAll;
 import io.resys.hdes.ast.api.nodes.ImmutableHitPolicyFirst;
 import io.resys.hdes.ast.api.nodes.ImmutableHitPolicyMatrix;
@@ -86,9 +89,11 @@ import io.resys.hdes.ast.api.nodes.ImmutableLiteralValue;
 import io.resys.hdes.ast.api.nodes.ImmutableMatrixRow;
 import io.resys.hdes.ast.api.nodes.ImmutableNegateLiteralValue;
 import io.resys.hdes.ast.api.nodes.ImmutableNotUnary;
+import io.resys.hdes.ast.api.nodes.ImmutableObjectDef;
 import io.resys.hdes.ast.api.nodes.ImmutableOrExpression;
 import io.resys.hdes.ast.api.nodes.ImmutableRule;
 import io.resys.hdes.ast.api.nodes.ImmutableRuleRow;
+import io.resys.hdes.ast.api.nodes.ImmutableScalarDef;
 import io.resys.hdes.ast.api.nodes.ImmutableUndefinedValue;
 import io.resys.hdes.ast.spi.visitors.ast.HdesParserAstNodeVisitor.RedundentDescription;
 import io.resys.hdes.ast.spi.visitors.ast.HdesParserAstNodeVisitor.RedundentScalarType;
@@ -96,7 +101,6 @@ import io.resys.hdes.ast.spi.visitors.ast.util.Nodes;
 import io.resys.hdes.ast.spi.visitors.ast.util.Nodes.TokenIdGenerator;
 
 public class DtParserAstNodeVisitor extends EnParserAstNodeVisitor {
-  private Headers headers;
 
   public DtParserAstNodeVisitor(TokenIdGenerator tokenIdGenerator) {
     super(tokenIdGenerator);
@@ -119,12 +123,27 @@ public class DtParserAstNodeVisitor extends EnParserAstNodeVisitor {
 
   @Override
   public DecisionTableBody visitDtBody(DtBodyContext ctx) {
-    Nodes children = nodes(ctx);
-    this.headers = children.of(Headers.class).get();
-    HitPolicy hitPolicy = children.of(HitPolicy.class).get();
-    
-    if(hitPolicy instanceof HitPolicyAll) {
-      HitPolicyAll all = (HitPolicyAll) hitPolicy;
+    final Nodes children = nodes(ctx);
+    final Headers headers = children.of(Headers.class).get();
+    final HitPolicy hitPolicy = hitPolicy(children);
+    final TypeInvocation id = children.of(TypeInvocation.class).get();
+    final ObjectDef statics = statics(hitPolicy, headers);
+    final ObjectDef instance = instance(hitPolicy, headers);
+    return ImmutableDecisionTableBody.builder()
+        .token(token(ctx))
+        .id(ImmutableBodyId.builder().token(id.getToken()).value(id.getValue()).build())
+        .description(children.of(RedundentDescription.class).map(e -> e.getValue()))
+        .headers(ImmutableHeaders.builder().from(headers).statics(statics).instance(instance).build())
+        .hitPolicy(hitPolicy)
+        .build();
+  }
+  
+  private HitPolicy hitPolicy(Nodes children) {
+    final Headers headers = children.of(Headers.class).get();
+    HitPolicy src = children.of(HitPolicy.class).get();
+
+    if(src instanceof HitPolicyAll) {
+      HitPolicyAll all = (HitPolicyAll) src;
       List<RuleRow> rulerows = new ArrayList<>(); 
       for(RuleRow row : all.getRows()) {
         List<Rule> rules = new ArrayList<>();
@@ -136,9 +155,9 @@ public class DtParserAstNodeVisitor extends EnParserAstNodeVisitor {
         }
         rulerows.add(ImmutableRuleRow.builder().from(row).rules(rules).build());
       }
-      hitPolicy = ImmutableHitPolicyAll.builder().from(all).rows(rulerows).build();
-    } else if(hitPolicy instanceof HitPolicyMatrix) {
-      HitPolicyMatrix matrix = (HitPolicyMatrix) hitPolicy;
+      return ImmutableHitPolicyAll.builder().from(all).rows(rulerows).build();
+    } else if(src instanceof HitPolicyMatrix) {
+      HitPolicyMatrix matrix = (HitPolicyMatrix) src;
       List<Rule> rules = new ArrayList<>();
       int ruleIndex = 0;
       for(Rule rule :  matrix.getRules()) {
@@ -146,31 +165,113 @@ public class DtParserAstNodeVisitor extends EnParserAstNodeVisitor {
         rules.add(ImmutableRule.builder().from(rule).header(header).build());
         ruleIndex++;
       }
-      hitPolicy = ImmutableHitPolicyMatrix.builder().from(matrix).rules(rules).build();
-    } else {
-      HitPolicyFirst first = (HitPolicyFirst) hitPolicy;
-      List<RuleRow> rulerows = new ArrayList<>(); 
-      for(RuleRow row : first.getRows()) {
-        List<Rule> rules = new ArrayList<>();
-        int ruleIndex = 0;
-        for(Rule rule : row.getRules()) {
-          int header = getHeaderIndex(headers, ruleIndex);
-          rules.add(ImmutableRule.builder().from(rule).header(header).build());
-          ruleIndex++;
-        }
-        rulerows.add(ImmutableRuleRow.builder().from(row).rules(rules).build());
+      return ImmutableHitPolicyMatrix.builder().from(matrix).rules(rules).build();
+    } 
+    HitPolicyFirst first = (HitPolicyFirst) src;
+    List<RuleRow> rulerows = new ArrayList<>(); 
+    for(RuleRow row : first.getRows()) {
+      List<Rule> rules = new ArrayList<>();
+      int ruleIndex = 0;
+      for(Rule rule : row.getRules()) {
+        int header = getHeaderIndex(headers, ruleIndex);
+        rules.add(ImmutableRule.builder().from(rule).header(header).build());
+        ruleIndex++;
       }
-      hitPolicy = ImmutableHitPolicyFirst.builder().from(first).rows(rulerows).build();
+      rulerows.add(ImmutableRuleRow.builder().from(row).rules(rules).build());
+    }
+    return ImmutableHitPolicyFirst.builder().from(first).rows(rulerows).build();
+  }
+  
+
+  private final ObjectDef statics(HitPolicy hitPolicy, Headers headers) {
+    Token token = headers.getToken();
+    if(hitPolicy instanceof HitPolicyFirst || hitPolicy instanceof HitPolicyAll) {
+      List<TypeDef> fields = headers.getValues().stream()
+        .filter(h -> h.getDirection() == DirectionType.OUT)
+        .map(h -> (ScalarDef) h)
+        .filter(h -> h.getFormula().isEmpty())
+        .map(h -> ImmutableScalarDef.builder().from(h).direction(DirectionType.IN).build())
+        .collect(Collectors.toList());
+      return ImmutableObjectDef.builder()
+          .name("static").token(token)
+          .array(true).required(true).direction(DirectionType.IN)
+          .addAllValues(fields)
+          .build();
     }
     
-    TypeInvocation id = children.of(TypeInvocation.class).get();
-    return ImmutableDecisionTableBody.builder()
-        .token(token(ctx))
-        .id(ImmutableBodyId.builder().token(id.getToken()).value(id.getValue()).build())
-        .description(children.of(RedundentDescription.class).map(e -> e.getValue()))
-        .headers(headers)
-        .hitPolicy(hitPolicy)
+    HitPolicyMatrix matrix = (HitPolicyMatrix) hitPolicy;
+    List<TypeDef> staticValues = new ArrayList<>(); 
+
+    // matrix type
+    staticValues.add(ImmutableScalarDef.builder()
+        .name("").token(token)
+        .array(true).required(true).direction(DirectionType.IN)
+        .type(matrix.getToType())
+        .build());
+    
+    // matrix row name and value
+    for(MatrixRow row : matrix.getRows()) {
+      staticValues.add(ImmutableScalarDef.builder()
+          .name(row.getTypeName().getValue()).token(token)
+          .array(true).required(true).direction(DirectionType.IN)
+          .type(matrix.getToType())
+          .build());
+    }
+  
+    return ImmutableObjectDef.builder()
+        .array(true)
+        .required(true)
+        .direction(DirectionType.IN)
+        .addAllValues(staticValues)
+        .name("static")
+        .token(token)
         .build();
+  }
+  
+  private ObjectDef instance(HitPolicy hitPolicy, Headers headers) {
+    Token token = headers.getToken();
+    if(hitPolicy instanceof HitPolicyFirst || hitPolicy instanceof HitPolicyAll) {
+      
+      List<TypeDef> fields = headers.getValues().stream()
+          .filter(h -> h.getDirection() == DirectionType.OUT)
+          .map(h -> (ScalarDef) h)
+          .collect(Collectors.toList());
+      
+      return ImmutableObjectDef.builder()
+          .array(hitPolicy instanceof HitPolicyAll).required(true).direction(DirectionType.OUT)
+          .addAllValues(fields)
+          .name("").token(token)
+          .build();
+    }
+    
+    HitPolicyMatrix matrix = (HitPolicyMatrix) hitPolicy;
+    List<TypeDef> fields = new ArrayList<>();
+
+    // matrix type
+    fields.add(ImmutableObjectDef.builder()
+      .name("instance").token(token)
+      .array(true).required(true).direction(DirectionType.IN)
+      .addValues(ImmutableScalarDef.builder()
+          .name("").token(token)
+          .array(true).required(true).direction(DirectionType.OUT)
+          .type(matrix.getToType())
+          .build())
+      .build());
+    
+    for(MatrixRow row : matrix.getRows()) {
+      fields.add(ImmutableScalarDef.builder()
+          .name(row.getTypeName().getValue()).token(token)
+          .array(true).required(true).direction(DirectionType.OUT)
+          .type(matrix.getToType())
+          .build());
+    }
+  
+    return ImmutableObjectDef.builder()
+        .array(false).required(true)
+        .direction(DirectionType.OUT)
+        .addAllValues(fields)
+        .name("instance").token(token).build();
+    
   }
   
   private int getHeaderIndex(final Headers headers, final int ruleIndex) {

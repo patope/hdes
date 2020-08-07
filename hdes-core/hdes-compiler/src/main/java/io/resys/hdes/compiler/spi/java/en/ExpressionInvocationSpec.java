@@ -21,7 +21,6 @@ package io.resys.hdes.compiler.spi.java.en;
  */
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.immutables.value.Value;
@@ -30,10 +29,8 @@ import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.ast.api.nodes.AstNode.Invocation;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.AstNodeVisitorContext;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
-import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodInvocation;
 import io.resys.hdes.ast.api.nodes.ImmutableAstNodeVisitorContext;
 import io.resys.hdes.ast.spi.Assertions;
 
@@ -49,9 +46,8 @@ public class ExpressionInvocationSpec {
   @Value.Immutable
   public interface InvocationSpecParam {
     TypeDef getNode();
+    Invocation getValue();
     UsageSource getUsageSource();
-    Optional<TypeInvocation> getTypeName();
-    Optional<MethodInvocation> getMethodRef();
   }
 
   public interface InvocationResolver {

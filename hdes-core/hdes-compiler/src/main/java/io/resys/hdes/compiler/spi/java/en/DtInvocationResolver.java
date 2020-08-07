@@ -1,7 +1,5 @@
 package io.resys.hdes.compiler.spi.java.en;
 
-import java.util.ArrayList;
-
 /*-
  * #%L
  * hdes-compiler
@@ -24,27 +22,21 @@ import java.util.ArrayList;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
+import io.resys.hdes.ast.api.nodes.AstNode.InstanceInvocation;
 import io.resys.hdes.ast.api.nodes.AstNode.Invocation;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
-import io.resys.hdes.ast.api.nodes.AstNode.Token;
+import io.resys.hdes.ast.api.nodes.AstNode.StaticInvocation;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeNameScope;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.AstNodeVisitorContext;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
-import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyAll;
-import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyFirst;
-import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyMatrix;
-import io.resys.hdes.ast.api.nodes.DecisionTableNode.MatrixRow;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.LambdaExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodInvocation;
 import io.resys.hdes.ast.api.nodes.ImmutableObjectDef;
@@ -53,7 +45,6 @@ import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.InvocationResolver;
 import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.InvocationSpecParams;
-import io.resys.hdes.executor.api.DecisionTableMeta.DecisionTableStaticValue;
 
 public class DtInvocationResolver implements InvocationResolver {
 
@@ -62,6 +53,26 @@ public class DtInvocationResolver implements InvocationResolver {
     try {
       if(invocation instanceof TypeInvocation) {
         return accept((TypeInvocation) invocation, ctx);
+      } else if(invocation instanceof StaticInvocation) {
+        
+        String[] pathName = invocation.getValue().split("\\.");
+        DecisionTableBody body = getBody(ctx);
+        Optional<TypeDef> typeDef = getTypeDefNode(body.getHeaders().getStatics().get(), pathName);
+        if(typeDef.isPresent()) {
+          return typeDef.get();
+        }
+        throw new HdesCompilerException(HdesCompilerException.builder().unknownExpressionParameter(invocation));
+        
+      } else if(invocation instanceof InstanceInvocation) {
+
+        String[] pathName = invocation.getValue().split("\\.");
+        DecisionTableBody body = getBody(ctx);
+        Optional<TypeDef> typeDef = getTypeDefNode(body.getHeaders().getInstance().get(), pathName);
+        if(typeDef.isPresent()) {
+          return typeDef.get();
+        }
+        throw new HdesCompilerException(HdesCompilerException.builder().unknownExpressionParameter(invocation));
+        
       }
       return accept((MethodInvocation) invocation, ctx);
     } catch(HdesCompilerException e) {
@@ -74,38 +85,13 @@ public class DtInvocationResolver implements InvocationResolver {
   private TypeDef accept(TypeInvocation typeName, AstNodeVisitorContext ctx) {
     String[] pathName = typeName.getValue().split("\\.");
         
-    // static data access
-    if(typeName.getScope() == TypeNameScope.STATIC) {
-      ObjectDef staticValue = ImmutableObjectDef.builder()
-          .array(false)
-          .required(true)
-          .direction(DirectionType.IN)
-          .addAllValues(getStaticValues(ctx))
-          .name(typeName.getValue())
-          .token(typeName.getToken())
-          .build();
-      
-      Optional<TypeDef> typeDef = getTypeDefNode(staticValue, pathName);
-      if(typeDef.isPresent()) {
-        return typeDef.get();
-      }
-      throw new HdesCompilerException(HdesCompilerException.builder().unknownExpressionParameter(typeName));
-    } else if(typeName.getScope() == TypeNameScope.INSTANCE) {
-      TypeDef output =  getOutputValues(typeName, ctx);
-      Optional<TypeDef> typeDef = getTypeDefNode(output, pathName);
-      if(typeDef.isPresent()) {
-        return typeDef.get();
-      }
-      throw new HdesCompilerException(HdesCompilerException.builder().unknownExpressionParameter(typeName));
-    }
     
     if(ctx.getParent().isPresent()) {
       try {
         AstNodeVisitorContext lambdaCtx = ExpressionVisitor.getLambda(ctx).orElse(null);
-        
         if(lambdaCtx != null) {
-          AstNodeVisitorContext lambdaParent = lambdaCtx.getParent().get();
           
+          AstNodeVisitorContext lambdaParent = lambdaCtx.getParent().get();
           MethodInvocation lambdaParentNode = (MethodInvocation) lambdaParent.getValue();
           LambdaExpression expression = (LambdaExpression) lambdaCtx.getValue();
           TypeInvocation lambdaName = expression.getParams().get(0);
@@ -113,7 +99,7 @@ public class DtInvocationResolver implements InvocationResolver {
 
           Optional<TypeDef> typeDef = getTypeDefNode(
               ImmutableObjectDef.builder()
-              .from((ObjectDef) lambdaOn.getValues().get(0))
+              .from(lambdaOn)
               .name(lambdaName.getValue())
               .build(), 
               pathName);
@@ -122,7 +108,7 @@ public class DtInvocationResolver implements InvocationResolver {
             return typeDef.get();
           }
         }
-      } catch (Exception e) {
+      } catch (Exception e) {e.printStackTrace();
         throw new HdesCompilerException(HdesCompilerException.builder().unknownExpressionParameter(typeName), e);
       }
     }
@@ -171,136 +157,23 @@ public class DtInvocationResolver implements InvocationResolver {
           .array(false)
           .required(true)
           .token(method.getToken())
-          .name(method.getName())
+          .name(method.getValue())
           .direction(DirectionType.IN)
           .type(scalar)
           .build();
     }
     
     // Non global methods 
-    TypeInvocation typeName = method.getType().get();
+    Invocation typeName = method.getType().get();
     TypeDef typeDef = accept(typeName, ctx);
     
-    if(method.getName().equals("map")) {
-      Optional<TypeDef> result = getTypeDefNode(typeDef, new String[] {"static", ExpressionVisitor.ACCESS_STATIC_VALUES});
-      if(result.isPresent()) {
-        return result.get();
-      }
-      throw new HdesCompilerException(HdesCompilerException.builder().unknownFunctionCall(method, method.getName()));
+    if(method.getValue().equals("map")) {
+      return typeDef;
     }
     
-    throw new HdesCompilerException(HdesCompilerException.builder().unknownFunctionCall(method, method.getName()));
+    throw new HdesCompilerException(HdesCompilerException.builder().unknownFunctionCall(method, method.getValue()));
   }
-  
-  private final TypeDef getOutputValues(TypeInvocation typeName, AstNodeVisitorContext ctx) {
-    DecisionTableBody body = getBody(ctx);
-    Token token = ctx.getValue().getToken();
-    if(body.getHitPolicy() instanceof HitPolicyFirst || 
-       body.getHitPolicy() instanceof HitPolicyAll) {
 
-      List<TypeDef> fields = body.getHeaders().getValues().stream()
-          .filter(h -> h.getDirection() == DirectionType.OUT)
-          .map(h -> (ScalarDef) h)
-          .collect(Collectors.toList());
-      
-      return ImmutableObjectDef.builder()
-        .array(body.getHitPolicy() instanceof HitPolicyAll)
-        .required(true)
-        .direction(DirectionType.OUT)
-        .addAllValues(fields)
-        .name(typeName.getValue())
-        .token(typeName.getToken())
-        .build();
-    }
-    
-    
-    HitPolicyMatrix matrix = (HitPolicyMatrix) body.getHitPolicy();
-    List<TypeDef> fields = new ArrayList<>();
-
-    // matrix type
-    fields.add(ImmutableObjectDef.builder()
-      .name(ExpressionVisitor.ACCESS_OUTPUT_VALUE).token(ctx.getValue().getToken())
-      .array(true).required(true).direction(DirectionType.IN)
-      .addValues(ImmutableScalarDef.builder()
-          .name("").token(token)
-          .array(true).required(true).direction(DirectionType.OUT)
-          .type(matrix.getToType())
-          .build())
-      .build());
-    
-    for(MatrixRow row : matrix.getRows()) {
-      fields.add(ImmutableScalarDef.builder()
-          .name(row.getTypeName().getValue()).token(token)
-          .array(true).required(true).direction(DirectionType.OUT)
-          .type(matrix.getToType())
-          .build());
-    }
-  
-    return ImmutableObjectDef.builder()
-        .array(false)
-        .required(true)
-        .direction(DirectionType.OUT)
-        .addAllValues(fields)
-        .name(typeName.getValue())
-        .token(typeName.getToken())
-        .build();
-  }
-  
-  
-  private final List<TypeDef> getStaticValues(AstNodeVisitorContext ctx) {
-
-    // Just an assertion, security check that the method is actually there
-    try {
-      DecisionTableStaticValue.class.getMethod("getValues");
-    } catch(Exception e) {
-      throw new RuntimeException(e.getMessage(), e);
-    }      
-    
-    
-    DecisionTableBody body = getBody(ctx);
-    Token token = ctx.getValue().getToken();
-    
-    final List<TypeDef> staticValues;
-    if(body.getHitPolicy() instanceof HitPolicyFirst || 
-       body.getHitPolicy() instanceof HitPolicyAll) {
-
-      staticValues = Arrays.asList(ImmutableObjectDef.builder()
-        .name(ExpressionVisitor.ACCESS_STATIC_VALUES).token(token)
-        .array(true).required(true).direction(DirectionType.IN)
-        .values(body.getHeaders().getValues().stream()
-            .filter(h -> h.getDirection() == DirectionType.OUT)
-            .map(h -> (ScalarDef) h)
-            .filter(h -> h.getFormula().isEmpty())
-            .collect(Collectors.toList()))
-        .build());
-      
-    } else  {
-      HitPolicyMatrix matrix = (HitPolicyMatrix) body.getHitPolicy();
-      staticValues = new ArrayList<>(); 
-
-      // matrix type
-      staticValues.add(ImmutableObjectDef.builder()
-        .name(ExpressionVisitor.ACCESS_STATIC_VALUES).token(ctx.getValue().getToken())
-        .array(true).required(true).direction(DirectionType.IN)
-        .addValues(ImmutableScalarDef.builder()
-            .name("").token(token)
-            .array(true).required(true).direction(DirectionType.IN)
-            .type(matrix.getToType())
-            .build())
-        .build());
-      
-      // matrix row name and value
-      for(MatrixRow row : matrix.getRows()) {
-        staticValues.add(ImmutableScalarDef.builder()
-            .name(row.getTypeName().getValue()).token(token)
-            .array(true).required(true).direction(DirectionType.IN)
-            .type(matrix.getToType())
-            .build());
-      }
-    }
-    return staticValues;
-  }
-  
   private Optional<TypeDef> getTypeDefNode(TypeDef node, String[] pathName) {
     String path = pathName[0];
     if (!node.getName().equals(path)) {

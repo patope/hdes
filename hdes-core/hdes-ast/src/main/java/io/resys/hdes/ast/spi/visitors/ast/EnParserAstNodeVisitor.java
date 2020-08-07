@@ -54,6 +54,7 @@ import io.resys.hdes.ast.HdesParser.UnaryExpressionNotPlusMinusContext;
 import io.resys.hdes.ast.HdesParserBaseVisitor;
 import io.resys.hdes.ast.api.AstNodeException;
 import io.resys.hdes.ast.api.nodes.AstNode;
+import io.resys.hdes.ast.api.nodes.AstNode.Invocation;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveType;
@@ -116,10 +117,11 @@ public class EnParserAstNodeVisitor extends HdesParserBaseVisitor<AstNode> {
   @Override
   public MethodInvocation visitMethodInvocation(MethodInvocationContext ctx) {
     Nodes nodes = nodes(ctx);
+    MethodInvocation z;
     return ImmutableMethodInvocation.builder()
         .token(token(ctx))
-        .name(nodes.of(RedundentMethodName.class).get().getValue())
-        .type(nodes.of(TypeInvocation.class))
+        .value(nodes.of(RedundentMethodName.class).get().getValue())
+        .type(nodes.of(Invocation.class))
         .values(nodes.of(RedundentArgs.class).map(a -> a.getValues()).orElse(Collections.emptyList()))
         .build();
   }

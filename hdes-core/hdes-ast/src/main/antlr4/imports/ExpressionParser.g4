@@ -9,6 +9,7 @@ methodName: Identifier;
 methodInvocation
   : methodName '(' methodArgs? ')'
   | typeName '.' methodName '(' methodArgs? ')' ('.' expression)?;
+
 methodArgs: methodArg (',' methodArg)*;
 methodArg: expression;
 

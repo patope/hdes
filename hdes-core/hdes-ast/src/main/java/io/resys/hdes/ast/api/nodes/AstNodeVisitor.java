@@ -26,11 +26,11 @@ import java.util.Optional;
 import org.immutables.value.Value;
 
 import io.resys.hdes.ast.api.nodes.AstNode.Headers;
+import io.resys.hdes.ast.api.nodes.AstNode.Invocation;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.ExpressionValue;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HeaderIndex;
@@ -87,7 +87,7 @@ import io.resys.hdes.ast.api.nodes.ManualTaskNode.WhenAction;
 
 public interface AstNodeVisitor<T, R> {
   // basic
-  T visitTypeInvocation(TypeInvocation node, AstNodeVisitorContext ctx);
+  T visitInvocation(Invocation node, AstNodeVisitorContext ctx);
   T visitLiteral(Literal node, AstNodeVisitorContext ctx);
 
   interface TypeDefVisitor<T, R> extends AstNodeVisitor<T, R> {

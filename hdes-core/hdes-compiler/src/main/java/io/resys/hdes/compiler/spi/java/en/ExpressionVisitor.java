@@ -35,13 +35,15 @@ import com.squareup.javapoet.CodeBlock;
 
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
+import io.resys.hdes.ast.api.nodes.AstNode.InstanceInvocation;
+import io.resys.hdes.ast.api.nodes.AstNode.Invocation;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
+import io.resys.hdes.ast.api.nodes.AstNode.StaticInvocation;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeNameScope;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.ExpressionAstNodeVisitor;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveType;
@@ -114,7 +116,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
   }
 
   @Override
-  public EnJavaSpec visitTypeInvocation(TypeInvocation node, AstNodeVisitorContext ctx) {
+  public EnJavaSpec visitInvocation(Invocation node, AstNodeVisitorContext ctx) {
     TypeDef typeDefNode = resolver.accept(node, ctx);
     String typeName = node.getValue();
     Optional<String> lambdaContext = getLambda(ctx).map(runningCtx -> {
@@ -125,18 +127,20 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
     
     CodeBlock.Builder value = CodeBlock.builder();
     
+    
     if(lambdaContext.isPresent() && 
         (typeName.equals(lambdaContext.get()) || typeName.startsWith(lambdaContext.get() + ".")) && 
-        node.getScope() == TypeNameScope.VAR) {
+        node instanceof TypeInvocation) {
+      
       String name = JavaSpecUtil.methodVarCall(node.getValue());
       value.add(name + (typeDefNode.getRequired() ? "" : ".get()"));
       
-    } else if(node.getScope() == TypeNameScope.STATIC) {
+    } else if(node instanceof StaticInvocation) {
     
       String name = typeName.replaceFirst("static", ACCESS_STATIC_VALUE);
       value.add("$L.$L", ACCESS_SRC_VALUE, JavaSpecUtil.methodCall(name) + (typeDefNode.getRequired() ? "" : ".get()"));
       
-    } else if(node.getScope() == TypeNameScope.INSTANCE) {
+    } else if(node instanceof InstanceInvocation) {
       String name = JavaSpecUtil.methodCall(ACCESS_OUTPUT_VALUE);
       value.add("$L.$L", ACCESS_SRC_VALUE, name + (typeDefNode.getRequired() ? "" : ".get()"));
     
@@ -148,7 +152,6 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
       String name = JavaSpecUtil.methodCall(ACCESS_OUTPUT_VALUE + "." + typeName);
       value.add("$L.$L", ACCESS_SRC_VALUE, name + (typeDefNode.getRequired() ? "" : ".get()"));
     }
-    
     
     if(typeDefNode instanceof ScalarDef) {
       ScalarDef scalarNode = (ScalarDef) typeDefNode;
@@ -248,9 +251,9 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
   public EnJavaSpec visitMethod(MethodInvocation node, AstNodeVisitorContext ctx) {
     if (node.getType().isEmpty()) {
 
-      if (!GLOBAL_METHODS.contains(node.getName())) {
+      if (!GLOBAL_METHODS.contains(node.getValue())) {
         throw new HdesCompilerException(
-            HdesCompilerException.builder().unknownGlobalFunctionCall(node, node.getName(), "min, max, sum, avg"));
+            HdesCompilerException.builder().unknownGlobalFunctionCall(node, node.getValue(), "min, max, sum, avg"));
       }
 
       boolean isDecimal = false;
@@ -303,26 +306,25 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
         params.add(".toInteger()");
       }
 
-      ScalarType returnType = isDecimal || node.getName().equals("avg") ? ScalarType.DECIMAL : ScalarType.INTEGER;
-      return ImmutableEnScalarCodeSpec.builder().value(params.add(".$L()", node.getName()).build()).array(false)
+      ScalarType returnType = isDecimal || node.getValue().equals("avg") ? ScalarType.DECIMAL : ScalarType.INTEGER;
+      return ImmutableEnScalarCodeSpec.builder().value(params.add(".$L()", node.getValue()).build()).array(false)
           .type(returnType).build();
       
       
     // lambda function
-    } else if(node.getName().equals("map")) {
+    } else if(node.getValue().equals("map")) {
       List<AstNode> mapValues = node.getValues();
       
       if(mapValues.isEmpty() || mapValues.size() != 1 || !(mapValues.get(0) instanceof LambdaExpression)) {
         throw new HdesCompilerException(HdesCompilerException.builder().incorrectLambdaFormula(node));
       }
-      TypeInvocation typeName = node.getType().get();
+      Invocation typeName = node.getType().get();
       LambdaExpression lambda = (LambdaExpression) mapValues.get(0);
       EnJavaSpec javaSpec = visitAny(typeName, ctx);
       
       if(javaSpec instanceof EnObjectCodeSpec) {
         EnObjectCodeSpec objectSpec = (EnObjectCodeSpec) javaSpec;
-        List<TypeDef> defs = objectSpec.getType().getValues();
-        if(!objectSpec.getArray() && (defs.isEmpty() || !defs.get(0).getArray())) {
+        if(!objectSpec.getArray()) {
           throw new HdesCompilerException(HdesCompilerException.builder().incorrectLambdaFormula(node));  
         }
 
@@ -330,7 +332,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
         
         CodeBlock value = CodeBlock.builder()
           .add(objectSpec.getValue())
-          .add(".").add(JavaSpecUtil.methodCall(defs.get(0).getName()))
+          .add(".getValues()")
           .add(".stream().map($L).collect($T.toList())", lambdaSpec.getValue(), Collectors.class)
         .build();
         
@@ -347,12 +349,12 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
     TypeDef typeDef = this.resolver.accept(node, ctx);
     if (typeDef instanceof ScalarDef) {
       return ImmutableEnScalarCodeSpec.builder()
-          .value(CodeBlock.builder().add("input.").add(JavaSpecUtil.methodCall(node.getName())).build())
+          .value(CodeBlock.builder().add("input.").add(JavaSpecUtil.methodCall(node.getValue())).build())
           .array(typeDef.getArray()).type(((ScalarDef) typeDef).getType()).build();
 
     } else {
       return ImmutableEnObjectCodeSpec.builder()
-          .value(CodeBlock.builder().add("input.").add(JavaSpecUtil.methodCall(node.getName())).build())
+          .value(CodeBlock.builder().add("input.").add(JavaSpecUtil.methodCall(node.getValue())).build())
           .array(typeDef.getArray()).type((ObjectDef) typeDef).build();
 
     }
@@ -599,9 +601,10 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
 
   private EnJavaSpec visitAny(AstNode node, AstNodeVisitorContext parent) {
     AstNodeVisitorContext ctx = ImmutableAstNodeVisitorContext.builder().parent(parent).value(node).build();
-
-    if (node instanceof TypeInvocation) {
-      return visitTypeInvocation((TypeInvocation) node, ctx);
+    if (node instanceof MethodInvocation) {
+      return visitMethod((MethodInvocation) node, ctx);
+    } else if (node instanceof Invocation) {
+      return visitInvocation((Invocation) node, ctx);
     } else if (node instanceof Literal) {
       return visitLiteral((Literal) node, ctx);
     } else if (node instanceof NotUnary) {
@@ -624,8 +627,6 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
       return visitAdditive((AdditiveExpression) node, ctx);
     } else if (node instanceof MultiplicativeExpression) {
       return visitMultiplicative((MultiplicativeExpression) node, ctx);
-    } else if (node instanceof MethodInvocation) {
-      return visitMethod((MethodInvocation) node, ctx);
     } else if (node instanceof PreIncrementUnary) {
       return visitPreIncrement((PreIncrementUnary) node, ctx);
     } else if (node instanceof PreDecrementUnary) {

@@ -48,17 +48,18 @@ import io.resys.hdes.ast.HdesParser.TypeNameContext;
 
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
+import io.resys.hdes.ast.api.nodes.AstNode.Invocation;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeNameScope;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.ImmutableHeaders;
+import io.resys.hdes.ast.api.nodes.ImmutableInstanceInvocation;
 import io.resys.hdes.ast.api.nodes.ImmutableObjectDef;
 import io.resys.hdes.ast.api.nodes.ImmutableScalarDef;
+import io.resys.hdes.ast.api.nodes.ImmutableStaticInvocation;
 import io.resys.hdes.ast.api.nodes.ImmutableTypeInvocation;
 import io.resys.hdes.ast.api.nodes.ManualTaskNode;
 import io.resys.hdes.ast.spi.visitors.ast.util.Nodes;
@@ -118,25 +119,17 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
   }
 
   @Override
-  public TypeInvocation visitTypeName(TypeNameContext ctx) {
-    final TypeNameScope scope;    
-    
+  public Invocation visitTypeName(TypeNameContext ctx) {
+    AstNode.Token token = token(ctx);
     ParseTree child = ctx.getChild(0);
     TerminalNode terminal = child instanceof TerminalNode ? (TerminalNode) child : null;
     
     if(terminal != null && terminal.getSymbol().getType() == HdesParser.STATIC_SCOPE) {
-      scope = TypeNameScope.STATIC;
+      return ImmutableStaticInvocation.builder().token(token).value(ctx.getText()).build();
     } else if(terminal != null && terminal.getSymbol().getType() == HdesParser.INSTANCE_SCOPE) {
-      scope = TypeNameScope.INSTANCE;
-    } else {
-      scope = TypeNameScope.VAR;
+      return ImmutableInstanceInvocation.builder().token(token).value(ctx.getText()).build();
     }
-  
-    return ImmutableTypeInvocation.builder()
-        .token(token(ctx))
-        .value(ctx.getText())
-        .scope(scope)
-        .build();
+    return ImmutableTypeInvocation.builder().token(token).value(ctx.getText()).build();
   }
   
   @Override
@@ -244,10 +237,10 @@ public class HdesParserAstNodeVisitor extends FwParserAstNodeVisitor {
         .build();
   }
   
-  protected final TypeInvocation getDefTypeName(ParserRuleContext ctx) {
+  protected final Invocation getDefTypeName(ParserRuleContext ctx) {
     if(ctx.getParent() instanceof TypeDefContext) {
-      return (TypeInvocation) ctx.getParent().getChild(0).accept(this);
+      return (Invocation) ctx.getParent().getChild(0).accept(this);
     }
-    return (TypeInvocation) ctx.getParent().getParent().getChild(0).accept(this);
+    return (Invocation) ctx.getParent().getParent().getChild(0).accept(this);
   }
 }

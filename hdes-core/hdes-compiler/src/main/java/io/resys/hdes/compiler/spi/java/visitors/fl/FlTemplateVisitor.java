@@ -22,11 +22,11 @@ package io.resys.hdes.compiler.spi.java.visitors.fl;
 
 import java.util.List;
 
+import io.resys.hdes.ast.api.nodes.AstNode.Invocation;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.FlowAstNodeVisitor;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.EndPointer;
@@ -40,10 +40,6 @@ import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 
 public class FlTemplateVisitor<T, R> implements FlowAstNodeVisitor<T, R> {
-  @Override
-  public T visitTypeInvocation(TypeInvocation node, AstNodeVisitorContext ctx) {
-    throw new IllegalArgumentException("Not implemented");
-  }
 
   @Override
   public T visitLiteral(Literal node, AstNodeVisitorContext ctx) {
@@ -127,6 +123,11 @@ public class FlTemplateVisitor<T, R> implements FlowAstNodeVisitor<T, R> {
 
   @Override
   public T visitOutputs(List<TypeDef> node, AstNodeVisitorContext ctx) {
+    throw new IllegalArgumentException("Not implemented");
+  }
+
+  @Override
+  public T visitInvocation(Invocation node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 }

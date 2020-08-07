@@ -348,7 +348,7 @@ public class HdesCompilerException extends RuntimeException {
     public String incorrectLambdaFormula(MethodInvocation invocation) {
       return new StringBuilder()
           .append("Incorrect lambda formula declaration!").append(System.lineSeparator())
-          .append("Lambda name: ").append(invocation.getName()).append("!").append(System.lineSeparator())
+          .append("Lambda name: ").append(invocation.getValue()).append("!").append(System.lineSeparator())
           .append(" AST: ").append(invocation.getClass()).append(System.lineSeparator())
           .append("  - ").append(invocation).append("!")
           .toString();

@@ -30,13 +30,10 @@ public interface AstNode {
   Token getToken();
 
   enum DirectionType { IN, OUT }
-  enum TypeNameScope { VAR, STATIC, INSTANCE }
   enum ScalarType {
     STRING, INTEGER, BOOLEAN, DECIMAL,
     DATE, DATE_TIME, TIME,
   }
-  
-  interface Invocation extends AstNode { }
   
   interface Body extends AstNode {
     BodyId getId();
@@ -82,11 +79,18 @@ public interface AstNode {
     String getValue();
   }
   
-  @Value.Immutable
-  interface TypeInvocation extends Invocation {
+  interface Invocation extends AstNode {
     String getValue();
-    TypeNameScope getScope();
   }
+  
+  @Value.Immutable
+  interface TypeInvocation extends Invocation {}
+ 
+  @Value.Immutable
+  interface StaticInvocation extends Invocation {}
+  
+  @Value.Immutable
+  interface InstanceInvocation extends Invocation {}
   
   @Value.Immutable
   interface Literal extends AstNode {
@@ -97,6 +101,8 @@ public interface AstNode {
   @Value.Immutable
   interface Headers extends AstNode {
     List<TypeDef> getValues();
+    Optional<ObjectDef> getStatics();
+    Optional<ObjectDef> getInstance();
   }
   
   @Value.Immutable

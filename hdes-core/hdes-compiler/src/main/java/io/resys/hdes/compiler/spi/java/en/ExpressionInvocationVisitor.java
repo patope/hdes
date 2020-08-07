@@ -27,12 +27,13 @@ import java.util.Set;
 
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
+import io.resys.hdes.ast.api.nodes.AstNode.InstanceInvocation;
+import io.resys.hdes.ast.api.nodes.AstNode.Invocation;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
+import io.resys.hdes.ast.api.nodes.AstNode.StaticInvocation;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeNameScope;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.ExpressionAstNodeVisitor;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.AndExpression;
@@ -207,13 +208,13 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
   }
   
   @Override
-  public InvocationSpecParams visitTypeInvocation(TypeInvocation node, AstNodeVisitorContext ctx) {
+  public InvocationSpecParams visitInvocation(Invocation node, AstNodeVisitorContext ctx) {
     final TypeDef typeDef = resolver.accept(node, ctx);
     final UsageSource scope;
     
-    if(node.getScope() == TypeNameScope.STATIC) {
+    if(node instanceof StaticInvocation) {
       scope = UsageSource.STATIC;
-    } else if(node.getScope() == TypeNameScope.INSTANCE) {
+    } else if(node instanceof InstanceInvocation) {
       scope = UsageSource.OUT;
     } else if(typeDef.getDirection() == DirectionType.IN) {
       scope = UsageSource.IN;
@@ -225,7 +226,7 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
     
     return ImmutableInvocationSpecParams.builder()
         .returnType(typeDef)
-        .addValues(ImmutableInvocationSpecParam.builder().typeName(node).node(typeDef).usageSource(scope).build())
+        .addValues(ImmutableInvocationSpecParam.builder().value(node).node(typeDef).usageSource(scope).build())
         .addUsageSources(scope)
         .build();
   }
@@ -251,7 +252,7 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
     
     return ImmutableInvocationSpecParams.builder()
         .returnType(typeDef)
-        .addValues(ImmutableInvocationSpecParam.builder().methodRef(node).node(typeDef).usageSource(UsageSource.INSTANCE).build())
+        .addValues(ImmutableInvocationSpecParam.builder().value(node).node(typeDef).usageSource(UsageSource.INSTANCE).build())
         .addAllValues(values)
         .addAllUsageSources(usage)
         .build();
@@ -385,8 +386,10 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
   public InvocationSpecParams visit(AstNode node, AstNodeVisitorContext parent) {
     AstNodeVisitorContext ctx = ImmutableAstNodeVisitorContext.builder().parent(parent).value(node).build();
 
-    if (node instanceof TypeInvocation) {
-      return visitTypeInvocation((TypeInvocation) node, ctx);
+    if (node instanceof MethodInvocation) {
+      return visitMethod((MethodInvocation) node, ctx);
+    } else if (node instanceof Invocation) {
+      return visitInvocation((Invocation) node, ctx);
     } else if (node instanceof Literal) {
       return visitLiteral((Literal) node, ctx);
     } else if (node instanceof NotUnary) {
@@ -403,8 +406,6 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
       return visitPostIncrement((PostIncrementUnary) node, ctx);
     } else if (node instanceof PostDecrementUnary) {
       return visitPostDecrement((PostDecrementUnary) node, ctx);
-    } else if (node instanceof MethodInvocation) {
-      return visitMethod((MethodInvocation) node, ctx);
     } else if (node instanceof EqualityOperation) {
       return visitEquality((EqualityOperation) node, ctx);
     } else if (node instanceof AndExpression) {
