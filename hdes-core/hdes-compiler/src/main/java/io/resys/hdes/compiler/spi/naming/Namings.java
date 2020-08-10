@@ -57,7 +57,9 @@ public interface Namings {
   interface SwitchNaming {
     String pkg(FlowBody body);
     ClassName api(FlowBody node, FlowTaskNode pointer);
+    ClassName impl(FlowBody node, FlowTaskNode pointer);
     ParameterizedTypeName executable(FlowBody node, FlowTaskNode pointer);
+    ParameterizedTypeName execution(FlowBody node, FlowTaskNode pointer);
     
     ClassName gate(FlowBody node, FlowTaskNode pointer);
     ClassName inputValue(FlowBody node, FlowTaskNode pointer);

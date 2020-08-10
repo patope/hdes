@@ -27,7 +27,9 @@ import com.squareup.javapoet.TypeName;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.compiler.spi.naming.Namings.SwitchNaming;
+import io.resys.hdes.executor.api.HdesExecutable.Execution;
 import io.resys.hdes.executor.api.HdesExecutable.Switch;
+import io.resys.hdes.executor.api.SwitchMeta;
 
 public class JavaSwitchNaming implements SwitchNaming {
   private final JavaNaming parent;
@@ -50,11 +52,6 @@ public class JavaSwitchNaming implements SwitchNaming {
     return ClassName.get(pkg(node), node.getId().getValue() + pointer.getId());
   }
   @Override
-  public ParameterizedTypeName executable(FlowBody node, FlowTaskNode pointer) {
-    TypeName returnType = outputValue(node, pointer);
-    return ParameterizedTypeName.get(ClassName.get(Switch.class), inputValue(node, pointer), returnType);
-  }
-  @Override
   public ClassName inputValue(FlowBody node, FlowTaskNode pointer) {
     ClassName api = api(node, pointer);
     return ClassName.get(api.canonicalName(), api.simpleName() + "In");
@@ -63,5 +60,20 @@ public class JavaSwitchNaming implements SwitchNaming {
   public ClassName outputValue(FlowBody node, FlowTaskNode pointer) {
     ClassName api = api(node, pointer);
     return ClassName.get(api.canonicalName(), api.simpleName() + "Out");
+  }
+  @Override
+  public ClassName impl(FlowBody node, FlowTaskNode pointer) {
+    ClassName api = api(node, pointer);
+    return ClassName.get(api.packageName(), api.simpleName() + "Gen");
+  }
+  @Override
+  public ParameterizedTypeName execution(FlowBody node, FlowTaskNode pointer) {
+    ClassName outputName = outputValue(node, pointer);
+    return ParameterizedTypeName.get(ClassName.get(Execution.class), ClassName.get(SwitchMeta.class), outputName);
+  }
+  @Override
+  public ParameterizedTypeName executable(FlowBody node, FlowTaskNode pointer) {
+    TypeName returnType = outputValue(node, pointer);
+    return ParameterizedTypeName.get(ClassName.get(Switch.class), inputValue(node, pointer), returnType);
   }
 }

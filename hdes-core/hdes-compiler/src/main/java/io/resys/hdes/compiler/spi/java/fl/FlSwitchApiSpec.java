@@ -32,6 +32,7 @@ public class FlSwitchApiSpec {
   }
 
   public static class Builder {
+    final AnnotationSpec annotationSpec = AnnotationSpec.builder(javax.annotation.processing.Generated.class).addMember("value", "$S", FlSwitchApiSpec.class.getCanonicalName()).build();
     private final Namings namings;
     private FlowBody body;
 
@@ -94,8 +95,6 @@ public class FlSwitchApiSpec {
     }
     
     private TypeSpec whenThen(FlowTaskNode task, WhenThenPointer whenThen) {      
-      final AnnotationSpec annotationSpec = AnnotationSpec.builder(javax.annotation.processing.Generated.class).addMember("value", "$S", FlSwitchApiSpec.class.getCanonicalName()).build();
-      
       final TypeSpec input = JavaSpecUtil
         .immutableSpec(namings.sw().inputValue(body, task))
         .addSuperinterface(HdesExecutable.InputValue.class)

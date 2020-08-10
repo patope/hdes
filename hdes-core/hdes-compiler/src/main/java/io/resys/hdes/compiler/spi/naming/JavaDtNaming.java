@@ -47,12 +47,6 @@ public class JavaDtNaming implements DtNaming {
   }
 
   @Override
-  public TypeName executable(DecisionTableBody node) {
-    TypeName returnType = outputValueMono(node);
-    return ParameterizedTypeName.get(ClassName.get(DecisionTable.class), inputValue(node), returnType);
-  }
-
-  @Override
   public ClassName impl(DecisionTableBody node) {
     return ClassName.get(pkg, node.getId().getValue() + "Gen");
   }
@@ -102,9 +96,12 @@ public class JavaDtNaming implements DtNaming {
   @Override
   public ParameterizedTypeName execution(DecisionTableBody body) {
     ClassName outputName = outputValueMono(body);
-    ParameterizedTypeName returnType = ParameterizedTypeName
-        .get(ClassName.get(Execution.class), ClassName.get(DecisionTableMeta.class), outputName);
-    return returnType;
-  } 
+    return ParameterizedTypeName.get(ClassName.get(Execution.class), ClassName.get(DecisionTableMeta.class), outputName);
+  }
+  @Override
+  public TypeName executable(DecisionTableBody node) {
+    TypeName returnType = outputValueMono(node);
+    return ParameterizedTypeName.get(ClassName.get(DecisionTable.class), inputValue(node), returnType);
+  }
 }
 

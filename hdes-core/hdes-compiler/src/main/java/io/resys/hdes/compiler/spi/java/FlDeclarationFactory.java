@@ -34,6 +34,7 @@ import io.resys.hdes.compiler.api.ImmutableTypeDeclaration;
 import io.resys.hdes.compiler.api.ImmutableTypeName;
 import io.resys.hdes.compiler.spi.java.fl.FlApiSpec;
 import io.resys.hdes.compiler.spi.java.fl.FlSwitchApiSpec;
+import io.resys.hdes.compiler.spi.java.fl.FlSwitchImplSpec;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.HdesExecutable;
@@ -72,6 +73,7 @@ public class FlDeclarationFactory {
     TypeSpec api = FlApiSpec.builder(naming).body(body).build();    
     TypeSpec impl = null; // new FlImplementationVisitor(naming).visitBody(body);
     List<TypeSpec> switchApi = FlSwitchApiSpec.builder(naming).body(body).build();
+    List<TypeSpec> switchImpl = FlSwitchImplSpec.builder(naming).body(body).build();
     
     return ImmutableResource.builder()
         .type(HdesExecutable.SourceType.FL)
@@ -83,6 +85,12 @@ public class FlDeclarationFactory {
         .output(JavaSpecUtil.typeName(naming.fl().outputValue(body)))
 
         .addAllDeclarations(switchApi.stream()
+            .map((TypeSpec e) -> ImmutableTypeDeclaration.builder()
+                .type(ImmutableTypeName.builder().name(e.name).pkg(pkg).build())
+                .isExecutable(false).value(JavaSpecUtil.javaFile(e, pkg)).build())
+            .collect(Collectors.toList()))
+        
+        .addAllDeclarations(switchImpl.stream()
             .map((TypeSpec e) -> ImmutableTypeDeclaration.builder()
                 .type(ImmutableTypeName.builder().name(e.name).pkg(pkg).build())
                 .isExecutable(false).value(JavaSpecUtil.javaFile(e, pkg)).build())
