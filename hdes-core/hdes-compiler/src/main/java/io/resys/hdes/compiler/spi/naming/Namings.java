@@ -61,7 +61,6 @@ public interface Namings {
     
     ClassName gate(FlowBody node, FlowTaskNode pointer);
     ClassName inputValue(FlowBody node, FlowTaskNode pointer);
-    ClassName inputValue(FlowBody node, FlowTaskNode pointer, ObjectDef object);
     ClassName outputValue(FlowBody node, FlowTaskNode pointer);
   }
   
@@ -90,7 +89,7 @@ public interface Namings {
     ClassName impl(FlowBody node);
     ClassName state(FlowBody body);
     
-    TaskRefNaming ref(TaskRef ref);
+    TaskRefNaming ref(FlowBody node, TaskRef ref);
     ParameterizedTypeName execution(FlowBody body);
     TypeName executable(FlowBody node);
     

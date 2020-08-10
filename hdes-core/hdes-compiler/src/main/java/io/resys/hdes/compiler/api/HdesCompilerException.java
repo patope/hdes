@@ -107,12 +107,19 @@ public class HdesCompilerException extends RuntimeException {
           .append("  - ").append(ast).append("!")
           .toString();
     }
-    public String unknownFlTaskRef(TaskRef ast) {
+    public String unknownFlTaskRef(FlowBody flow, TaskRef ast) {
       return new StringBuilder()
-          .append("Unknown FLOW task reference AST: ").append(ast.getValue()).append(System.lineSeparator())
-          .append("  - ").append(ast).append("!")
+          .append("Unknown FLOW task reference").append(System.lineSeparator())
+            .append("  Flow: ")
+            .append("\"").append(flow.getId().getValue()).append("\"")
+            .append(" task ref: ")
+            .append("\"").append(ast.getValue()).append("\"")
+            .append(" does not exist!").append(System.lineSeparator())
+          .append("  AST: ").append(ast.getValue()).append(System.lineSeparator())
+          .append("    - ").append(ast).append("!")
           .toString();
     }
+    
     public String unknownFlTaskPointer(FlowTaskPointer ast) {
       return new StringBuilder()
           .append("Unknown FLOW task pointer AST: ").append(ast.getClass()).append(System.lineSeparator())

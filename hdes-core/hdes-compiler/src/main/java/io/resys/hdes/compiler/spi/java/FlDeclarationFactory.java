@@ -21,6 +21,7 @@ package io.resys.hdes.compiler.spi.java;
  */
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.squareup.javapoet.TypeSpec;
 
@@ -32,6 +33,7 @@ import io.resys.hdes.compiler.api.ImmutableResource;
 import io.resys.hdes.compiler.api.ImmutableTypeDeclaration;
 import io.resys.hdes.compiler.api.ImmutableTypeName;
 import io.resys.hdes.compiler.spi.java.fl.FlApiSpec;
+import io.resys.hdes.compiler.spi.java.fl.FlSwitchApiSpec;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.HdesExecutable;
@@ -65,12 +67,11 @@ public class FlDeclarationFactory {
     Assertions.notNull(envir, () -> "envir can't be null");
     Assertions.notNull(body, () -> "body can't be null");
 
-    TypeSpec api = FlApiSpec.builder(naming).body(body).build();
-    TypeSpec impl = null; // new FlImplementationVisitor(naming).visitBody(body);
-    List<TypeSpec> switches = null;// new FlSwitchVisitor(naming).visitBody(body);
-    
-
     String pkg = naming.fl().pkg(body); 
+    
+    TypeSpec api = FlApiSpec.builder(naming).body(body).build();    
+    TypeSpec impl = null; // new FlImplementationVisitor(naming).visitBody(body);
+    List<TypeSpec> switchApi = FlSwitchApiSpec.builder(naming).body(body).build();
     
     return ImmutableResource.builder()
         .type(HdesExecutable.SourceType.FL)
@@ -81,14 +82,16 @@ public class FlDeclarationFactory {
         .input(JavaSpecUtil.typeName(naming.fl().inputValue(body)))
         .output(JavaSpecUtil.typeName(naming.fl().outputValue(body)))
 
-//        .addAllDeclarations(switches.stream().map(s -> ImmutableTypeDeclaration.builder()
-//            .type(ImmutableTypeName.builder().name(s.name).pkg(pkg).build())
-//            .isExecutable(false).value(JavaSpecUtil.javaFile(s, pkg)).build())
-//            .collect(Collectors.toList()))
-//        
+        .addAllDeclarations(switchApi.stream()
+            .map((TypeSpec e) -> ImmutableTypeDeclaration.builder()
+                .type(ImmutableTypeName.builder().name(e.name).pkg(pkg).build())
+                .isExecutable(false).value(JavaSpecUtil.javaFile(e, pkg)).build())
+            .collect(Collectors.toList()))
+        
         .addDeclarations(ImmutableTypeDeclaration.builder()
             .type(ImmutableTypeName.builder().name(api.name).pkg(pkg).build())
             .isExecutable(false).value(JavaSpecUtil.javaFile(api, pkg)).build())
+        
 //        
 //        .addDeclarations(ImmutableTypeDeclaration.builder()
 //            .type(ImmutableTypeName.builder().name(impl.name).pkg(pkg).build())

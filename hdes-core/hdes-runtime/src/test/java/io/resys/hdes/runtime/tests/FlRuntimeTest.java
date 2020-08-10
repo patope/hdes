@@ -95,7 +95,7 @@ public class FlRuntimeTest {
     try {
       List<Resource> resources = compiler.parser()
           .add(name, src)
-          //.add("NameScoreDt", nameScoreDt)
+          .add("NameScoreDt", nameScoreDt)
           .build();
       RuntimeEnvir runtime = ImmutableHdesRuntime.builder().from(resources).build();
       RuntimeTask task = runtime.get(name);

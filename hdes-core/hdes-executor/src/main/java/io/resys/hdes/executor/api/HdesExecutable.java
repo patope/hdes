@@ -84,7 +84,7 @@ public interface HdesExecutable<I extends HdesExecutable.InputValue, M extends H
   interface Flow<I extends InputValue, V extends OutputValue> extends HdesExecutable<I, FlowMeta, V> {}
   interface Formula<I extends InputValue, V extends OutputValue> extends HdesExecutable<I, FormulaMeta, V> {}
   
-  interface Switch<I extends InputValue, M extends SwitchMeta, V extends OutputValue> extends HdesExecutable<I, M, V> {}
+  interface Switch<I extends InputValue, V extends OutputValue> extends HdesExecutable<I, SwitchMeta, V> {}
 
   
   interface ManualTask<I extends InputValue, M extends Meta, V extends OutputValue> extends HdesExecutable<I, M, V> {}

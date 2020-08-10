@@ -25,6 +25,7 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
 import io.resys.hdes.ast.api.AstEnvir;
+import io.resys.hdes.ast.api.AstNodeException;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
@@ -65,7 +66,7 @@ public class JavaFlNaming implements FlNaming {
   
   @Override
   public ClassName state(FlowBody node) {
-    return ClassName.get(pkg(node), node.getId().getValue() + "State");
+    return ClassName.get(api(node).canonicalName(), node.getId().getValue() + "State");
   }
 
   @Override
@@ -102,21 +103,25 @@ public class JavaFlNaming implements FlNaming {
   }
 
   @Override
-  public TaskRefNaming ref(TaskRef node) {
+  public TaskRefNaming ref(FlowBody flow, TaskRef node) {
     switch (node.getType()) {
     case DECISION_TABLE: {
       String typeName = node.getValue();
-      DecisionTableBody body = (DecisionTableBody) envir.getByAstId(typeName);
-      return ImmutableTaskRefNaming.builder()
-          .type(parent.dt().api(body))
-          .returnType(parent.dt().execution(body))
-          .build(); 
+      try {
+        DecisionTableBody body = (DecisionTableBody) envir.getByAstId(typeName);
+        return ImmutableTaskRefNaming.builder()
+            .type(parent.dt().api(body))
+            .returnType(parent.dt().execution(body))
+            .build();
+      } catch(AstNodeException e) {
+        throw new HdesCompilerException(HdesCompilerException.builder().unknownFlTaskRef(flow, node));        
+      }
         
     }
     //case FLOW_TASK: return ClassName.get(parent, node.getValue());
     //case MANUAL_TASK: return ClassName.get(parent, node.getValue());
     //case SERVICE_TASK: return ClassName.get(parent, node.getValue());
-    default: throw new HdesCompilerException(HdesCompilerException.builder().unknownFlTaskRef(node));
+    default: throw new HdesCompilerException(HdesCompilerException.builder().unknownFlTaskRef(flow, node));
     }
   }
 

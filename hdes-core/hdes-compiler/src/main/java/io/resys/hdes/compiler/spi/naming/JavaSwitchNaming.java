@@ -24,7 +24,6 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 
-import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.compiler.spi.naming.Namings.SwitchNaming;
@@ -48,7 +47,7 @@ public class JavaSwitchNaming implements SwitchNaming {
   }
   @Override
   public ClassName api(FlowBody node, FlowTaskNode pointer) {
-    return ClassName.get(pkg(node), node.getId().getValue() + pointer.getId() + "Switch");
+    return ClassName.get(pkg(node), node.getId().getValue() + pointer.getId());
   }
   @Override
   public ParameterizedTypeName executable(FlowBody node, FlowTaskNode pointer) {
@@ -58,16 +57,11 @@ public class JavaSwitchNaming implements SwitchNaming {
   @Override
   public ClassName inputValue(FlowBody node, FlowTaskNode pointer) {
     ClassName api = api(node, pointer);
-    return ClassName.get(api.canonicalName(), pointer.getId() + "In");
+    return ClassName.get(api.canonicalName(), api.simpleName() + "In");
   }
   @Override
   public ClassName outputValue(FlowBody node, FlowTaskNode pointer) {
     ClassName api = api(node, pointer);
-    return ClassName.get(api.canonicalName(), pointer.getId() + "Out");
-  }
-  @Override
-  public ClassName inputValue(FlowBody node, FlowTaskNode pointer, ObjectDef object) {
-    ClassName api = api(node, pointer);
-    return ClassName.get(api.canonicalName(), node.getId() + object.getName() + "In");
+    return ClassName.get(api.canonicalName(), api.simpleName() + "Out");
   }
 }

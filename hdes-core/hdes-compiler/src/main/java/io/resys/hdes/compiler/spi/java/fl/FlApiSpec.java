@@ -1,6 +1,7 @@
 package io.resys.hdes.compiler.spi.java.fl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,9 +21,19 @@ import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
+import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
+import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskPointer;
+import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
+import io.resys.hdes.ast.api.nodes.FlowNode.ThenPointer;
+import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
+import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
+import io.resys.hdes.compiler.spi.naming.Namings.TaskRefNaming;
+import io.resys.hdes.executor.api.FlowMeta;
+import io.resys.hdes.executor.api.FlowMeta.FlowTaskMetaFlux;
+import io.resys.hdes.executor.api.FlowMeta.FlowTaskMetaMono;
 import io.resys.hdes.executor.api.HdesExecutable;
 
 public class FlApiSpec {
@@ -120,7 +131,9 @@ public class FlApiSpec {
           .method(method).build();
     }
     
-
+    /*
+     * Return type of the header
+     */
     private TypeName returnType(TypeDef node) {
       final TypeName typeName;
       if(node instanceof ScalarDef) {
@@ -142,18 +155,62 @@ public class FlApiSpec {
       return ParameterizedTypeName.get(ClassName.get(Optional.class), typeName);
     }
     
+
+    private List<MethodSpec> state(Optional<FlowTaskNode> start) {
+      if (start.isEmpty()) {
+        return Collections.emptyList();
+      }
+
+      List<MethodSpec> result = new ArrayList<>();      
+      if(!start.get().getRef().isEmpty()) {
+        TaskRef ref = start.get().getRef().get();
+        TaskRefNaming refName = namings.fl().ref(body, ref);
+        Assertions.notNull(namings.ast().getByAstId(ref.getValue()), () -> "Reference can't be null!");
+
+        Class<?> taskSuperinterface = start.get().getLoop().isPresent() ? FlowTaskMetaFlux.class : FlowTaskMetaMono.class;
+        final MethodSpec methodSpec = MethodSpec.methodBuilder(JavaSpecUtil.methodName(start.get().getId()))
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .returns(ParameterizedTypeName.get(ClassName.get(taskSuperinterface), refName.getReturnType())).build();
+        result.add(methodSpec);  
+      }
+
+      FlowTaskPointer pointer = start.get().getNext();
+      if (pointer instanceof ThenPointer) {
+        ThenPointer then = (ThenPointer) pointer;
+        result.addAll(state(then.getTask()));
+      } else if (pointer instanceof WhenThenPointer) {
+        WhenThenPointer whenThen = (WhenThenPointer) pointer;
+
+        ClassName type = namings.sw().api(body, start.get());
+        result.add(MethodSpec.methodBuilder(JavaSpecUtil.methodName(type.simpleName()))
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT).returns(type).build());
+        
+        for (WhenThen c : whenThen.getValues()) {
+          FlowTaskPointer nextPointer = c.getThen();
+          if(nextPointer instanceof ThenPointer) {
+            ThenPointer next = (ThenPointer) nextPointer;
+            result.addAll(state(next.getTask()));  
+          }
+        }
+      }
+      
+      return result;
+    }
+    
     public TypeSpec build() {
       Assertions.notNull(body, () -> "body must be defined!");
+      
       final ClassName interfaceName = namings.fl().api(body);
       final TypeName superinterface = namings.fl().executable(body);
       final AnnotationSpec annotation = AnnotationSpec.builder(javax.annotation.processing.Generated.class)
           .addMember("value", "$S", FlApiSpec.class.getCanonicalName()).build();
-
+      
       final List<TypeSpec> headers = headers();
+      final TypeSpec state = JavaSpecUtil.immutableSpec(namings.fl().state(body))
+          .addSuperinterface(FlowMeta.FlowState.class).addMethods(state(body.getTask())).build();
 
       return TypeSpec.interfaceBuilder(interfaceName).addModifiers(Modifier.PUBLIC).addAnnotation(annotation)
-          .addSuperinterface(superinterface).addTypes(headers).build();
-
+      .addSuperinterface(superinterface).addTypes(headers).addType(state).build();
     }
   }
 }

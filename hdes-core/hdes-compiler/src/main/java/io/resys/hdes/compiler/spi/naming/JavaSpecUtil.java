@@ -77,7 +77,15 @@ public class JavaSpecUtil {
   
   public static ClassName immutable(ClassName src) {
     String pkg = src.packageName();
-    String top = pkg.substring(0, pkg.lastIndexOf("."));
+    int index = pkg.lastIndexOf(".");
+    
+    String top;
+    if(Character.isUpperCase(pkg.charAt(index + 1))) {
+      top = pkg.substring(0, index);
+    } else {
+      top = pkg;
+    }
+    
     return ClassName.get(top, "Immutable" + src.simpleName());
   }
   

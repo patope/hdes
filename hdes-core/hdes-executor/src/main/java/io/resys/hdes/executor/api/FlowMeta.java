@@ -31,21 +31,22 @@ public interface FlowMeta extends HdesExecutable.Meta {
 
   FlowState getState();  
   
-  interface FlowTask extends Serializable {
-    String getId();
-  }
-  
   interface FlowState extends Serializable {
+  }
+  
+  interface FlowTaskMeta extends Serializable {
     String getId();
   }
   
+  @SuppressWarnings("rawtypes")
   @Value.Immutable
-  interface FlowTaskMonoMeta extends FlowTask {
-    HdesExecutable.Meta getDelegate();
+  interface FlowTaskMetaMono<T extends HdesExecutable.Execution> extends FlowTaskMeta {
+    T getDelegate();
   }
   
+  @SuppressWarnings("rawtypes")
   @Value.Immutable
-  interface FlowTaskFluxMeta extends FlowTask {
-    List<HdesExecutable.Meta> getDelegate();
+  interface FlowTaskMetaFlux<T extends HdesExecutable.Execution> extends FlowTaskMeta {
+    List<T> getDelegate();
   }
 }
