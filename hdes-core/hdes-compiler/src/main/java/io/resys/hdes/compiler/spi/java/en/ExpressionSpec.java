@@ -30,7 +30,7 @@ import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor.EnScalarCodeSpec;
 import io.resys.hdes.compiler.spi.java.invocation.InvocationTypeDef;
 
-public class ExpressionSpec {
+public interface ExpressionSpec {
   
   public static Builder builder() {
     return new Builder();
@@ -41,7 +41,6 @@ public class ExpressionSpec {
     private Body node;
     private AstEnvir envir;
     
-
     public Builder parent(Body node) {
       this.node = node;
       return this;

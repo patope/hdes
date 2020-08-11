@@ -50,7 +50,8 @@ import io.resys.hdes.ast.api.nodes.DecisionTableNode.MatrixRow;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.RuleRow;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.spi.java.dt.RuleRowSpec.DtControlStatement;
-import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationGetMethod;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationGetMethodDt;
 import io.resys.hdes.compiler.spi.java.invocation.InvocationSpec;
 import io.resys.hdes.compiler.spi.java.invocation.InvocationSpec.InvocationSpecParams;
 import io.resys.hdes.compiler.spi.java.invocation.InvocationSpec.InvocationType;
@@ -113,14 +114,14 @@ public class DtImplSpec {
       for(InvocationType scope : referedTypes.getTypes()) {
         switch (scope) {
         case IN:
-          formulaInput.add("\r\n").add("  .$L($L)", ExpressionVisitor.ACCESS_INPUT_VALUE, ExpressionVisitor.ACCESS_INPUT_VALUE);
+          formulaInput.add("\r\n").add("  .$L($L)", InvocationGetMethod.ACCESS_INPUT_VALUE, InvocationGetMethod.ACCESS_INPUT_VALUE);
           break;
         case OUT:
-          formulaInput.add("\r\n").add("  .$L($L)", ExpressionVisitor.ACCESS_OUTPUT_VALUE, ExpressionVisitor.ACCESS_OUTPUT_VALUE);
+          formulaInput.add("\r\n").add("  .$L($L)", InvocationGetMethodDt.ACCESS_OUTPUT_VALUE, InvocationGetMethodDt.ACCESS_OUTPUT_VALUE);
         case INSTANCE:
           continue;
         case STATIC:
-          formulaInput.add("\r\n").add("  .$L($L)", ExpressionVisitor.ACCESS_STATIC_VALUE, ExpressionVisitor.ACCESS_STATIC_VALUE);
+          formulaInput.add("\r\n").add("  .$L($L)", InvocationGetMethodDt.ACCESS_STATIC_VALUE, InvocationGetMethodDt.ACCESS_STATIC_VALUE);
           continue;
         default: throw new IllegalArgumentException("Scope: " + scope + " parameter: " + scalarDef + " not implemented!"); 
         }
@@ -154,7 +155,7 @@ public class DtImplSpec {
       }
       
       CodeBlock.Builder builder = CodeBlock.builder()
-          .addStatement("$T mutator = $L", inputType, ExpressionVisitor.ACCESS_INPUT_VALUE);
+          .addStatement("$T mutator = $L", inputType, InvocationGetMethod.ACCESS_INPUT_VALUE);
       
       for(CodeBlock codeBlock : inputFormulas) {
         builder.add(codeBlock).add("\r\n");
@@ -164,7 +165,7 @@ public class DtImplSpec {
         .methodBuilder("applyInputFormula")
         .addModifiers(Modifier.PUBLIC)
         .addCode(builder.addStatement("return mutator").build())
-        .addParameter(inputType, ExpressionVisitor.ACCESS_INPUT_VALUE)
+        .addParameter(inputType, InvocationGetMethod.ACCESS_INPUT_VALUE)
         .returns(inputType)
         .build());
     }
@@ -183,7 +184,7 @@ public class DtImplSpec {
       final ClassName outputType = namings.dt().outputValueMono(body);
       
       CodeBlock.Builder builder = CodeBlock.builder()
-          .addStatement("$T mutator = $L", outputType, ExpressionVisitor.ACCESS_OUTPUT_VALUE);
+          .addStatement("$T mutator = $L", outputType, InvocationGetMethodDt.ACCESS_OUTPUT_VALUE);
       
       for(CodeBlock codeBlock : outputFormulas) {
         builder.add(codeBlock).add("\r\n");
@@ -193,8 +194,8 @@ public class DtImplSpec {
         .methodBuilder("applyOutputFormula")
         .addModifiers(Modifier.PUBLIC)
         .addCode(builder.addStatement("return mutator").build())
-        .addParameter(inputType, ExpressionVisitor.ACCESS_INPUT_VALUE)
-        .addParameter(outputType, ExpressionVisitor.ACCESS_OUTPUT_VALUE)
+        .addParameter(inputType, InvocationGetMethod.ACCESS_INPUT_VALUE)
+        .addParameter(outputType, InvocationGetMethodDt.ACCESS_OUTPUT_VALUE)
         .returns(outputType)
         .build());
     }

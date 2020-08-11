@@ -84,19 +84,32 @@ public class FlSwitchImplSpec {
     }
     
     private TypeSpec whenThen(FlowTaskNode task, WhenThenPointer pointer) {
-      CodeBlock.Builder execution = CodeBlock.builder().addStatement("return null");
+      CodeBlock.Builder execution = CodeBlock.builder();
       
       for(WhenThen whenThen : pointer.getValues()) {
         
         if(whenThen.getWhen().isPresent()) {
           EnScalarCodeSpec scalar = ExpressionSpec.builder().parent(body).envir(namings.ast()).build(whenThen.getWhen().get());
           
+          execution
+          .beginControlFlow("if($L)", scalar.getValue())
+          .endControlFlow();
+          
+          scalar.getValue();
           System.out.println(scalar);
           
           // if not boolean then null check or Optional.isPresent ?
+        } else if(pointer.getValues().size() > 1) {
+          execution
+          .beginControlFlow("else")
+          .endControlFlow();
           
+          break;
         }
       }
+      
+      execution.addStatement("return null");
+      
       return TypeSpec.classBuilder(namings.sw().impl(body, task))
           .addModifiers(Modifier.PUBLIC)
           .addSuperinterface(namings.sw().api(body, task))

@@ -1,5 +1,7 @@
 package io.resys.hdes.compiler.spi.java.invocation;
 
+import com.squareup.javapoet.CodeBlock;
+
 import io.resys.hdes.ast.api.AstEnvir;
 import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.ast.api.nodes.AstNode.Invocation;
@@ -10,7 +12,9 @@ import io.resys.hdes.ast.spi.Assertions;
 
 public interface InvocationTypeDef {
   
-  TypeDef apply(Invocation name, AstNodeVisitorContext ctx);
+  TypeDef getTypeDef(Invocation name, AstNodeVisitorContext ctx);
+  
+  CodeBlock getMethod(Invocation name, AstNodeVisitorContext ctx);
   
   public static Builder builder() {
     return new Builder();

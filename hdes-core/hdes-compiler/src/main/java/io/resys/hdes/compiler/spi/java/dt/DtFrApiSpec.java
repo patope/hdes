@@ -36,7 +36,8 @@ import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationGetMethod;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationGetMethodDt;
 import io.resys.hdes.compiler.spi.java.invocation.InvocationSpec;
 import io.resys.hdes.compiler.spi.java.invocation.InvocationSpec.InvocationSpecParams;
 import io.resys.hdes.compiler.spi.java.invocation.InvocationSpec.InvocationType;
@@ -90,19 +91,19 @@ public class DtFrApiSpec {
       for(InvocationType scope : referedTypes.getTypes()) {
         switch (scope) {
         case IN:
-          methods.add(MethodSpec.methodBuilder(JavaSpecUtil.methodName(ExpressionVisitor.ACCESS_INPUT_VALUE))
+          methods.add(MethodSpec.methodBuilder(JavaSpecUtil.methodName(InvocationGetMethod.ACCESS_INPUT_VALUE))
               .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
               .returns(namings.dt().inputValue(body))
               .build());
           break;
         case OUT:
-          methods.add(MethodSpec.methodBuilder(JavaSpecUtil.methodName(ExpressionVisitor.ACCESS_OUTPUT_VALUE))
+          methods.add(MethodSpec.methodBuilder(JavaSpecUtil.methodName(InvocationGetMethodDt.ACCESS_OUTPUT_VALUE))
               .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
               .returns(namings.dt().outputValueMono(body))
               .build());
           break;
         case STATIC:
-          methods.add(MethodSpec.methodBuilder(JavaSpecUtil.methodName(ExpressionVisitor.ACCESS_STATIC_VALUE))
+          methods.add(MethodSpec.methodBuilder(JavaSpecUtil.methodName(InvocationGetMethodDt.ACCESS_STATIC_VALUE))
               .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
               .returns(namings.dt().staticValue(body))
               .build());

@@ -2,6 +2,8 @@ package io.resys.hdes.compiler.spi.java.invocation;
 
 import java.util.Optional;
 
+import com.squareup.javapoet.CodeBlock;
+
 import io.resys.hdes.ast.api.AstEnvir;
 import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.ast.api.nodes.AstNode.Invocation;
@@ -25,7 +27,7 @@ public class InvocationTypeDefFl implements InvocationTypeDef {
   }
 
   @Override
-  public TypeDef apply(Invocation invocation, AstNodeVisitorContext ctx) {
+  public TypeDef getTypeDef(Invocation invocation, AstNodeVisitorContext ctx) {
     try {
       FlowBody flow = TypeDefFinder.getBody(ctx);
       if(invocation instanceof MethodInvocation) {
@@ -39,11 +41,11 @@ public class InvocationTypeDefFl implements InvocationTypeDef {
             TaskRef taskRef = task.get().getRef().get();
             return InvocationTypeDef.builder()
                 .envir(envir).body(envir.getBody(taskRef.getValue())).build()
-                .apply(deconstruct(delegate), ImmutableAstNodeVisitorContext.builder().parent(ctx).value(delegate).build());
+                .getTypeDef(deconstruct(delegate), ImmutableAstNodeVisitorContext.builder().parent(ctx).value(delegate).build());
           }
         }
         
-        return new InvocationTypeDefGeneric(envir).apply(invocation, ctx);
+        return new InvocationTypeDefGeneric(envir).getTypeDef(invocation, ctx);
       }
       
       
@@ -55,7 +57,7 @@ public class InvocationTypeDefFl implements InvocationTypeDef {
         Body delegate = envir.getBody(taskRef.getValue());
         return InvocationTypeDef.builder()
             .envir(envir).body(delegate).build()
-            .apply(deconstruct(invocation), ImmutableAstNodeVisitorContext.builder().parent(ctx).value(delegate).build());
+            .getTypeDef(deconstruct(invocation), ImmutableAstNodeVisitorContext.builder().parent(ctx).value(delegate).build());
       }
 
       throw new HdesCompilerException(HdesCompilerException.builder().unknownExpressionParameter(invocation));
@@ -69,5 +71,11 @@ public class InvocationTypeDefFl implements InvocationTypeDef {
   private Invocation deconstruct(Invocation src) {
     String nextPath = "instance." + src.getValue().substring(src.getValue().indexOf(".") + 1);
     return ImmutableInstanceInvocation.builder().from(src).value(nextPath).build();
+  }
+
+  @Override
+  public CodeBlock getMethod(Invocation invocation, AstNodeVisitorContext ctx) {
+    TypeDef typeDef = getTypeDef(invocation, ctx);
+    return InvocationGetMethod.builder().ctx(ctx).typeDef(typeDef).invocation(invocation).build();
   }
 }

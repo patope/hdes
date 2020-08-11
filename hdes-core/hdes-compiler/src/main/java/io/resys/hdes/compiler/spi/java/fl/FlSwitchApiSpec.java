@@ -20,6 +20,7 @@ import io.resys.hdes.ast.api.nodes.FlowNode.ThenPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 import io.resys.hdes.ast.spi.Assertions;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationGetMethodFl;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.HdesExecutable;
@@ -98,6 +99,9 @@ public class FlSwitchApiSpec {
       final TypeSpec input = JavaSpecUtil
         .immutableSpec(namings.sw().inputValue(body, task))
         .addSuperinterface(HdesExecutable.InputValue.class)
+        .addMethod(MethodSpec.methodBuilder(JavaSpecUtil.methodName(InvocationGetMethodFl.ACCESS_STATE_VALUE))
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .returns(namings.fl().state(body)).build())
         .build();
       
       final TypeSpec output = JavaSpecUtil

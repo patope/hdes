@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import com.squareup.javapoet.CodeBlock;
+
 import io.resys.hdes.ast.api.AstEnvir;
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.Body;
@@ -33,7 +35,7 @@ public class InvocationTypeDefGeneric implements InvocationTypeDef {
   }
 
   @Override
-  public TypeDef apply(Invocation invocation, AstNodeVisitorContext ctx) {
+  public TypeDef getTypeDef(Invocation invocation, AstNodeVisitorContext ctx) {
     try {
       if(invocation instanceof TypeInvocation) {
         return accept((TypeInvocation) invocation, ctx);
@@ -75,7 +77,7 @@ public class InvocationTypeDefGeneric implements InvocationTypeDef {
       MethodInvocation lambdaParentNode = (MethodInvocation) lambdaParent.getValue();
       LambdaExpression expression = (LambdaExpression) lambdaCtx.getValue();
       TypeInvocation lambdaName = expression.getParams().get(0);
-      ObjectDef lambdaOn = (ObjectDef) apply(lambdaParentNode.getType().get(), lambdaParent);
+      ObjectDef lambdaOn = (ObjectDef) getTypeDef(lambdaParentNode.getType().get(), lambdaParent);
 
       Optional<TypeDef> typeDef = TypeDefFinder.getTypeDef(
           ImmutableObjectDef.builder()
@@ -136,12 +138,18 @@ public class InvocationTypeDefGeneric implements InvocationTypeDef {
     
     // Non global methods 
     Invocation typeName = method.getType().get();
-    TypeDef typeDef = apply(typeName, ctx);
+    TypeDef typeDef = getTypeDef(typeName, ctx);
     
     if(method.getValue().equals("map")) {
       return typeDef;
     }
     
     throw new HdesCompilerException(HdesCompilerException.builder().unknownFunctionCall(method, method.getValue()));
+  }
+
+  @Override
+  public CodeBlock getMethod(Invocation invocation, AstNodeVisitorContext ctx) {
+    TypeDef typeDef = getTypeDef(invocation, ctx);
+    return InvocationGetMethod.builder().ctx(ctx).typeDef(typeDef).invocation(invocation).build();
   }
 }

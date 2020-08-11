@@ -34,23 +34,23 @@ import io.resys.hdes.ast.api.nodes.AstNodeVisitor.AstNodeVisitorContext;
 import io.resys.hdes.ast.api.nodes.ImmutableAstNodeVisitorContext;
 import io.resys.hdes.ast.spi.Assertions;
 
-public class InvocationSpec {
+public interface InvocationSpec {
 
   @Value.Immutable
-  public interface InvocationSpecParams {
+  interface InvocationSpecParams {
     List<InvocationSpecParam> getValues();
     Set<InvocationType> getTypes();
     TypeDef getReturnType();
   }
 
   @Value.Immutable
-  public interface InvocationSpecParam {
+  interface InvocationSpecParam {
     TypeDef getNode();
     Invocation getValue();
     InvocationType getType();
   }
 
-  public static enum InvocationType {
+  static enum InvocationType {
     INSTANCE, STATIC, IN, OUT
   }
 

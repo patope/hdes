@@ -26,7 +26,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.immutables.value.Value;
@@ -34,16 +33,12 @@ import org.immutables.value.Value;
 import com.squareup.javapoet.CodeBlock;
 
 import io.resys.hdes.ast.api.nodes.AstNode;
-import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
-import io.resys.hdes.ast.api.nodes.AstNode.InstanceInvocation;
 import io.resys.hdes.ast.api.nodes.AstNode.Invocation;
 import io.resys.hdes.ast.api.nodes.AstNode.Literal;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarType;
-import io.resys.hdes.ast.api.nodes.AstNode.StaticInvocation;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
-import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.ExpressionAstNodeVisitor;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveExpression;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.AdditiveType;
@@ -71,16 +66,11 @@ import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor.EnJavaSpec;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor.EnScalarCodeSpec;
 import io.resys.hdes.compiler.spi.java.en.TypeConverter.EnConvertionSpec;
 import io.resys.hdes.compiler.spi.java.invocation.InvocationTypeDef;
-import io.resys.hdes.compiler.spi.java.invocation.TypeDefFinder;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.executor.spi.HdesMath;
 
 public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, EnScalarCodeSpec> {
-  public final static String ACCESS_INPUT_VALUE = "inputValue";
-  public final static String ACCESS_OUTPUT_VALUE = "outputValue";
-  public final static String ACCESS_STATIC_VALUE = "staticValue";
-  public final static String ACCESS_STATIC_VALUES = "values";
-  public final static String ACCESS_INSTANCE_VALUE = "instanceValue";
+  
   public final static String ACCESS_SRC_VALUE = "src";
   public final static List<String> GLOBAL_METHODS = Arrays.asList("min", "max", "sum", "avg");
   public final static List<String> LAMBDA_METHODS = Arrays.asList("map");
@@ -118,52 +108,21 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
 
   @Override
   public EnJavaSpec visitInvocation(Invocation node, AstNodeVisitorContext ctx) {
-    TypeDef typeDefNode = resolver.apply(node, ctx);
-    String typeName = node.getValue();
-    Optional<String> lambdaContext = TypeDefFinder.getLambda(ctx).map(runningCtx -> {
-      LambdaExpression lambda = (LambdaExpression) runningCtx.getValue();
-      return lambda.getParams().get(0).getValue();
-    });
+    TypeDef typeDefNode = resolver.getTypeDef(node, ctx);
+    CodeBlock value = resolver.getMethod(node, ctx);
 
-    
-    CodeBlock.Builder value = CodeBlock.builder();
-    if(lambdaContext.isPresent() && 
-        (typeName.equals(lambdaContext.get()) || typeName.startsWith(lambdaContext.get() + ".")) && 
-        node instanceof TypeInvocation) {
-      
-      String name = JavaSpecUtil.methodVarCall(node.getValue());
-      value.add(name + (typeDefNode.getRequired() ? "" : ".get()"));
-      
-    } else if(node instanceof StaticInvocation) {
-    
-      String name = typeName.replaceFirst("static", ACCESS_STATIC_VALUE);
-      value.add("$L.$L", ACCESS_SRC_VALUE, JavaSpecUtil.methodCall(name) + (typeDefNode.getRequired() ? "" : ".get()"));
-      
-    } else if(node instanceof InstanceInvocation) {
-      String name = JavaSpecUtil.methodCall(ACCESS_OUTPUT_VALUE);
-      value.add("$L.$L", ACCESS_SRC_VALUE, name + (typeDefNode.getRequired() ? "" : ".get()"));
-    
-    } else if(typeDefNode.getDirection() == DirectionType.IN) {
-      String name = JavaSpecUtil.methodCall(ACCESS_INPUT_VALUE + "." + typeName);
-      value.add("$L.$L", ACCESS_SRC_VALUE, name + (typeDefNode.getRequired() ? "" : ".get()"));
-    
-    } else {
-      String name = JavaSpecUtil.methodCall(ACCESS_OUTPUT_VALUE + "." + typeName);
-      value.add("$L.$L", ACCESS_SRC_VALUE, name + (typeDefNode.getRequired() ? "" : ".get()"));
-    }
-    
     if(typeDefNode instanceof ScalarDef) {
       ScalarDef scalarNode = (ScalarDef) typeDefNode;
       return ImmutableEnScalarCodeSpec.builder()
           .type(scalarNode.getType()).array(typeDefNode.getArray())
-          .value(value.build())
+          .value(value)
           .build();
     }
     
     ObjectDef type = (ObjectDef) typeDefNode;
     return ImmutableEnObjectCodeSpec.builder()
         .array(typeDefNode.getArray()).type(type)
-        .value(value.build())
+        .value(value)
         .build();
   }
 
@@ -345,7 +304,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
       throw new HdesCompilerException(HdesCompilerException.builder().incorrectLambdaFormula(node)); 
     }
 
-    TypeDef typeDef = this.resolver.apply(node, ctx);
+    TypeDef typeDef = this.resolver.getTypeDef(node, ctx);
     if (typeDef instanceof ScalarDef) {
       return ImmutableEnScalarCodeSpec.builder()
           .value(CodeBlock.builder().add("input.").add(JavaSpecUtil.methodCall(node.getValue())).build())

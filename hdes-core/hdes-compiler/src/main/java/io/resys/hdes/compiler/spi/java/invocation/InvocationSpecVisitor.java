@@ -208,7 +208,7 @@ public class InvocationSpecVisitor implements ExpressionAstNodeVisitor<Invocatio
   
   @Override
   public InvocationSpecParams visitInvocation(Invocation node, AstNodeVisitorContext ctx) {
-    final TypeDef typeDef = resolver.apply(node, ctx);
+    final TypeDef typeDef = resolver.getTypeDef(node, ctx);
     final InvocationType scope;
     
     if(node instanceof StaticInvocation) {
@@ -232,7 +232,7 @@ public class InvocationSpecVisitor implements ExpressionAstNodeVisitor<Invocatio
   
   @Override
   public InvocationSpecParams visitMethod(MethodInvocation node, AstNodeVisitorContext ctx) {
-    final TypeDef typeDef = resolver.apply(node, ctx);
+    final TypeDef typeDef = resolver.getTypeDef(node, ctx);
     List<InvocationType> usage = new ArrayList<>();
     usage.add(InvocationType.INSTANCE);
     List<InvocationSpecParam> values = new ArrayList<>();
