@@ -1,5 +1,7 @@
 package io.resys.hdes.compiler.spi.java.en;
 
+import io.resys.hdes.ast.api.AstEnvir;
+
 /*-
  * #%L
  * hdes-compiler
@@ -22,12 +24,11 @@ package io.resys.hdes.compiler.spi.java.en;
 
 import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.AstNodeVisitorContext;
-import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.ImmutableAstNodeVisitorContext;
 import io.resys.hdes.ast.spi.Assertions;
-import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.InvocationResolver;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor.EnScalarCodeSpec;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationTypeDef;
 
 public class ExpressionSpec {
   
@@ -38,6 +39,8 @@ public class ExpressionSpec {
   public static class Builder {
     private AstNodeVisitorContext ctx;
     private Body node;
+    private AstEnvir envir;
+    
 
     public Builder parent(Body node) {
       this.node = node;
@@ -49,7 +52,12 @@ public class ExpressionSpec {
       return this;
     }
     
+    public Builder envir(AstEnvir envir) {
+      this.envir = envir;
+      return this;
+    }
     public EnScalarCodeSpec build(ExpressionBody value) {
+      Assertions.notNull(envir, () -> "envir or context can't be null!");
       Assertions.isTrue(node != null || ctx != null, () -> "node or context can't be null!");
 
       // find body node
@@ -69,13 +77,7 @@ public class ExpressionSpec {
         ctx = ImmutableAstNodeVisitorContext.builder().value(value).parent(parent).build();
       }
       
-      InvocationResolver resolver = null;
-      if (body instanceof DecisionTableBody) {
-        resolver = new DtInvocationResolver();
-      } 
-      
-      Assertions.notNull(resolver, () -> "can't create resolver for node: " + node + " ctx: " + ctx);
-      
+      InvocationTypeDef resolver = InvocationTypeDef.builder().envir(envir).body(body).build();
       return new ExpressionVisitor(resolver).visitBody(value, ctx);
     }
   }

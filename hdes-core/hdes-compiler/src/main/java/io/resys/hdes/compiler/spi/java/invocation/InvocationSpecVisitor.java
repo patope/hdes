@@ -1,4 +1,4 @@
-package io.resys.hdes.compiler.spi.java.en;
+package io.resys.hdes.compiler.spi.java.invocation;
 
 /*-
  * #%L
@@ -56,16 +56,15 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnary;
 import io.resys.hdes.ast.api.nodes.ImmutableAstNodeVisitorContext;
 import io.resys.hdes.ast.api.nodes.ImmutableScalarDef;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.InvocationResolver;
-import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.InvocationSpecParam;
-import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.InvocationSpecParams;
-import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.UsageSource;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationSpec.InvocationSpecParam;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationSpec.InvocationSpecParams;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationSpec.InvocationType;
 
-public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<InvocationSpecParams, InvocationSpecParams> {
+public class InvocationSpecVisitor implements ExpressionAstNodeVisitor<InvocationSpecParams, InvocationSpecParams> {
   
-  private final InvocationResolver resolver;
+  private final InvocationTypeDef resolver;
   
-  public ExpressionInvocationVisitor(InvocationResolver resolver) {
+  public InvocationSpecVisitor(InvocationTypeDef resolver) {
     super();
     this.resolver = resolver;
   }
@@ -114,8 +113,8 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
     return ImmutableInvocationSpecParams.builder()
         .addAllValues(left.getValues())
         .addAllValues(right.getValues())
-        .addAllUsageSources(left.getUsageSources())
-        .addAllUsageSources(right.getUsageSources())
+        .addAllTypes(left.getTypes())
+        .addAllTypes(right.getTypes())
         .returnType(ImmutableScalarDef.builder()
             .array(false).required(true)
             .token(node.getToken())
@@ -152,8 +151,8 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
     return ImmutableInvocationSpecParams.builder()
         .addAllValues(left.getValues())
         .addAllValues(right.getValues())
-        .addAllUsageSources(left.getUsageSources())
-        .addAllUsageSources(right.getUsageSources())
+        .addAllTypes(left.getTypes())
+        .addAllTypes(right.getTypes())
         .returnType(ImmutableScalarDef.builder()
             .array(false).required(true)
             .token(node.getToken())
@@ -201,60 +200,60 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
     return ImmutableInvocationSpecParams.builder()
         .addAllValues(left.getValues())
         .addAllValues(right.getValues())
-        .addAllUsageSources(left.getUsageSources())
-        .addAllUsageSources(right.getUsageSources())
+        .addAllTypes(left.getTypes())
+        .addAllTypes(right.getTypes())
         .returnType(returnTypeDef)
         .build();
   }
   
   @Override
   public InvocationSpecParams visitInvocation(Invocation node, AstNodeVisitorContext ctx) {
-    final TypeDef typeDef = resolver.accept(node, ctx);
-    final UsageSource scope;
+    final TypeDef typeDef = resolver.apply(node, ctx);
+    final InvocationType scope;
     
     if(node instanceof StaticInvocation) {
-      scope = UsageSource.STATIC;
+      scope = InvocationType.STATIC;
     } else if(node instanceof InstanceInvocation) {
-      scope = UsageSource.OUT;
+      scope = InvocationType.OUT;
     } else if(typeDef.getDirection() == DirectionType.IN) {
-      scope = UsageSource.IN;
+      scope = InvocationType.IN;
     } else if(typeDef.getDirection() == DirectionType.OUT) {
-      scope = UsageSource.OUT;
+      scope = InvocationType.OUT;
     } else {
       throw new HdesCompilerException(HdesCompilerException.builder().unknownExpressionParameter(node));
     }
     
     return ImmutableInvocationSpecParams.builder()
         .returnType(typeDef)
-        .addValues(ImmutableInvocationSpecParam.builder().value(node).node(typeDef).usageSource(scope).build())
-        .addUsageSources(scope)
+        .addValues(ImmutableInvocationSpecParam.builder().value(node).node(typeDef).type(scope).build())
+        .addTypes(scope)
         .build();
   }
   
   @Override
   public InvocationSpecParams visitMethod(MethodInvocation node, AstNodeVisitorContext ctx) {
-    final TypeDef typeDef = resolver.accept(node, ctx);
-    List<UsageSource> usage = new ArrayList<>();
-    usage.add(UsageSource.INSTANCE);
+    final TypeDef typeDef = resolver.apply(node, ctx);
+    List<InvocationType> usage = new ArrayList<>();
+    usage.add(InvocationType.INSTANCE);
     List<InvocationSpecParam> values = new ArrayList<>();
     
     if(node.getType().isPresent()) {
       InvocationSpecParams children = visit(node.getType().get(), ctx);
       values.addAll(children.getValues());
-      usage.addAll(children.getUsageSources());
+      usage.addAll(children.getTypes());
     }
     
     for(AstNode child : node.getValues()) {
       InvocationSpecParams children = visit(child, ctx);
       values.addAll(children.getValues());
-      usage.addAll(children.getUsageSources());
+      usage.addAll(children.getTypes());
     }
     
     return ImmutableInvocationSpecParams.builder()
         .returnType(typeDef)
-        .addValues(ImmutableInvocationSpecParam.builder().value(node).node(typeDef).usageSource(UsageSource.INSTANCE).build())
+        .addValues(ImmutableInvocationSpecParam.builder().value(node).node(typeDef).type(InvocationType.INSTANCE).build())
         .addAllValues(values)
-        .addAllUsageSources(usage)
+        .addAllTypes(usage)
         .build();
   }
 
@@ -307,8 +306,8 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
     return ImmutableInvocationSpecParams.builder()
         .addAllValues(left.getValues())
         .addAllValues(right.getValues())
-        .addAllUsageSources(left.getUsageSources())
-        .addAllUsageSources(right.getUsageSources())
+        .addAllTypes(left.getTypes())
+        .addAllTypes(right.getTypes())
         .returnType(ImmutableScalarDef.builder()
             .array(false).required(true)
             .token(node.getToken())
@@ -328,8 +327,8 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
     return ImmutableInvocationSpecParams.builder()
         .addAllValues(left.getValues())
         .addAllValues(right.getValues())
-        .addAllUsageSources(left.getUsageSources())
-        .addAllUsageSources(right.getUsageSources())
+        .addAllTypes(left.getTypes())
+        .addAllTypes(right.getTypes())
         .returnType(ImmutableScalarDef.builder()
             .array(false).required(true)
             .token(node.getToken())
@@ -348,8 +347,8 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
     return ImmutableInvocationSpecParams.builder()
         .addAllValues(left.getValues())
         .addAllValues(right.getValues())
-        .addAllUsageSources(left.getUsageSources())
-        .addAllUsageSources(right.getUsageSources())
+        .addAllTypes(left.getTypes())
+        .addAllTypes(right.getTypes())
         .returnType(ImmutableScalarDef.builder()
             .array(false).required(true)
             .token(node.getToken())
@@ -370,9 +369,9 @@ public class ExpressionInvocationVisitor implements ExpressionAstNodeVisitor<Inv
         .addAllValues(left.getValues())
         .addAllValues(right.getValues())
         .addAllValues(value.getValues())
-        .addAllUsageSources(left.getUsageSources())
-        .addAllUsageSources(right.getUsageSources())
-        .addAllUsageSources(value.getUsageSources())
+        .addAllTypes(left.getTypes())
+        .addAllTypes(right.getTypes())
+        .addAllTypes(value.getTypes())
         .returnType(ImmutableScalarDef.builder()
             .array(false).required(true)
             .token(node.getToken())

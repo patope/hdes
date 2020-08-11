@@ -1,4 +1,4 @@
-package io.resys.hdes.compiler.spi.java.en;
+package io.resys.hdes.compiler.spi.java.invocation;
 
 /*-
  * #%L
@@ -25,21 +25,21 @@ import java.util.Set;
 
 import org.immutables.value.Value;
 
+import io.resys.hdes.ast.api.AstEnvir;
 import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.ast.api.nodes.AstNode.Invocation;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.AstNodeVisitorContext;
-import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.ImmutableAstNodeVisitorContext;
 import io.resys.hdes.ast.spi.Assertions;
 
-public class ExpressionInvocationSpec {
+public class InvocationSpec {
 
   @Value.Immutable
   public interface InvocationSpecParams {
     List<InvocationSpecParam> getValues();
-    Set<UsageSource> getUsageSources();
+    Set<InvocationType> getTypes();
     TypeDef getReturnType();
   }
 
@@ -47,30 +47,30 @@ public class ExpressionInvocationSpec {
   public interface InvocationSpecParam {
     TypeDef getNode();
     Invocation getValue();
-    UsageSource getUsageSource();
+    InvocationType getType();
   }
 
-  public interface InvocationResolver {
-    TypeDef accept(Invocation name, AstNodeVisitorContext ctx);
-  }
-
-  public static enum UsageSource {
+  public static enum InvocationType {
     INSTANCE, STATIC, IN, OUT
   }
 
   public static Builder builder() {
     return new Builder();
   }
-
+  
   public static class Builder {
     private AstNodeVisitorContext ctx;
     private Body node;
+    private AstEnvir envir;
 
     public Builder parent(Body node) {
       this.node = node;
       return this;
     }
-
+    public Builder envir(AstEnvir envir) {
+      this.envir = envir;
+      return this;
+    }
     public Builder ctx(AstNodeVisitorContext ctx) {
       this.ctx = ctx;
       return this;
@@ -78,6 +78,7 @@ public class ExpressionInvocationSpec {
 
     public InvocationSpecParams build(AstNode value) {
       Assertions.isTrue(node != null || ctx != null, () -> "node or context can't be null!");
+      Assertions.notNull(envir, () -> "envir or context can't be null!");
 
       // find body node
       Body body = null;
@@ -96,13 +97,8 @@ public class ExpressionInvocationSpec {
         ctx = ImmutableAstNodeVisitorContext.builder().value(value).parent(parent).build();
       }
       
-      InvocationResolver resolver = null;
-      if (body instanceof DecisionTableBody) {
-        resolver = new DtInvocationResolver();
-      } 
-      
-      Assertions.notNull(resolver, () -> "can't create resolver for node: " + node + " ctx: " + ctx);
-      return new ExpressionInvocationVisitor(resolver).visit(value, ctx);
+      InvocationTypeDef resolver = InvocationTypeDef.builder().envir(envir).body(body).build();
+      return new InvocationSpecVisitor(resolver).visit(value, ctx);
     }
   }
 }

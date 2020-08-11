@@ -67,10 +67,11 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnary;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnary;
 import io.resys.hdes.ast.api.nodes.ImmutableAstNodeVisitorContext;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.InvocationResolver;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor.EnJavaSpec;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor.EnScalarCodeSpec;
 import io.resys.hdes.compiler.spi.java.en.TypeConverter.EnConvertionSpec;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationTypeDef;
+import io.resys.hdes.compiler.spi.java.invocation.TypeDefFinder;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.executor.spi.HdesMath;
 
@@ -83,7 +84,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
   public final static String ACCESS_SRC_VALUE = "src";
   public final static List<String> GLOBAL_METHODS = Arrays.asList("min", "max", "sum", "avg");
   public final static List<String> LAMBDA_METHODS = Arrays.asList("map");
-  private final InvocationResolver resolver;
+  private final InvocationTypeDef resolver;
 
   public interface EnJavaSpec { 
     CodeBlock getValue();
@@ -105,7 +106,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
     ObjectDef getType();
   }
 
-  public ExpressionVisitor(InvocationResolver resolver) {
+  public ExpressionVisitor(InvocationTypeDef resolver) {
     super();
     this.resolver = resolver;
   }
@@ -117,17 +118,15 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
 
   @Override
   public EnJavaSpec visitInvocation(Invocation node, AstNodeVisitorContext ctx) {
-    TypeDef typeDefNode = resolver.accept(node, ctx);
+    TypeDef typeDefNode = resolver.apply(node, ctx);
     String typeName = node.getValue();
-    Optional<String> lambdaContext = getLambda(ctx).map(runningCtx -> {
+    Optional<String> lambdaContext = TypeDefFinder.getLambda(ctx).map(runningCtx -> {
       LambdaExpression lambda = (LambdaExpression) runningCtx.getValue();
       return lambda.getParams().get(0).getValue();
     });
 
     
     CodeBlock.Builder value = CodeBlock.builder();
-    
-    
     if(lambdaContext.isPresent() && 
         (typeName.equals(lambdaContext.get()) || typeName.startsWith(lambdaContext.get() + ".")) && 
         node instanceof TypeInvocation) {
@@ -197,7 +196,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
       throw new HdesCompilerException(HdesCompilerException.builder().unknownExpressionParameter(node));
     }
 
-    return ImmutableEnScalarCodeSpec.builder().value(builder.build()).type(node.getType()).build();
+    return ImmutableEnScalarCodeSpec.builder().value(builder.build()).array(false).type(node.getType()).build();
   }
 
   @Override
@@ -346,7 +345,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
       throw new HdesCompilerException(HdesCompilerException.builder().incorrectLambdaFormula(node)); 
     }
 
-    TypeDef typeDef = this.resolver.accept(node, ctx);
+    TypeDef typeDef = this.resolver.apply(node, ctx);
     if (typeDef instanceof ScalarDef) {
       return ImmutableEnScalarCodeSpec.builder()
           .value(CodeBlock.builder().add("input.").add(JavaSpecUtil.methodCall(node.getValue())).build())
@@ -416,7 +415,7 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
       throw new HdesCompilerException(
           HdesCompilerException.builder().betweenOperationNotSupportedForType(node, commonType));
     }
-    return ImmutableEnScalarCodeSpec.builder().value(body.build()).type(commonType).build();
+    return ImmutableEnScalarCodeSpec.builder().value(body.build()).array(false).type(commonType).build();
 
   }
 
@@ -659,18 +658,5 @@ public class ExpressionVisitor implements ExpressionAstNodeVisitor<EnJavaSpec, E
   @Override
   public EnJavaSpec visitPostDecrement(PostDecrementUnary node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
-  }
-  
-  public static Optional<AstNodeVisitorContext> getLambda(AstNodeVisitorContext ctx) {
-    AstNodeVisitorContext parent = ctx;
-    do {
-      if(parent.getValue() instanceof LambdaExpression) {
-        return Optional.of(parent);
-      } else {
-        parent = parent.getParent().orElse(null);
-      }
-    } while(parent != null);
-    
-    return Optional.empty();
   }
 }

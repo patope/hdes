@@ -36,10 +36,10 @@ import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec;
-import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.InvocationSpecParams;
-import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.UsageSource;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationSpec;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationSpec.InvocationSpecParams;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationSpec.InvocationType;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.HdesExecutable;
@@ -78,16 +78,16 @@ public class DtFrApiSpec {
     }
     
     private TypeSpec inputType(ScalarDef scalar) {
-      InvocationSpecParams referedTypes = ExpressionInvocationSpec.builder().parent(body).build(scalar.getFormula().get());
-      if(scalar.getDirection() == DirectionType.IN && referedTypes.getUsageSources().contains(UsageSource.OUT)) {
+      InvocationSpecParams referedTypes = InvocationSpec.builder().parent(body).envir(namings.ast()).build(scalar.getFormula().get());
+      if(scalar.getDirection() == DirectionType.IN && referedTypes.getTypes().contains(InvocationType.OUT)) {
         List<String> unusables = referedTypes.getValues().stream()
-            .filter(e -> e.getUsageSource() == UsageSource.OUT)
+            .filter(e -> e.getType() == InvocationType.OUT)
             .map(e -> e.getNode().getName()).collect(Collectors.toList());
         throw new HdesCompilerException(HdesCompilerException.builder().dtFormulaContainsIncorectScopeParameters(scalar, unusables));
       }
       
       List<MethodSpec> methods = new ArrayList<>();
-      for(UsageSource scope : referedTypes.getUsageSources()) {
+      for(InvocationType scope : referedTypes.getTypes()) {
         switch (scope) {
         case IN:
           methods.add(MethodSpec.methodBuilder(JavaSpecUtil.methodName(ExpressionVisitor.ACCESS_INPUT_VALUE))

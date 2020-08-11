@@ -75,7 +75,7 @@ public class DtFrImplSpec {
       Assertions.isTrue(formula.getFormula().isPresent(), () -> "formula must be present!");
       
       ClassName outputType = namings.fr().outputValue(body, formula);
-      EnScalarCodeSpec formulaSpec = ExpressionSpec.builder().parent(body).build(formula.getFormula().get());
+      EnScalarCodeSpec formulaSpec = ExpressionSpec.builder().envir(namings.ast()).parent(body).build(formula.getFormula().get());
       if(formula.getArray() != formulaSpec.getArray()) {
         throw new HdesCompilerException(HdesCompilerException.builder().dtFormulaContainsIncorectArrayType(formula, formulaSpec.getArray()));
       }

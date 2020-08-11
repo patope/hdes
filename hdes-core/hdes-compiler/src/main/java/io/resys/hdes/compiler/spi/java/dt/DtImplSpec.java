@@ -50,10 +50,10 @@ import io.resys.hdes.ast.api.nodes.DecisionTableNode.MatrixRow;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.RuleRow;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.spi.java.dt.RuleRowSpec.DtControlStatement;
-import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec;
-import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.InvocationSpecParams;
-import io.resys.hdes.compiler.spi.java.en.ExpressionInvocationSpec.UsageSource;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationSpec;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationSpec.InvocationSpecParams;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationSpec.InvocationType;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.DecisionTableMeta;
@@ -109,8 +109,8 @@ public class DtImplSpec {
       CodeBlock.Builder formulaInput = CodeBlock.builder()
           .add("$T.builder()",  JavaSpecUtil.immutable(namings.fr().inputValue(body, scalarDef)));
       
-      InvocationSpecParams referedTypes = ExpressionInvocationSpec.builder().parent(body).build(scalarDef.getFormula().get());
-      for(UsageSource scope : referedTypes.getUsageSources()) {
+      InvocationSpecParams referedTypes = InvocationSpec.builder().envir(namings.ast()).parent(body).build(scalarDef.getFormula().get());
+      for(InvocationType scope : referedTypes.getTypes()) {
         switch (scope) {
         case IN:
           formulaInput.add("\r\n").add("  .$L($L)", ExpressionVisitor.ACCESS_INPUT_VALUE, ExpressionVisitor.ACCESS_INPUT_VALUE);
@@ -203,8 +203,8 @@ public class DtImplSpec {
       boolean isStaticUsagePresent = body.getHeaders().getValues().stream()
         .map(h -> (ScalarDef) h)
         .filter(h -> h.getFormula().isPresent())
-        .map(h -> ExpressionInvocationSpec.builder().parent(body).build(h.getFormula().get()))
-        .map(h -> h.getUsageSources().contains(UsageSource.STATIC))
+        .map(h -> InvocationSpec.builder().envir(namings.ast()).parent(body).build(h.getFormula().get()))
+        .map(h -> h.getTypes().contains(InvocationType.STATIC))
         .filter(v -> v)
         .findFirst().orElse(false);
       
