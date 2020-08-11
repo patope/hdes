@@ -31,6 +31,15 @@ public class FlSwitchApiSpec {
     Assertions.notNull(namings, () -> "namings must be defined!");
     return new Builder(namings);
   }
+  
+  public static String getGateName(FlowTaskPointer pointer) {
+    if(pointer instanceof ThenPointer) {
+      return ((ThenPointer) pointer).getName();
+    } else if(pointer instanceof EndPointer) {
+      return ((EndPointer) pointer).getName();
+    }
+    return "Nested";
+  }
 
   public static class Builder {
     final AnnotationSpec annotationSpec = AnnotationSpec.builder(javax.annotation.processing.Generated.class).addMember("value", "$S", FlSwitchApiSpec.class.getCanonicalName()).build();
@@ -51,18 +60,9 @@ public class FlSwitchApiSpec {
       ClassName gateTypeName = namings.sw().gate(body, task);
       TypeSpec.Builder gateEnum = TypeSpec.enumBuilder(gateTypeName);
       for (WhenThen c : node.getValues()) {
-        gateEnum.addEnumConstant(getName(c.getThen()));
+        gateEnum.addEnumConstant(getGateName(c.getThen()));
       }
       return gateEnum.addModifiers(Modifier.PUBLIC, Modifier.STATIC).build();  
-    }
-    
-    private String getName(FlowTaskPointer pointer) {
-      if(pointer instanceof ThenPointer) {
-        return ((ThenPointer) pointer).getName();
-      } else if(pointer instanceof EndPointer) {
-        return ((EndPointer) pointer).getName();
-      }
-      return "Nested";
     }
     
     

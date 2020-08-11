@@ -8,6 +8,7 @@ import java.util.Optional;
 import javax.lang.model.element.Modifier;
 
 import com.squareup.javapoet.AnnotationSpec;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
@@ -22,8 +23,13 @@ import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.spi.java.en.ExpressionSpec;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor.EnScalarCodeSpec;
+import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
+import io.resys.hdes.executor.api.HdesExecutable.ExecutionStatus;
 import io.resys.hdes.executor.api.HdesExecutable.SourceType;
+import io.resys.hdes.executor.api.ImmutableExecution;
+import io.resys.hdes.executor.api.ImmutableSwitchMeta;
+import io.resys.hdes.executor.api.SwitchMeta;
 
 public class FlSwitchImplSpec {
   
@@ -84,7 +90,13 @@ public class FlSwitchImplSpec {
     }
     
     private TypeSpec whenThen(FlowTaskNode task, WhenThenPointer pointer) {
-      CodeBlock.Builder execution = CodeBlock.builder();
+      final ClassName outputType = namings.sw().outputValue(body, task);
+      final ClassName immutableOutputName = JavaSpecUtil.immutable(outputType);
+      final ClassName gate = namings.sw().gate(body, task);
+      
+      CodeBlock.Builder execution = CodeBlock.builder()
+        .addStatement("long start = System.currentTimeMillis()")
+        .addStatement("$T.Builder result = $T.builder()", immutableOutputName, immutableOutputName).add("\r\n");
       
       for(WhenThen whenThen : pointer.getValues()) {
         
@@ -93,22 +105,32 @@ public class FlSwitchImplSpec {
           
           execution
           .beginControlFlow("if($L)", scalar.getValue())
+          .addStatement("result.gate($T.$L)", gate, FlSwitchApiSpec.getGateName(whenThen.getThen()))
           .endControlFlow();
-          
-          scalar.getValue();
-          System.out.println(scalar);
           
           // if not boolean then null check or Optional.isPresent ?
         } else if(pointer.getValues().size() > 1) {
           execution
           .beginControlFlow("else")
+          .addStatement("result.gate($T.$L)", gate, FlSwitchApiSpec.getGateName(whenThen.getThen()))
           .endControlFlow();
           
           break;
         }
       }
       
-      execution.addStatement("return null");
+      execution.add("\r\n")
+      .addStatement("$T output = result.build()", outputType)
+      .addStatement("long end = System.currentTimeMillis()")
+      .add("$T metaWrapper = $T.builder()", ImmutableSwitchMeta.class, ImmutableSwitchMeta.class)
+      .add("\r\n  ").add(".id($S).status($T.COMPLETED) ", task.getId(), ExecutionStatus.class)
+      .add("\r\n  ").addStatement(".start(start).end(end).time(end - start).build()")
+      .add("\r\n")
+      
+      .addStatement("$T.Builder<$T, $T> resultWrapper = $T.builder()", ImmutableExecution.class, SwitchMeta.class, outputType, ImmutableExecution.class)
+      .addStatement("return resultWrapper.meta(metaWrapper).value(output).build()")
+      .build();
+    
       
       return TypeSpec.classBuilder(namings.sw().impl(body, task))
           .addModifiers(Modifier.PUBLIC)
