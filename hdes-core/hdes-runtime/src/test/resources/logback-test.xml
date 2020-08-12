@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="io.resys.hdes.runtime.tests.LogbackDeclarationFilter">
+      <Marker>NameScoreFlow</Marker>
+    </filter>
+    <encoder>
+      <param name="pattern" value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n" />
+    </encoder>
+  </appender>
+  
+  <logger name="io.resys.hdes.runtime.spi.ImmutableHdesRuntime" level="debug"/>
+
+  <root level="error">
+    <appender-ref ref="STDOUT" />
+  </root>
+</configuration>
