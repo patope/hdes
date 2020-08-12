@@ -45,10 +45,6 @@ import io.resys.hdes.executor.api.ImmutableExecution;
 import io.resys.hdes.executor.api.ImmutableFormulaMeta;
 
 public class DtFrImplSpec {
-  
-  public static String ACCESS_INPUT_VALUE = "inputValue";
-  public static String ACCESS_OUTPUT_VALUE = "outputValue";
-  public static String ACCESS_STATIC_VALUE = "staticValue";
 
   public static Builder builder(Namings namings) {
     Assertions.notNull(namings, () -> "namings must be defined!");
@@ -108,7 +104,7 @@ public class DtFrImplSpec {
               .addAnnotation(Override.class)
               .addModifiers(Modifier.PUBLIC)
               .returns(SourceType.class)
-              .addStatement("return $T.FR", SourceType.class)
+              .addStatement("return $T.$L", SourceType.class, SourceType.FR)
               .build())
           
           .addMethod(MethodSpec.methodBuilder("apply")

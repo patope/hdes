@@ -81,7 +81,7 @@ public class DtImplSpec {
         .addAnnotation(Override.class)
         .addModifiers(Modifier.PUBLIC)
         .returns(SourceType.class)
-        .addStatement("return $T.DT", SourceType.class)
+        .addStatement("return $T.$L", SourceType.class, SourceType.DT)
         .build();
     private final MethodSpec constructor = MethodSpec.constructorBuilder()
         .addModifiers(Modifier.PUBLIC)
@@ -262,13 +262,13 @@ public class DtImplSpec {
       final List<MethodSpec> formulas = new ArrayList<>();
       final ClassName staticType = namings.dt().staticValue(body);
       final ClassName outputType = namings.dt().outputValueMono(body);
-      final ClassName immutableOutputName = JavaSpecUtil.immutable(outputType);
+      final ClassName immutableOutputType = JavaSpecUtil.immutable(outputType);
       
       CodeBlock.Builder execution = CodeBlock.builder()
           .addStatement("long start = System.currentTimeMillis()")
           .addStatement("int id = 0")
           .addStatement("$T<Integer, $T> meta = new $T<>()", Map.class, DecisionTableMetaEntry.class, HashMap.class)
-          .addStatement("$T.Builder result = $T.builder()", immutableOutputName, immutableOutputName);
+          .addStatement("$T.Builder result = $T.builder()", immutableOutputType, immutableOutputType);
       
       // init static
       Optional<CodeBlock> staticValue = staticValue(body);

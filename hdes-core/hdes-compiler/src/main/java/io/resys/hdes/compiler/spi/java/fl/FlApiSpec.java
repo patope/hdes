@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;
 
 import org.immutables.value.Value;
@@ -50,6 +51,7 @@ public class FlApiSpec {
   }
 
   public static class Builder {
+    private final AnnotationSpec nullable = AnnotationSpec.builder(Nullable.class).build();
     private final Namings namings;
     private FlowBody body;
 
@@ -166,11 +168,12 @@ public class FlApiSpec {
         TaskRef ref = start.get().getRef().get();
         TaskRefNaming refName = namings.fl().ref(body, ref);
         Assertions.notNull(namings.ast().getByAstId(ref.getValue()), () -> "Reference can't be null!");
+        ClassName taskSuperinterface = ClassName.get(start.get().getLoop().isPresent() ? FlowTaskMetaFlux.class : FlowTaskMetaMono.class);
 
-        Class<?> taskSuperinterface = start.get().getLoop().isPresent() ? FlowTaskMetaFlux.class : FlowTaskMetaMono.class;
         final MethodSpec methodSpec = MethodSpec.methodBuilder(JavaSpecUtil.methodName(start.get().getId()))
+            .addAnnotation(nullable)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .returns(ParameterizedTypeName.get(ClassName.get(taskSuperinterface), refName.getReturnType())).build();
+            .returns(ParameterizedTypeName.get(taskSuperinterface, refName.getMeta(), refName.getOutputValue())).build();
         result.add(methodSpec);  
       }
 
@@ -183,6 +186,7 @@ public class FlApiSpec {
 
         ClassName type = namings.sw().api(body, start.get());
         result.add(MethodSpec.methodBuilder(JavaSpecUtil.methodName(type.simpleName()))
+            .addAnnotation(nullable)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT).returns(type).build());
         
         for (WhenThen c : whenThen.getValues()) {

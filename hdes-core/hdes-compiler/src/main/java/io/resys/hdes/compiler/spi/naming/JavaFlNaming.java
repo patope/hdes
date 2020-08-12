@@ -33,6 +33,7 @@ import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
 import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.spi.naming.Namings.FlNaming;
 import io.resys.hdes.compiler.spi.naming.Namings.TaskRefNaming;
+import io.resys.hdes.executor.api.DecisionTableMeta;
 import io.resys.hdes.executor.api.FlowMeta;
 import io.resys.hdes.executor.api.HdesExecutable.Execution;
 import io.resys.hdes.executor.api.HdesExecutable.Flow;
@@ -111,7 +112,8 @@ public class JavaFlNaming implements FlNaming {
         DecisionTableBody body = (DecisionTableBody) envir.getByAstId(typeName);
         return ImmutableTaskRefNaming.builder()
             .type(parent.dt().api(body))
-            .returnType(parent.dt().execution(body))
+            .meta(ClassName.get(DecisionTableMeta.class))
+            .outputValue(parent.dt().outputValueMono(body))
             .build();
       } catch(AstNodeException e) {
         throw new HdesCompilerException(HdesCompilerException.builder().unknownFlTaskRef(flow, node));        

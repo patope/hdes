@@ -114,7 +114,8 @@ public interface Namings {
   @Value.Immutable
   interface TaskRefNaming {
     ClassName getType();
-    ParameterizedTypeName getReturnType();
+    ClassName getMeta();
+    ClassName getOutputValue();
   }
   
 }

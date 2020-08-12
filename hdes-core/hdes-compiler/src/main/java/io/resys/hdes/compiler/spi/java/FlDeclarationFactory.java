@@ -33,6 +33,7 @@ import io.resys.hdes.compiler.api.ImmutableResource;
 import io.resys.hdes.compiler.api.ImmutableTypeDeclaration;
 import io.resys.hdes.compiler.api.ImmutableTypeName;
 import io.resys.hdes.compiler.spi.java.fl.FlApiSpec;
+import io.resys.hdes.compiler.spi.java.fl.FlImplSpec;
 import io.resys.hdes.compiler.spi.java.fl.FlSwitchApiSpec;
 import io.resys.hdes.compiler.spi.java.fl.FlSwitchImplSpec;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
@@ -71,7 +72,7 @@ public class FlDeclarationFactory {
     String pkg = naming.fl().pkg(body); 
     
     TypeSpec api = FlApiSpec.builder(naming).body(body).build();    
-    TypeSpec impl = null; // new FlImplementationVisitor(naming).visitBody(body);
+    TypeSpec impl = FlImplSpec.builder(naming).body(body).build();
     List<TypeSpec> switchApi = FlSwitchApiSpec.builder(naming).body(body).build();
     List<TypeSpec> switchImpl = FlSwitchImplSpec.builder(naming).body(body).build();
     
@@ -100,10 +101,10 @@ public class FlDeclarationFactory {
             .type(ImmutableTypeName.builder().name(api.name).pkg(pkg).build())
             .isExecutable(false).value(JavaSpecUtil.javaFile(api, pkg)).build())
         
-//        
-//        .addDeclarations(ImmutableTypeDeclaration.builder()
-//            .type(ImmutableTypeName.builder().name(impl.name).pkg(pkg).build())
-//            .isExecutable(true).value(JavaSpecUtil.javaFile(impl, pkg)).build())
+        
+        .addDeclarations(ImmutableTypeDeclaration.builder()
+            .type(ImmutableTypeName.builder().name(impl.name).pkg(pkg).build())
+            .isExecutable(true).value(JavaSpecUtil.javaFile(impl, pkg)).build())
 
         .build();
   }

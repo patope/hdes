@@ -38,15 +38,13 @@ public interface FlowMeta extends HdesExecutable.Meta {
     String getId();
   }
   
-  @SuppressWarnings("rawtypes")
   @Value.Immutable
-  interface FlowTaskMetaMono<T extends HdesExecutable.Execution> extends FlowTaskMeta {
-    T getDelegate();
+  interface FlowTaskMetaMono<M extends HdesExecutable.Meta, T extends HdesExecutable.OutputValue> extends FlowTaskMeta {
+    HdesExecutable.Execution<M, T> getDelegate();
   }
   
-  @SuppressWarnings("rawtypes")
   @Value.Immutable
-  interface FlowTaskMetaFlux<T extends HdesExecutable.Execution> extends FlowTaskMeta {
-    List<T> getDelegate();
+  interface FlowTaskMetaFlux<M extends HdesExecutable.Meta, T extends HdesExecutable.OutputValue> extends FlowTaskMeta {
+    List<HdesExecutable.Execution<M, T>> getDelegate();
   }
 }
