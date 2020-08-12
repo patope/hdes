@@ -20,6 +20,7 @@ import io.resys.hdes.ast.api.nodes.FlowNode.ThenPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 import io.resys.hdes.ast.spi.Assertions;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationGetMethod;
 import io.resys.hdes.compiler.spi.java.invocation.InvocationGetMethodFl;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
@@ -102,6 +103,9 @@ public class FlSwitchApiSpec {
         .addMethod(MethodSpec.methodBuilder(JavaSpecUtil.methodName(InvocationGetMethodFl.ACCESS_STATE_VALUE))
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(namings.fl().state(body)).build())
+        .addMethod(MethodSpec.methodBuilder(JavaSpecUtil.methodName(InvocationGetMethod.ACCESS_INPUT_VALUE))
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .returns(namings.fl().inputValue(body)).build())
         .build();
       
       final TypeSpec output = JavaSpecUtil

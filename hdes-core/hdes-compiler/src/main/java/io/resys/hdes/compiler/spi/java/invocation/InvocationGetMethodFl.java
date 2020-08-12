@@ -52,8 +52,8 @@ public class InvocationGetMethodFl {
           .build();      
     }
     
-    return CodeBlock.builder()
-        .add("input.$L", JavaSpecUtil.methodCall(InvocationGetMethod.ACCESS_INPUT_VALUE) + (typeDef.getRequired() ? "" : ".get()"))
-        .build();
+    String required = (typeDef.getRequired() ? "" : ".get()");
+    String name = JavaSpecUtil.methodCall(InvocationGetMethod.ACCESS_INPUT_VALUE + "." + node.getValue());
+    return CodeBlock.builder().add("input.$L", name + required).build();
   }
 }
