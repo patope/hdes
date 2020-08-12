@@ -53,7 +53,7 @@ public class FlRuntimeTest {
         "  type INTEGER required IN,\n" + 
         "  firstName STRING required IN,\n" +
         "  lastName STRING required IN,\n" +
-        "  clientScore INTEGER required OUT\n" +
+        "  clientScore INTEGER optional OUT\n" +
         "}\n" + 
         "tasks: {\n" + 
         "  FirstNameTask: {\n" + 
@@ -73,7 +73,7 @@ public class FlRuntimeTest {
     data.put("lastName", "SAM");
     
     HdesExecutable.Execution<FlowMeta, ? extends OutputValue> output = runFlow("NameScoreFlow", src, data);
-    Assertions.assertEquals(output.getMeta().getState(), "");
+    Assertions.assertEquals(output.getMeta().getState().toString(), "NameScoreFlowState{firstNameTask=null, nameScoreFlowswitch=null, lastNameTask=null}");
   }
   
   
