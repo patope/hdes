@@ -108,10 +108,11 @@ public class ImmutableHdesRuntime implements HdesRuntime {
   }
   
   private static void log(TypeDeclaration type) {
-    if(LOGGER.isDebugEnabled() 
-        && type.getType().getName().toLowerCase().contains("switch")
-        ) {
-      StringBuilder result = new StringBuilder(type.getType().getName()).append(System.lineSeparator());
+    if(LOGGER.isDebugEnabled()) {
+      
+      StringBuilder result = new StringBuilder().append(System.lineSeparator())
+          .append("Declaration: '").append(type.getType().getName()).append("'")
+          .append(System.lineSeparator());
       
       int index = 1;
       for(String value : type.getValue().split("\\r?\\n")) {
