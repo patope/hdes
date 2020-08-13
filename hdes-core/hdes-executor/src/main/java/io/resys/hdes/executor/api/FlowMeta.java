@@ -33,6 +33,7 @@ public interface FlowMeta extends HdesExecutable.Meta {
   
   interface FlowState extends Serializable {
     String getId();
+    long getStart();
     //ExecutionStatus getStatus();
   }
   
