@@ -259,17 +259,23 @@ public class FlImplSpec {
           .addStatement("$T after = $T.builder().start(start).id($S).build()", immutableStateType, immutableStateType, body.getId().getValue())
           .add("\r\n");
   
-      execution
-        .addStatement("long end = System.currentTimeMillis()")
-        .add("$T meta = $T.builder()", FlowMeta.class, ImmutableFlowMeta.class)
-        .add("\r\n  ").add(".id($S).status($T.COMPLETED) ", body.getId().getValue(), ExecutionStatus.class)
-        .add("\r\n  ").add(".start(start).end(end).time(end - start)")
-        .add("\r\n  ").addStatement(".state(after).build()", body.getId().getValue(), ExecutionStatus.class)
+      if(body.getTask().isPresent()) {
+        String nextTaskId = body.getTask().get().getId();
+        String nextMethodName = getExecuteTaskMethodName(nextTaskId);
+        execution.addStatement("return $L(input, after)", nextMethodName);
         
-        .addStatement("$T.Builder result = $T.builder()", immutableOutputType, immutableOutputType)
-        .addStatement("$T.Builder<$T, $T> resultWrapper = $T.builder()", ImmutableExecution.class, FlowMeta.class, outputType, ImmutableExecution.class)
-        .addStatement("return resultWrapper.meta(meta).value(result.build()).build()");
-      
+      } else {
+        execution
+          .addStatement("long end = System.currentTimeMillis()")
+          .add("$T meta = $T.builder()", FlowMeta.class, ImmutableFlowMeta.class)
+          .add("\r\n  ").add(".id($S).status($T.COMPLETED) ", body.getId().getValue(), ExecutionStatus.class)
+          .add("\r\n  ").add(".start(start).end(end).time(end - start)")
+          .add("\r\n  ").addStatement(".state(after).build()", body.getId().getValue(), ExecutionStatus.class)
+          
+          .addStatement("$T.Builder result = $T.builder()", immutableOutputType, immutableOutputType)
+          .addStatement("$T.Builder<$T, $T> resultWrapper = $T.builder()", ImmutableExecution.class, FlowMeta.class, outputType, ImmutableExecution.class)
+          .addStatement("return resultWrapper.meta(meta).value(result.build()).build()");
+      }
       return TypeSpec.classBuilder(namings.fl().impl(body))
           .addModifiers(Modifier.PUBLIC)
           .addSuperinterface(namings.fl().api(body))
