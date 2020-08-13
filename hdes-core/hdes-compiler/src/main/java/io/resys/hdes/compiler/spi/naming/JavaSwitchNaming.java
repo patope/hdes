@@ -45,7 +45,7 @@ public class JavaSwitchNaming implements SwitchNaming {
   @Override
   public ClassName gate(FlowBody node, FlowTaskNode pointer) {
     ClassName api = api(node, pointer);
-    return ClassName.get(api.packageName() + "." + api.simpleName(), "Gate");
+    return ClassName.get(api.packageName() + "." + api.simpleName(), JavaSpecUtil.capitalize(pointer.getId()) + "Gate");
   }
   @Override
   public ClassName api(FlowBody node, FlowTaskNode pointer) {

@@ -57,9 +57,9 @@ public class FlRuntimeTest {
         "}\n" + 
         "tasks: {\n" + 
         "  FirstNameTask: {\n" + 
-        "    then: switch\n" + 
+        "    then: decision\n" + 
         "    decision-table: NameScoreDt uses: { value: firstName } },\n" + 
-        "  switch: {\n" + 
+        "  decision: {\n" + 
         "    when: FirstNameTask.value > 10 then: LastNameTask,\n" + 
         "    when: ? then: end as: { clientScore: FirstNameTask.value } },\n" + 
         "  LastNameTask: {\n" + 
@@ -71,7 +71,7 @@ public class FlRuntimeTest {
     data.put("type", 11);
     data.put("firstName", "BOB");
     data.put("lastName", "SAM");
-    
+
     HdesExecutable.Execution<FlowMeta, ? extends OutputValue> output = runFlow("NameScoreFlow", src, data);
     Assertions.assertEquals(output.getMeta().getState().toString(), "NameScoreFlowState{firstNameTask=null, nameScoreFlowswitch=null, lastNameTask=null}");
   }

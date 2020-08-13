@@ -56,6 +56,7 @@ import io.resys.hdes.executor.api.FlowMeta;
 import io.resys.hdes.executor.api.FlowMeta.FlowTaskMetaFlux;
 import io.resys.hdes.executor.api.FlowMeta.FlowTaskMetaMono;
 import io.resys.hdes.executor.api.HdesExecutable;
+import io.resys.hdes.executor.api.SwitchMeta;
 
 public class FlApiSpec {
 
@@ -204,10 +205,13 @@ public class FlApiSpec {
       } else if (pointer instanceof WhenThenPointer) {
         WhenThenPointer whenThen = (WhenThenPointer) pointer;
 
-        ClassName type = namings.sw().api(body, start.get());
-        result.add(MethodSpec.methodBuilder(JavaSpecUtil.methodName(type.simpleName()))
+        result.add(MethodSpec.methodBuilder(JavaSpecUtil.methodName(start.get().getId()))
             .addAnnotation(nullable)
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT).returns(type).build());
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .returns(ParameterizedTypeName.get(
+                ClassName.get(FlowTaskMetaMono.class), 
+                ClassName.get(SwitchMeta.class), 
+                namings.sw().outputValue(body, start.get()))).build());
         
         for (WhenThen c : whenThen.getValues()) {
           FlowTaskPointer nextPointer = c.getThen();
@@ -230,7 +234,7 @@ public class FlApiSpec {
           .addMember("value", "$S", FlApiSpec.class.getCanonicalName()).build();
       
       final List<TypeSpec> headers = headers();
-      final TypeSpec state = JavaSpecUtil.immutableSpec(namings.fl().state(body))
+      final TypeSpec state = JavaSpecUtil.immutableSpec(namings.fl().stateValue(body))
           .addSuperinterface(FlowMeta.FlowState.class).addMethods(state(body.getTask())).build();
 
       return TypeSpec.interfaceBuilder(interfaceName).addModifiers(Modifier.PUBLIC).addAnnotation(annotation)

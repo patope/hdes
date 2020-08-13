@@ -66,7 +66,7 @@ public class JavaFlNaming implements FlNaming {
   }
   
   @Override
-  public ClassName state(FlowBody node) {
+  public ClassName stateValue(FlowBody node) {
     return ClassName.get(api(node).canonicalName(), node.getId().getValue() + "State");
   }
 
@@ -111,8 +111,11 @@ public class JavaFlNaming implements FlNaming {
       try {
         DecisionTableBody body = (DecisionTableBody) envir.getByAstId(typeName);
         return ImmutableTaskRefNaming.builder()
-            .type(parent.dt().api(body))
+            .api(parent.dt().api(body))
+            .impl(parent.dt().impl(body))
             .meta(ClassName.get(DecisionTableMeta.class))
+            .execution(parent.dt().execution(body))
+            .inputValue(parent.dt().inputValue(body))
             .outputValue(parent.dt().outputValueMono(body))
             .build();
       } catch(AstNodeException e) {

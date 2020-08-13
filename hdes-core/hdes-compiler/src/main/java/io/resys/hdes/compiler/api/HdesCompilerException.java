@@ -13,6 +13,7 @@ import io.resys.hdes.ast.api.nodes.DecisionTableNode.MatrixRow;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.EqualityOperation;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodInvocation;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
+import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
 import io.resys.hdes.ast.api.nodes.ManualTaskNode.ManualTaskBody;
@@ -358,6 +359,15 @@ public class HdesCompilerException extends RuntimeException {
           .append("Lambda name: ").append(invocation.getValue()).append("!").append(System.lineSeparator())
           .append(" AST: ").append(invocation.getClass()).append(System.lineSeparator())
           .append("  - ").append(invocation).append("!")
+          .toString();
+    }
+    
+    public String unknownSwitchThen(FlowTaskNode node) {
+      return new StringBuilder()
+          .append("Unknown then declaration used in task switch!").append(System.lineSeparator())
+          .append("Task name: ").append(node.getId()).append("!").append(System.lineSeparator())
+          .append(" AST: ").append(node.getClass()).append(System.lineSeparator())
+          .append("  - ").append(node).append("!")
           .toString();
     }
   }

@@ -1,5 +1,8 @@
 lexer grammar HdesLexer;
 
+
+ReservedKeyWord: 'switch' | 'case' | 'if' | 'else';
+
 DirectionType: IN | OUT;
 RequiredType: REQUIRED | OPTIONAL;
 DropdownType: DROPDOWN_SINGLE | DROPDOWN_MULTIPLE;

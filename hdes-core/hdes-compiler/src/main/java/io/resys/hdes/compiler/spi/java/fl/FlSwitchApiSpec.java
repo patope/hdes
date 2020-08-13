@@ -122,7 +122,7 @@ public class FlSwitchApiSpec {
         .addSuperinterface(HdesExecutable.InputValue.class)
         .addMethod(MethodSpec.methodBuilder(JavaSpecUtil.methodName(InvocationGetMethodFl.ACCESS_STATE_VALUE))
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .returns(namings.fl().state(body)).build())
+            .returns(namings.fl().stateValue(body)).build())
         .addMethod(MethodSpec.methodBuilder(JavaSpecUtil.methodName(InvocationGetMethod.ACCESS_INPUT_VALUE))
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(namings.fl().inputValue(body)).build())
