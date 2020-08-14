@@ -36,7 +36,9 @@ public interface FlowMetaValue extends HdesExecutable.MetaValue {
   
   FlowState getState();
   
-  interface FlowState extends Serializable {}
+  interface FlowState extends Serializable {
+    
+  }
   
   interface FlowTaskMeta extends Serializable {
     String getId();

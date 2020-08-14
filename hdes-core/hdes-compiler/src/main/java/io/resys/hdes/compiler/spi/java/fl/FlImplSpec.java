@@ -136,15 +136,15 @@ public class FlImplSpec {
       final WhenThenPointer whenThen = (WhenThenPointer) pointer;
       final ClassName stateType = namings.fl().stateValue(body);
       
-      CodeBlock.Builder delegateInput = CodeBlock.builder()
+      CodeBlock delegateInput = CodeBlock.builder()
           .add("$T.builder()", JavaSpecUtil.immutable(namings.sw().inputValue(body, task)))
-          .add("\r\n").add(".inputValue(input)")
-          .add("\r\n").add(".stateValue(before)")
-          .add("\r\n").add(".build()");
+          .add(".inputValue(input)")
+          .add(".stateValue(before)")
+          .add(".build()").build();
       
       CodeBlock.Builder execution = CodeBlock.builder()
           .add("$T delegate = new $T()", namings.sw().execution(body, task), namings.sw().impl(body, task))
-          .add("\r\n  ").addStatement(".apply($L)", delegateInput.build())
+          .addStatement(".apply($L)", delegateInput)
           .add("\r\n")
           
           .addStatement("$T.Builder<$T, $T, $T> task = $T.builder()", ImmutableFlowTaskMetaMono.class, namings.sw().inputValue(body, task), SwitchMeta.class, namings.sw().outputValue(body, task), ImmutableFlowTaskMetaMono.class)
@@ -164,7 +164,7 @@ public class FlImplSpec {
         if(nextPointer instanceof ThenPointer) {
           String nextTaskId = ((ThenPointer) nextPointer).getTask().get().getId();
           String nextMethodName = getExecuteTaskMethodName(nextTaskId);
-          execution.addStatement("case $L: return $L(input, after)", nextTaskId, nextMethodName);
+          execution.addStatement("case $L: return $L(input, after, meta)", nextTaskId, nextMethodName);
         } else if(nextPointer instanceof EndPointer) {
           EndPointer endPointer = (EndPointer) nextPointer;
           execution
@@ -192,22 +192,18 @@ public class FlImplSpec {
       final ClassName inputType = namings.fl().inputValue(body);
       final ClassName immutableOutputType = JavaSpecUtil.immutable(outputType);
       
-      final CodeBlock.Builder execution = CodeBlock.builder()
-      .add("\r\n")
-      .addStatement("$T.Builder result = $T.builder()", immutableOutputType, immutableOutputType)
+      final CodeBlock metaValue = CodeBlock.builder()
+          .add("$T.builder()", ImmutableFlowMetaValue.class)
+          .add("\r\n").add(".from(meta).state(after).end(end).time(end - start)")
+          .add("\r\n").add(".status($T.$L).build()", ExecutionStatus.class, ExecutionStatus.COMPLETED)
+          .build();
       
-      .addStatement("long start = after.getStart()")
-      .addStatement("long end = System.currentTimeMillis()")
-      .add("$T meta = $T.builder()", FlowMetaValue.class, ImmutableFlowMetaValue.class)
-      .add("\r\n  ").add(".id($S).status($T.COMPLETED) ", body.getId().getValue(), ExecutionStatus.class)
-      .add("\r\n  ").add(".start(start).end(end).time(end - start)")
-      .add("\r\n  ").addStatement(".state(after).build()", body.getId().getValue(), ExecutionStatus.class)
-      
-      .addStatement("$T.Builder<$T, $T, $T> resultWrapper = $T.builder()", ImmutableHdesExecution.class, inputType, FlowMetaValue.class, outputType, ImmutableHdesExecution.class)
-      .addStatement("return resultWrapper.metaValue(meta).outputValue(result.build()).build()");
-    
-      
-      return execution.build();
+      return CodeBlock.builder().add("\r\n")
+        .addStatement("$T.Builder result = $T.builder()", immutableOutputType, immutableOutputType)
+        .addStatement("long start = meta.getStart()")
+        .addStatement("long end = System.currentTimeMillis()")      
+        .addStatement("return execution(input, result.build(), $L)", metaValue)
+        .build();
     }
     
     /**
@@ -230,7 +226,7 @@ public class FlImplSpec {
         
         String nextTaskId = then.getTask().get().getId();
         String nextMethodName = getExecuteTaskMethodName(nextTaskId);
-        execution.addStatement("return $L(input, after)", nextMethodName);
+        execution.addStatement("return $L(input, after, meta)", nextMethodName);
      
       } else if (pointer instanceof WhenThenPointer) {        
         WhenThenPointer whenThen = (WhenThenPointer) pointer;
@@ -254,6 +250,7 @@ public class FlImplSpec {
           .addModifiers(Modifier.PUBLIC)
           .addParameter(ParameterSpec.builder(namings.fl().inputValue(body), "input").build())
           .addParameter(ParameterSpec.builder(namings.fl().stateValue(body), "before").build())
+          .addParameter(ParameterSpec.builder(FlowMetaValue.class, "meta").build())
           .returns(namings.fl().execution(body))
           .addCode(execution.build())
           .build());
@@ -267,18 +264,18 @@ public class FlImplSpec {
       Assertions.notNull(body, () -> "body must be defined!");
       
       final ClassName outputType = namings.fl().outputValue(body);
-      final ClassName inputType = namings.fl().inputValue(body);
       final ClassName immutableOutputType = JavaSpecUtil.immutable(outputType);
       final ClassName immutableStateType = JavaSpecUtil.immutable(namings.fl().stateValue(body));
       final CodeBlock.Builder execution = CodeBlock.builder()
-          .addStatement("long start = System.currentTimeMillis()")
-          .addStatement("$T after = $T.builder().start(start).id($S).build()", immutableStateType, immutableStateType, body.getId().getValue())
-          .add("\r\n");
+          .addStatement("$T state = $T.builder().build()", immutableStateType, immutableStateType);
+      
+      execution.add("$T meta = $T.builder()", FlowMetaValue.class, ImmutableFlowMetaValue.class)
+        .addStatement(".id($S).status($T.$L).start(System.currentTimeMillis()).state(state).build()", body.getId().getValue(), ExecutionStatus.class, ExecutionStatus.RUNNING);
   
       if(body.getTask().isPresent()) {
         String nextTaskId = body.getTask().get().getId();
         String nextMethodName = getExecuteTaskMethodName(nextTaskId);
-        execution.addStatement("return $L(input, after)", nextMethodName);
+        execution.addStatement("return $L(input, state, meta)", nextMethodName);
         
       } else {
         execution
@@ -297,21 +294,13 @@ public class FlImplSpec {
       return TypeSpec.classBuilder(namings.fl().impl(body))
           .addModifiers(Modifier.PUBLIC)
           .addSuperinterface(namings.fl().api(body))
+          .superclass(namings.fl().template(body))
           .addJavadoc(body.getDescription().orElse(""))
           .addAnnotations(annotations)
           .addField(FieldSpec.builder(HdesWhen.class, "when", Modifier.PRIVATE, Modifier.FINAL).build())
           .addMethods(task(body.getTask()))
           .addMethod(constructor)
           .addMethod(sourceType)
-          .addMethod(MethodSpec.methodBuilder("execution")
-              .addModifiers(Modifier.PRIVATE)
-              .returns(namings.fl().execution(body))
-              .addCode(CodeBlock.builder()
-                  .addStatement("$T.Builder<$T, $T, $T> result = $T.builder()", ImmutableHdesExecution.class, 
-                      inputType, FlowMetaValue.class, outputType, ImmutableHdesExecution.class)
-                  .addStatement("return result")
-                  .build())
-              .build())
           .addMethod(MethodSpec.methodBuilder("apply")
               .addAnnotation(Override.class)
               .addModifiers(Modifier.PUBLIC)

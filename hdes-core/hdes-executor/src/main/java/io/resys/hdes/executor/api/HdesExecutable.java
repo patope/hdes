@@ -22,7 +22,10 @@ package io.resys.hdes.executor.api;
 
 import java.io.Serializable;
 
+import javax.annotation.Nullable;
+
 import org.immutables.value.Value;
+
 
 public interface HdesExecutable<I extends HdesExecutable.InputValue, M extends HdesExecutable.MetaValue, O extends HdesExecutable.OutputValue> {
   
@@ -46,8 +49,10 @@ public interface HdesExecutable<I extends HdesExecutable.InputValue, M extends H
     String getId();
     ExecutionStatus getStatus();
     long getStart();
-    long getEnd();
-    long getTime();
+    @Nullable
+    Long getEnd();
+    @Nullable
+    Long getTime();
   }
   
   // Single command style method
