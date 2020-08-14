@@ -23,7 +23,6 @@ package io.resys.hdes.compiler.spi.java.invocation;
 import com.squareup.javapoet.CodeBlock;
 
 import io.resys.hdes.ast.api.AstEnvir;
-import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.ast.api.nodes.AstNode.Invocation;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
@@ -54,7 +53,7 @@ public interface InvocationTypeDef {
       return this;
     }
     
-    public InvocationTypeDef build(AstNode target) {
+    public InvocationTypeDef build() {
       Assertions.notNull(envir, () -> "envir can't be null!");
       Assertions.notNull(body, () -> "body can't be null!");
       

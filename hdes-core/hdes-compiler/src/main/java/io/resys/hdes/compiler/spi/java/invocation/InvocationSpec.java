@@ -96,7 +96,6 @@ public interface InvocationSpec {
         AstNodeVisitorContext parent = ImmutableAstNodeVisitorContext.builder().value(body).build();
         ctx = ImmutableAstNodeVisitorContext.builder().value(value).parent(parent).build();
       }
-      
       InvocationTypeDef resolver = InvocationTypeDef.builder().envir(envir).body(body).build();
       return new InvocationSpecVisitor(resolver).visit(value, ctx);
     }
