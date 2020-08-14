@@ -46,10 +46,10 @@ import io.resys.hdes.ast.api.nodes.ImmutableScalarDef;
 import io.resys.hdes.compiler.api.HdesCompilerException;
 import io.resys.hdes.compiler.spi.java.invocation.InvocationSpec.InvocationSpecParams;
 
-public class InvocationTypeDefGeneric implements InvocationTypeDef {
+public class InvocationTypeDefDt implements InvocationTypeDef {
   private final AstEnvir envir;
   
-  public InvocationTypeDefGeneric(AstEnvir envir) {
+  public InvocationTypeDefDt(AstEnvir envir) {
     super();
     this.envir = envir;
   }

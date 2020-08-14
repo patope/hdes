@@ -58,7 +58,7 @@ public interface InvocationTypeDef {
       Assertions.notNull(body, () -> "body can't be null!");
       
       if (body instanceof DecisionTableBody) {
-        return new InvocationTypeDefGeneric(envir);
+        return new InvocationTypeDefDt(envir);
       }
       return new InvocationTypeDefFl(envir);  
     }

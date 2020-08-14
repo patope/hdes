@@ -65,13 +65,15 @@ public class InvocationTypeDefFl implements InvocationTypeDef {
           }
         }
         
-        return new InvocationTypeDefGeneric(envir).getTypeDef(invocation, ctx);
+        return new InvocationTypeDefDt(envir).getTypeDef(invocation, ctx);
       }
       
       
       String[] pathName = invocation.getValue().split("\\.");
       Optional<FlowTaskNode> task = TypeDefFinder.getTask(flow.getTask(), pathName[0]);
       
+      
+      // Get delegate output
       if(task.isPresent() && !task.get().getRef().isEmpty()) {
         TaskRef taskRef = task.get().getRef().get();
         Body delegate = envir.getBody(taskRef.getValue());

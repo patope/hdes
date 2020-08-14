@@ -37,17 +37,11 @@ public interface ExpressionSpec {
   }
 
   public static class Builder {
-    private AstNodeVisitorContext ctx;
     private Body node;
     private AstEnvir envir;
     
     public Builder parent(Body node) {
       this.node = node;
-      return this;
-    }
-    
-    public Builder ctx(AstNodeVisitorContext ctx) {
-      this.ctx = ctx;
       return this;
     }
     
@@ -57,26 +51,13 @@ public interface ExpressionSpec {
     }
     public EnScalarCodeSpec build(ExpressionBody value) {
       Assertions.notNull(envir, () -> "envir or context can't be null!");
-      Assertions.isTrue(node != null || ctx != null, () -> "node or context can't be null!");
+      Assertions.isTrue(node != null, () -> "node or context can't be null!");
 
       // find body node
-      Body body = null;
-      if(ctx != null) {
-        AstNodeVisitorContext parent = ctx;
-        do {
-          if(parent.getValue() instanceof Body) {
-            body = (Body) parent.getValue();
-          } else {
-            parent = parent.getParent().orElse(null);
-          }
-        } while(body == null && parent != null);
-      } else if(node != null) {
-        body = node;
-        AstNodeVisitorContext parent = ImmutableAstNodeVisitorContext.builder().value(body).build();
-        ctx = ImmutableAstNodeVisitorContext.builder().value(value).parent(parent).build();
-      }
+      AstNodeVisitorContext parent = ImmutableAstNodeVisitorContext.builder().value(node).build();
+      AstNodeVisitorContext ctx = ImmutableAstNodeVisitorContext.builder().value(value).parent(parent).build();
       
-      InvocationTypeDef resolver = InvocationTypeDef.builder().envir(envir).body(body).build();
+      InvocationTypeDef resolver = InvocationTypeDef.builder().envir(envir).body(node).build();
       return new ExpressionVisitor(resolver).visitBody(value, ctx);
     }
   }

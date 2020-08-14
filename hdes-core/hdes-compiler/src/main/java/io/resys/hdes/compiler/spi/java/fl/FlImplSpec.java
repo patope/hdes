@@ -153,7 +153,7 @@ public class FlImplSpec {
           .addStatement(".$L(task.id($S).delegate(delegate).build()).build()", JavaSpecUtil.decapitalize(task.getId()), task.getId())
           
           .add("\r\n")
-          .addStatement("$T gate = after.$L.getDelegate().getValue().getGate()", 
+          .addStatement("$T gate = after.$L.getDelegate().getOutputValue().getGate()", 
               namings.sw().gate(body, task), 
               JavaSpecUtil.methodCall(task.getId()));
       
