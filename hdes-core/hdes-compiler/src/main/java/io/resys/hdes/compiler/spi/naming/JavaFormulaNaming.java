@@ -30,8 +30,8 @@ import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.compiler.spi.naming.Namings.FormulaNaming;
 import io.resys.hdes.executor.api.FormulaMeta;
-import io.resys.hdes.executor.api.HdesExecutable.Execution;
 import io.resys.hdes.executor.api.HdesExecutable.Formula;
+import io.resys.hdes.executor.api.HdesExecutable.HdesExecution;
 
 public class JavaFormulaNaming implements FormulaNaming {
   private final JavaNaming parent;
@@ -53,13 +53,12 @@ public class JavaFormulaNaming implements FormulaNaming {
   
   @Override
   public ParameterizedTypeName execution(Body body, ScalarDef pointer) {
-    ClassName outputName = outputValue(body, pointer);
-    ParameterizedTypeName returnType = ParameterizedTypeName
-        .get(ClassName.get(Execution.class), ClassName.get(FormulaMeta.class), outputName);
-    return returnType;
+    ClassName output = outputValue(body, pointer);
+    ClassName input = inputValue(body, pointer);
+    return ParameterizedTypeName
+        .get(ClassName.get(HdesExecution.class), input, ClassName.get(FormulaMeta.class), output);
   } 
   
-
   @Override
   public ClassName api(Body node, ScalarDef pointer) {
     return ClassName.get(pkg(node), node.getId().getValue() + JavaSpecUtil.capitalize(pointer.getName()) + "Formula");

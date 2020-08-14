@@ -65,7 +65,7 @@ public class InvocationGetMethodFl {
     if(task.isPresent()) {
       String nextPath = node.getValue().substring(node.getValue().indexOf(".") + 1);
       return CodeBlock.builder()
-          .add("input.$L.$L.getDelegate().getValue().$L", 
+          .add("input.$L.$L.getDelegate().getOutputValue().$L", 
               JavaSpecUtil.methodCall(ACCESS_STATE_VALUE),
               JavaSpecUtil.methodCall(taskName),
               JavaSpecUtil.methodCall(nextPath))

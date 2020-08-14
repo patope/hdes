@@ -38,6 +38,8 @@ import io.resys.hdes.compiler.spi.java.JavaHdesCompiler;
 import io.resys.hdes.executor.api.DecisionTableMeta;
 import io.resys.hdes.executor.api.HdesExecutable;
 import io.resys.hdes.executor.api.HdesExecutable.DecisionTable;
+import io.resys.hdes.executor.api.HdesExecutable.HdesExecution;
+import io.resys.hdes.executor.api.HdesExecutable.InputValue;
 import io.resys.hdes.executor.api.HdesExecutable.OutputValue;
 import io.resys.hdes.runtime.api.HdesRuntime.RuntimeEnvir;
 import io.resys.hdes.runtime.api.HdesRuntime.RuntimeTask;
@@ -64,9 +66,9 @@ public class DtRuntimeTest {
     data.put("value0", 11);
     data.put("value1", 2);
     
-    HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> output = runDT("ExpressionDT", src, data);
-    Assertions.assertEquals(output.getMeta().getValues().size(), 1);
-    Assertions.assertEquals(output.getMeta().getValues().get(0).getIndex(), 0);
+    HdesExecution<? extends InputValue, DecisionTableMeta, ? extends OutputValue> output = runDT("ExpressionDT", src, data);
+    Assertions.assertEquals(output.getMetaValue().getValues().size(), 1);
+    Assertions.assertEquals(output.getMetaValue().getValues().get(0).getIndex(), 0);
   }
   
   @Test 
@@ -90,10 +92,10 @@ public class DtRuntimeTest {
     data.put("name", "sam");
     data.put("lastName", "blah");
     
-    HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> output = runDT("SimpleHitPolicyFirstDt", src, data);
-    Assertions.assertEquals(output.getMeta().getValues().size(), 1);
-    Assertions.assertEquals(output.getMeta().getValues().get(0).getIndex(), 0);
-    Assertions.assertEquals("SimpleHitPolicyFirstDtOut{value=20, totalHit=9160}", output.getValue().toString());
+    HdesExecution<? extends InputValue, DecisionTableMeta, ? extends OutputValue> output = runDT("SimpleHitPolicyFirstDt", src, data);
+    Assertions.assertEquals(output.getMetaValue().getValues().size(), 1);
+    Assertions.assertEquals(output.getMetaValue().getValues().get(0).getIndex(), 0);
+    Assertions.assertEquals("SimpleHitPolicyFirstDtOut{value=20, totalHit=9160}", output.getOutputValue().toString());
   }
   
   @Test 
@@ -114,10 +116,10 @@ public class DtRuntimeTest {
     data.put("name", "sam");
     data.put("lastName", "blah");
     
-    HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> output = runDT("SimpleHitPolicyMatrixDt", src, data);
+    HdesExecution<? extends InputValue, DecisionTableMeta, ? extends OutputValue> output = runDT("SimpleHitPolicyMatrixDt", src, data);
     
-    Assertions.assertEquals(2, output.getMeta().getValues().size());
-    Assertions.assertEquals("SimpleHitPolicyMatrixDtOut{lastName=30, name=60}", output.getValue().toString());
+    Assertions.assertEquals(2, output.getMetaValue().getValues().size());
+    Assertions.assertEquals("SimpleHitPolicyMatrixDtOut{lastName=30, name=60}", output.getOutputValue().toString());
   }
   
   
@@ -141,10 +143,10 @@ public class DtRuntimeTest {
     data.put("b", 100);
     data.put("c", new BigDecimal("10.78"));
     
-    HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> output = runDT("DtWithFormula", src, data);
-    Assertions.assertEquals(output.getMeta().getValues().size(), 1);
-    Assertions.assertEquals(output.getMeta().getValues().get(0).getIndex(), 0);
-    Assertions.assertEquals("DtWithFormulaOut{totalOut=120.78, score=high-risk}", output.getValue().toString());
+    HdesExecution<? extends InputValue, DecisionTableMeta, ? extends OutputValue> output = runDT("DtWithFormula", src, data);
+    Assertions.assertEquals(output.getMetaValue().getValues().size(), 1);
+    Assertions.assertEquals(output.getMetaValue().getValues().get(0).getIndex(), 0);
+    Assertions.assertEquals("DtWithFormulaOut{totalOut=120.78, score=high-risk}", output.getOutputValue().toString());
   }
   
   @Test 
@@ -168,15 +170,15 @@ public class DtRuntimeTest {
     data.put("name", "BOB");
 
     
-    HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> output = runDT("MatrixDT", src, data);
-    Assertions.assertEquals(output.getMeta().getValues().size(), 2);
-    Assertions.assertEquals("MatrixDTOut{score=40, max=90, lastName=20, name=20}", output.getValue().toString());
+    HdesExecution<? extends InputValue, DecisionTableMeta, ? extends OutputValue> output = runDT("MatrixDT", src, data);
+    Assertions.assertEquals(output.getMetaValue().getValues().size(), 2);
+    Assertions.assertEquals("MatrixDTOut{score=40, max=90, lastName=20, name=20}", output.getOutputValue().toString());
   }
   
   
   
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  private static HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> runDT(
+  private static HdesExecution<? extends InputValue, DecisionTableMeta, ? extends OutputValue> runDT(
       String name, 
       String src, 
       Map<String, Serializable> data) {
@@ -186,7 +188,7 @@ public class DtRuntimeTest {
       RuntimeTask task = runtime.get(name);
       HdesExecutable.InputValue input = objectMapper.convertValue(data, task.getInput());
       DecisionTable dt = (DecisionTable) task.getValue();
-      HdesExecutable.Execution<DecisionTableMeta, ? extends OutputValue> output = dt.apply(input);
+      HdesExecution<? extends InputValue, DecisionTableMeta, ? extends OutputValue> output = dt.apply(input);
       
       return output;
     } catch(ClassNotFoundException e) {

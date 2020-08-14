@@ -34,9 +34,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.resys.hdes.compiler.api.HdesCompiler;
 import io.resys.hdes.compiler.api.HdesCompiler.Resource;
 import io.resys.hdes.compiler.spi.java.JavaHdesCompiler;
-import io.resys.hdes.executor.api.FlowMeta;
+import io.resys.hdes.executor.api.FlowMetaValue;
 import io.resys.hdes.executor.api.HdesExecutable;
 import io.resys.hdes.executor.api.HdesExecutable.Flow;
+import io.resys.hdes.executor.api.HdesExecutable.HdesExecution;
+import io.resys.hdes.executor.api.HdesExecutable.InputValue;
 import io.resys.hdes.executor.api.HdesExecutable.OutputValue;
 import io.resys.hdes.runtime.api.HdesRuntime.RuntimeEnvir;
 import io.resys.hdes.runtime.api.HdesRuntime.RuntimeTask;
@@ -72,13 +74,13 @@ public class FlRuntimeTest {
     data.put("firstName", "BOB");
     data.put("lastName", "SAM");
 
-    HdesExecutable.Execution<FlowMeta, ? extends OutputValue> output = runFlow("NameScoreFlow", src, data);
-    Assertions.assertEquals(output.getMeta().getState().toString(), "NameScoreFlowState{firstNameTask=null, nameScoreFlowswitch=null, lastNameTask=null}");
+    HdesExecution<? extends InputValue, FlowMetaValue, ? extends OutputValue> output = runFlow("NameScoreFlow", src, data);
+    Assertions.assertEquals(output.getMetaValue().toString(), "NameScoreFlowState{firstNameTask=null, nameScoreFlowswitch=null, lastNameTask=null}");
   }
   
   
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  private static HdesExecutable.Execution<FlowMeta, ? extends OutputValue> runFlow(
+  private static HdesExecution<? extends InputValue, FlowMetaValue, ? extends OutputValue> runFlow(
       String name, 
       String src, 
       Map<String, Serializable> data) {
@@ -101,7 +103,7 @@ public class FlRuntimeTest {
       RuntimeTask task = runtime.get(name);
       HdesExecutable.InputValue input = objectMapper.convertValue(data, task.getInput());
       Flow fl = (Flow) task.getValue();
-      HdesExecutable.Execution<FlowMeta, ? extends OutputValue> output = fl.apply(input);
+      HdesExecution<? extends InputValue, FlowMetaValue, ? extends OutputValue> output = fl.apply(input);
       
       return output;
     } catch(ClassNotFoundException e) {

@@ -79,6 +79,11 @@ public class InvocationTypeDefFl implements InvocationTypeDef {
             .envir(envir).body(delegate).build()
             .getTypeDef(deconstruct(invocation), ImmutableAstNodeVisitorContext.builder().parent(ctx).value(delegate).build());
       }
+      
+      Optional<TypeDef> typeDef = TypeDefFinder.getTypeDef(flow, pathName);
+      if(typeDef.isPresent()) {
+        return typeDef.get();
+      }
 
       throw new HdesCompilerException(HdesCompilerException.builder().unknownExpressionParameter(invocation));
     } catch(HdesCompilerException e) {

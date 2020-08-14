@@ -63,7 +63,7 @@ import io.resys.hdes.executor.api.HdesExecutable.ExecutionStatus;
 import io.resys.hdes.executor.api.HdesExecutable.SourceType;
 import io.resys.hdes.executor.api.HdesWhen;
 import io.resys.hdes.executor.api.ImmutableDecisionTableMeta;
-import io.resys.hdes.executor.api.ImmutableExecution;
+import io.resys.hdes.executor.api.ImmutableHdesExecution;
 
 public class DtImplSpec {
   
@@ -132,7 +132,7 @@ public class DtImplSpec {
       CodeBlock formulaCall = CodeBlock.builder()
           .add("$T $L = new $T()", JavaSpecUtil.type(scalarDef.getType()), scalarDef.getName(), impl)
           .add("\r\n").add("  .apply($L)", formulaInput.add("\r\n").add("    .build()").build())
-          .add("\r\n").addStatement("  .getValue().$L", JavaSpecUtil.methodCall(scalarDef.getName()))
+          .add("\r\n").addStatement("  .getOutputValue().$L", JavaSpecUtil.methodCall(scalarDef.getName()))
           .build();
 
       return CodeBlock.builder()
@@ -261,6 +261,7 @@ public class DtImplSpec {
       
       final List<MethodSpec> formulas = new ArrayList<>();
       final ClassName staticType = namings.dt().staticValue(body);
+      final ClassName inputType = namings.dt().inputValue(body);
       final ClassName outputType = namings.dt().outputValueMono(body);
       final ClassName immutableOutputType = JavaSpecUtil.immutable(outputType);
       
@@ -317,8 +318,8 @@ public class DtImplSpec {
       .add("\r\n  ").add(".start(start).end(end).time(end - start)")
       .add("\r\n  ").addStatement(".values(meta).build()", body.getId().getValue(), ExecutionStatus.class)
       
-      .addStatement("$T.Builder<$T, $T> resultWrapper = $T.builder()", ImmutableExecution.class, DecisionTableMeta.class, outputType, ImmutableExecution.class)
-      .addStatement("return resultWrapper.meta(metaWrapper).value(output).build()")
+      .addStatement("$T.Builder<$T, $T, $T> resultWrapper = $T.builder()", ImmutableHdesExecution.class, inputType, DecisionTableMeta.class, outputType, ImmutableHdesExecution.class)
+      .addStatement("return resultWrapper.inputValue(input).metaValue(metaWrapper).outputValue(output).build()")
       .build();
     
       return TypeSpec.classBuilder(namings.dt().impl(body))
@@ -332,7 +333,7 @@ public class DtImplSpec {
           .addMethod(MethodSpec.methodBuilder("apply")
               .addAnnotation(Override.class)
               .addModifiers(Modifier.PUBLIC)
-              .addParameter(ParameterSpec.builder(namings.dt().inputValue(body), "input").build())
+              .addParameter(ParameterSpec.builder(inputType, "input").build())
               .returns(namings.dt().execution(body))
               .addCode(execution.build())
               .build())

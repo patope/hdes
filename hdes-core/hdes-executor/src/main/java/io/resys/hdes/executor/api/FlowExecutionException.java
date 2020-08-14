@@ -1,6 +1,6 @@
 package io.resys.hdes.executor.api;
 
-import io.resys.hdes.executor.api.FlowMeta.FlowState;
+import io.resys.hdes.executor.api.FlowMetaValue.FlowState;
 
 public class FlowExecutionException extends RuntimeException {
   

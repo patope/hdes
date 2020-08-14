@@ -29,7 +29,7 @@ import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyAll;
 import io.resys.hdes.compiler.spi.naming.Namings.DtNaming;
 import io.resys.hdes.executor.api.DecisionTableMeta;
 import io.resys.hdes.executor.api.HdesExecutable.DecisionTable;
-import io.resys.hdes.executor.api.HdesExecutable.Execution;
+import io.resys.hdes.executor.api.HdesExecutable.HdesExecution;
 
 public class JavaDtNaming implements DtNaming {
   private final JavaNaming parent;
@@ -95,13 +95,14 @@ public class JavaDtNaming implements DtNaming {
 
   @Override
   public ParameterizedTypeName execution(DecisionTableBody body) {
-    ClassName outputName = outputValueMono(body);
-    return ParameterizedTypeName.get(ClassName.get(Execution.class), ClassName.get(DecisionTableMeta.class), outputName);
+    ClassName output = outputValueMono(body);
+    ClassName input = inputValue(body);
+    return ParameterizedTypeName.get(ClassName.get(HdesExecution.class), input, ClassName.get(DecisionTableMeta.class), output);
   }
   @Override
   public TypeName executable(DecisionTableBody node) {
-    TypeName returnType = outputValueMono(node);
-    return ParameterizedTypeName.get(ClassName.get(DecisionTable.class), inputValue(node), returnType);
+    TypeName output = outputValueMono(node);
+    return ParameterizedTypeName.get(ClassName.get(DecisionTable.class), inputValue(node), output);
   }
 }
 

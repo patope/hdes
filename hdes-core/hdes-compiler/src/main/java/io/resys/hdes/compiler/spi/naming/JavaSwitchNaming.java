@@ -27,7 +27,7 @@ import com.squareup.javapoet.TypeName;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.compiler.spi.naming.Namings.SwitchNaming;
-import io.resys.hdes.executor.api.HdesExecutable.Execution;
+import io.resys.hdes.executor.api.HdesExecutable.HdesExecution;
 import io.resys.hdes.executor.api.HdesExecutable.Switch;
 import io.resys.hdes.executor.api.SwitchMeta;
 
@@ -68,8 +68,9 @@ public class JavaSwitchNaming implements SwitchNaming {
   }
   @Override
   public ParameterizedTypeName execution(FlowBody node, FlowTaskNode pointer) {
-    ClassName outputName = outputValue(node, pointer);
-    return ParameterizedTypeName.get(ClassName.get(Execution.class), ClassName.get(SwitchMeta.class), outputName);
+    ClassName output = outputValue(node, pointer);
+    ClassName input = inputValue(node, pointer);
+    return ParameterizedTypeName.get(ClassName.get(HdesExecution.class), input, ClassName.get(SwitchMeta.class), output);
   }
   @Override
   public ParameterizedTypeName executable(FlowBody node, FlowTaskNode pointer) {

@@ -47,7 +47,7 @@ import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.HdesExecutable.ExecutionStatus;
 import io.resys.hdes.executor.api.HdesExecutable.SourceType;
-import io.resys.hdes.executor.api.ImmutableExecution;
+import io.resys.hdes.executor.api.ImmutableHdesExecution;
 import io.resys.hdes.executor.api.ImmutableSwitchMeta;
 import io.resys.hdes.executor.api.SwitchMeta;
 
@@ -139,6 +139,8 @@ public class FlSwitchImplSpec {
         }
       }
       
+      ClassName inputType = namings.sw().inputValue(body, task);
+      
       execution.add("\r\n")
       .addStatement("$T output = result.build()", outputType)
       .addStatement("long end = System.currentTimeMillis()")
@@ -147,8 +149,8 @@ public class FlSwitchImplSpec {
       .add("\r\n  ").addStatement(".start(start).end(end).time(end - start).build()")
       .add("\r\n")
       
-      .addStatement("$T.Builder<$T, $T> resultWrapper = $T.builder()", ImmutableExecution.class, SwitchMeta.class, outputType, ImmutableExecution.class)
-      .addStatement("return resultWrapper.meta(metaWrapper).value(output).build()")
+      .addStatement("$T.Builder<$T, $T, $T> resultWrapper = $T.builder()", ImmutableHdesExecution.class, inputType, SwitchMeta.class, outputType, ImmutableHdesExecution.class)
+      .addStatement("return resultWrapper.metaValue(metaWrapper).outputValue(output).build()")
       .build();
     
       
@@ -161,7 +163,7 @@ public class FlSwitchImplSpec {
           .addMethod(MethodSpec.methodBuilder("apply")
               .addAnnotation(Override.class)
               .addModifiers(Modifier.PUBLIC)
-              .addParameter(ParameterSpec.builder(namings.sw().inputValue(body, task), "input").build())
+              .addParameter(ParameterSpec.builder(inputType, "input").build())
               .returns(namings.sw().execution(body, task))
               .addCode(execution.build())
               .build())

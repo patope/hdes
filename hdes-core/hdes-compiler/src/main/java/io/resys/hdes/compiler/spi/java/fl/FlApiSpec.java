@@ -52,9 +52,9 @@ import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.compiler.spi.naming.Namings.TaskRefNaming;
-import io.resys.hdes.executor.api.FlowMeta;
-import io.resys.hdes.executor.api.FlowMeta.FlowTaskMetaFlux;
-import io.resys.hdes.executor.api.FlowMeta.FlowTaskMetaMono;
+import io.resys.hdes.executor.api.FlowMetaValue;
+import io.resys.hdes.executor.api.FlowMetaValue.FlowTaskMetaFlux;
+import io.resys.hdes.executor.api.FlowMetaValue.FlowTaskMetaMono;
 import io.resys.hdes.executor.api.HdesExecutable;
 import io.resys.hdes.executor.api.SwitchMeta;
 
@@ -194,7 +194,7 @@ public class FlApiSpec {
         final MethodSpec methodSpec = MethodSpec.methodBuilder(JavaSpecUtil.methodName(start.get().getId()))
             .addAnnotation(nullable)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .returns(ParameterizedTypeName.get(taskSuperinterface, refName.getMeta(), refName.getOutputValue())).build();
+            .returns(ParameterizedTypeName.get(taskSuperinterface, refName.getInputValue(), refName.getMeta(), refName.getOutputValue())).build();
         result.add(methodSpec);  
       }
 
@@ -209,7 +209,8 @@ public class FlApiSpec {
             .addAnnotation(nullable)
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .returns(ParameterizedTypeName.get(
-                ClassName.get(FlowTaskMetaMono.class), 
+                ClassName.get(FlowTaskMetaMono.class),
+                namings.sw().inputValue(body, start.get()),
                 ClassName.get(SwitchMeta.class), 
                 namings.sw().outputValue(body, start.get()))).build());
         
@@ -235,7 +236,7 @@ public class FlApiSpec {
       
       final List<TypeSpec> headers = headers();
       final TypeSpec state = JavaSpecUtil.immutableSpec(namings.fl().stateValue(body))
-          .addSuperinterface(FlowMeta.FlowState.class).addMethods(state(body.getTask())).build();
+          .addSuperinterface(FlowMetaValue.FlowState.class).addMethods(state(body.getTask())).build();
 
       return TypeSpec.interfaceBuilder(interfaceName).addModifiers(Modifier.PUBLIC).addAnnotation(annotation)
       .addSuperinterface(superinterface).addTypes(headers).addType(state).build();

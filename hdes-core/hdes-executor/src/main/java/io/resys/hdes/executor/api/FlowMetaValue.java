@@ -26,28 +26,29 @@ import java.util.List;
 
 import org.immutables.value.Value;
 
-@Value.Immutable
-public interface FlowMeta extends HdesExecutable.Meta {
+import io.resys.hdes.executor.api.HdesExecutable.HdesExecution;
+import io.resys.hdes.executor.api.HdesExecutable.InputValue;
+import io.resys.hdes.executor.api.HdesExecutable.MetaValue;
+import io.resys.hdes.executor.api.HdesExecutable.OutputValue;
 
-  FlowState getState();  
+@Value.Immutable
+public interface FlowMetaValue extends HdesExecutable.MetaValue {
   
-  interface FlowState extends Serializable {
-    String getId();
-    long getStart();
-    //ExecutionStatus getStatus();
-  }
+  FlowState getState();
+  
+  interface FlowState extends Serializable {}
   
   interface FlowTaskMeta extends Serializable {
     String getId();
   }
   
   @Value.Immutable
-  interface FlowTaskMetaMono<M extends HdesExecutable.Meta, T extends HdesExecutable.OutputValue> extends FlowTaskMeta {
-    HdesExecutable.Execution<M, T> getDelegate();
+  interface FlowTaskMetaMono<I extends InputValue, M extends MetaValue, T extends OutputValue> extends FlowTaskMeta {
+    HdesExecution<I, M, T> getDelegate();
   }
   
   @Value.Immutable
-  interface FlowTaskMetaFlux<M extends HdesExecutable.Meta, T extends HdesExecutable.OutputValue> extends FlowTaskMeta {
-    List<HdesExecutable.Execution<M, T>> getDelegate();
+  interface FlowTaskMetaFlux<I extends InputValue, M extends MetaValue, T extends OutputValue> extends FlowTaskMeta {
+    List<HdesExecution<I, M, T>> getDelegate();
   }
 }

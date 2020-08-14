@@ -41,8 +41,8 @@ import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.FormulaMeta;
 import io.resys.hdes.executor.api.HdesExecutable.ExecutionStatus;
 import io.resys.hdes.executor.api.HdesExecutable.SourceType;
-import io.resys.hdes.executor.api.ImmutableExecution;
 import io.resys.hdes.executor.api.ImmutableFormulaMeta;
+import io.resys.hdes.executor.api.ImmutableHdesExecution;
 
 public class DtFrImplSpec {
 
@@ -80,6 +80,8 @@ public class DtFrImplSpec {
         throw new HdesCompilerException(HdesCompilerException.builder().dtFormulaContainsIncorectScalarTypes(formula, formulaSpec.getType()));
       }
       
+      ClassName inputType = namings.fr().inputValue(body, formula);
+      
       CodeBlock.Builder execution = CodeBlock.builder()
       .addStatement("long start = System.currentTimeMillis()")
       .addStatement("var result = $L", formulaSpec.getValue())
@@ -90,10 +92,9 @@ public class DtFrImplSpec {
       .add("\r\n  ").add(".start(start).end(end).time(end - start)")
       .add("\r\n  ").addStatement(".build()")
       .add("\r\n")
-      .addStatement("$T.Builder<$T, $T> builder = $T.builder()", ImmutableExecution.class, FormulaMeta.class, outputType, ImmutableExecution.class)
-      .addStatement("return builder.meta(meta).value($L).build()", CodeBlock.builder()
-          .add("$T.builder().$L(result).build()", JavaSpecUtil.immutable(outputType), formula.getName())
-          .build()    
+      .addStatement("$T.Builder<$T, $T, $T> builder = $T.builder()", ImmutableHdesExecution.class, inputType, FormulaMeta.class, outputType, ImmutableHdesExecution.class)
+      .addStatement("return builder.inputValue($L).metaValue(meta).outputValue($L).build()", ExpressionVisitor.ACCESS_SRC_VALUE, 
+          CodeBlock.builder().add("$T.builder().$L(result).build()", JavaSpecUtil.immutable(outputType), formula.getName()).build()    
       );
       
       return TypeSpec.classBuilder(namings.fr().impl(body, formula))
@@ -110,7 +111,7 @@ public class DtFrImplSpec {
           .addMethod(MethodSpec.methodBuilder("apply")
               .addAnnotation(Override.class)
               .addModifiers(Modifier.PUBLIC)
-              .addParameter(ParameterSpec.builder(namings.fr().inputValue(body, formula), ExpressionVisitor.ACCESS_SRC_VALUE).build())
+              .addParameter(ParameterSpec.builder(inputType, ExpressionVisitor.ACCESS_SRC_VALUE).build())
               .returns(namings.fr().execution(body, formula))
               .addCode(execution.build())
               .build())

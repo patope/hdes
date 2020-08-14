@@ -26,14 +26,16 @@ import java.util.Map;
 
 import org.immutables.value.Value;
 
-import io.resys.hdes.executor.api.HdesExecutable.MetaToken;
-
 
 @Value.Immutable
-public interface DecisionTableMeta extends HdesExecutable.Meta {
+public interface DecisionTableMeta extends HdesExecutable.MetaValue {
   
   Map<Integer, DecisionTableMetaEntry> getValues();
 
+  interface DecisionTableStaticValue<T> extends Serializable {
+    List<T> getValues();
+  }
+  
   @Value.Immutable
   interface DecisionTableMetaEntry extends Serializable {
     int getId();
@@ -41,8 +43,17 @@ public interface DecisionTableMeta extends HdesExecutable.Meta {
     MetaToken getToken();
   }
   
-  
-  interface DecisionTableStaticValue<T> extends Serializable {
-    List<T> getValues();
+  @Value.Immutable
+  interface MetaToken {
+    String getValue();
+    MetaStamp getStart();
+    MetaStamp getEnd();
   }
+  
+  @Value.Immutable
+  interface MetaStamp {
+    int getLine();
+    int getColumn();
+  }
+  
 }
