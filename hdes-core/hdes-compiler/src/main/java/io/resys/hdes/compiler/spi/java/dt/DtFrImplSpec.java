@@ -38,11 +38,9 @@ import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor.EnScalarCodeSpec;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
-import io.resys.hdes.executor.api.FormulaMeta;
 import io.resys.hdes.executor.api.HdesExecutable.ExecutionStatus;
 import io.resys.hdes.executor.api.HdesExecutable.SourceType;
 import io.resys.hdes.executor.api.ImmutableFormulaMeta;
-import io.resys.hdes.executor.api.ImmutableHdesExecution;
 
 public class DtFrImplSpec {
 
@@ -82,24 +80,27 @@ public class DtFrImplSpec {
       
       ClassName inputType = namings.fr().inputValue(body, formula);
       
+      CodeBlock metaValue = CodeBlock.builder()
+        .add("$T.builder()", ImmutableFormulaMeta.class)
+        .add("\r\n  ").add(".id($S).status($T.COMPLETED) ", body.getId().getValue(), ExecutionStatus.class)
+        .add("\r\n  ").add(".start(start).end(end).time(end - start)")
+        .add("\r\n  ").add(".build()")
+        .add("\r\n").build();
+      
       CodeBlock.Builder execution = CodeBlock.builder()
       .addStatement("long start = System.currentTimeMillis()")
       .addStatement("var result = $L", formulaSpec.getValue())
       .addStatement("long end = System.currentTimeMillis()")
-      .add("\r\n")
-      .add("$T meta = $T.builder()", FormulaMeta.class, ImmutableFormulaMeta.class)
-      .add("\r\n  ").add(".id($S).status($T.COMPLETED) ", body.getId().getValue(), ExecutionStatus.class)
-      .add("\r\n  ").add(".start(start).end(end).time(end - start)")
-      .add("\r\n  ").addStatement(".build()")
-      .add("\r\n")
-      .addStatement("$T.Builder<$T, $T, $T> builder = $T.builder()", ImmutableHdesExecution.class, inputType, FormulaMeta.class, outputType, ImmutableHdesExecution.class)
-      .addStatement("return builder.inputValue($L).metaValue(meta).outputValue($L).build()", ExpressionVisitor.ACCESS_SRC_VALUE, 
-          CodeBlock.builder().add("$T.builder().$L(result).build()", JavaSpecUtil.immutable(outputType), formula.getName()).build()    
+      .addStatement("return execution($L, $L, $L)", 
+          ExpressionVisitor.ACCESS_SRC_VALUE, 
+          CodeBlock.builder().add("$T.builder().$L(result).build()", JavaSpecUtil.immutable(outputType), formula.getName()).build(),
+          metaValue
       );
       
       return TypeSpec.classBuilder(namings.fr().impl(body, formula))
           .addModifiers(Modifier.PUBLIC)
           .addAnnotation(AnnotationSpec.builder(javax.annotation.processing.Generated.class).addMember("value", "$S", DtFrImplSpec.class.getCanonicalName()).build())
+          .superclass(namings.fr().template(body, formula))
           .addSuperinterface(namings.fr().api(body, formula))
           .addMethod(MethodSpec.methodBuilder("getSourceType")
               .addAnnotation(Override.class)

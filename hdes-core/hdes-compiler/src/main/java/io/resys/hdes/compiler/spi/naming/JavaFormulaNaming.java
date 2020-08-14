@@ -32,6 +32,7 @@ import io.resys.hdes.compiler.spi.naming.Namings.FormulaNaming;
 import io.resys.hdes.executor.api.FormulaMeta;
 import io.resys.hdes.executor.api.HdesExecutable.Formula;
 import io.resys.hdes.executor.api.HdesExecutable.HdesExecution;
+import io.resys.hdes.executor.spi.HdesExecutableTemplate;
 
 public class JavaFormulaNaming implements FormulaNaming {
   private final JavaNaming parent;
@@ -58,6 +59,13 @@ public class JavaFormulaNaming implements FormulaNaming {
     return ParameterizedTypeName
         .get(ClassName.get(HdesExecution.class), input, ClassName.get(FormulaMeta.class), output);
   } 
+  
+  @Override
+  public ParameterizedTypeName template(Body body, ScalarDef pointer) {
+    ClassName output = outputValue(body, pointer);
+    ClassName input = inputValue(body, pointer);
+    return ParameterizedTypeName.get(ClassName.get(HdesExecutableTemplate.class), input, ClassName.get(FormulaMeta.class), output);
+  }
   
   @Override
   public ClassName api(Body node, ScalarDef pointer) {

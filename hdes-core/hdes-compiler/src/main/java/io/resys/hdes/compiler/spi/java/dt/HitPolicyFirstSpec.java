@@ -71,10 +71,10 @@ public class HitPolicyFirstSpec {
         execution
         .addStatement("meta.put(0, $L)", CodeBlock.builder()
             .add("$T.builder()", ImmutableDecisionTableMetaEntry.class)
-            .add("\r\n  .id(id)")
-            .add("\r\n  .index($L)", rowIndex++)
-            .add("\r\n  .token($L)", DtTokenSpec.build(row, row.getText()))
-            .add("\r\n  .build()")
+            .add(".id(id)")
+            .add(".index($L)", rowIndex++)
+            .add(".token($L)", DtTokenSpec.build(row, row.getText()))
+            .add(".build()")
             .build())
         .addStatement(value);
         

@@ -72,9 +72,9 @@ public class HitPolicyAllSpec {
 
         execution
         .add("meta.put(id, $T.builder()", ImmutableDecisionTableMetaEntry.class)
-        .add("\r\n  .id(id++)")
-        .add("\r\n  .index($L)", rowIndex++)
-        .add("\r\n  .token($L)", DtTokenSpec.build(row, row.getText()))
+        .add(".id(id++)")
+        .add(".index($L)", rowIndex++)
+        .add(".token($L)", DtTokenSpec.build(row, row.getText()))
         .addStatement(".build())")
         .addStatement("result.addValues($L)", value);
         

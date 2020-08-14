@@ -74,8 +74,9 @@ public class HitPolicyMatrixSpec {
 
           var prefix = index > 0 ? "else " : "";
           execution.beginControlFlow(prefix + "if($L)", expression)
-              .add("meta.put(id, $T.builder()", ImmutableDecisionTableMetaEntry.class).add("\r\n  .id(id++)")
-              .add("\r\n  .index($L)", index++).add("\r\n  .token($L)", DtTokenSpec.build(literal, "not available"))
+              .add("meta.put(id, $T.builder()", ImmutableDecisionTableMetaEntry.class)
+              .add(".id(id++)")
+              .add(".index($L)", index++).add(".token($L)", DtTokenSpec.build(literal, "not available"))
               .addStatement(".build())").addStatement("result.$L($L)", header.getName(), valueToSet)
               .endControlFlow();
 

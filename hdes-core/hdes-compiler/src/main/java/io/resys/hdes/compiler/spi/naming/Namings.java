@@ -47,6 +47,8 @@ public interface Namings {
     String pkg(Body body);
     ClassName api(Body node, ScalarDef pointer);
     ClassName impl(Body node, ScalarDef pointer);
+    ParameterizedTypeName template(Body node, ScalarDef pointer);
+    
     ParameterizedTypeName executable(Body node, ScalarDef pointer);
     ParameterizedTypeName execution(Body node, ScalarDef pointer);
     
@@ -58,6 +60,8 @@ public interface Namings {
     String pkg(FlowBody body);
     ClassName api(FlowBody node, FlowTaskNode pointer);
     ClassName impl(FlowBody node, FlowTaskNode pointer);
+    ParameterizedTypeName template(FlowBody node, FlowTaskNode pointer);
+    
     ParameterizedTypeName executable(FlowBody node, FlowTaskNode pointer);
     ParameterizedTypeName execution(FlowBody node, FlowTaskNode pointer);
     
@@ -71,17 +75,15 @@ public interface Namings {
     
     ClassName api(DecisionTableBody node);
     ClassName impl(DecisionTableBody node);
-    TypeName executable(DecisionTableBody node);
+    ParameterizedTypeName template(DecisionTableBody node);
     
+    TypeName executable(DecisionTableBody node);
     ParameterizedTypeName execution(DecisionTableBody node);
     
     ClassName staticValue(DecisionTableBody node);
     ClassName inputValue(DecisionTableBody node);
     ClassName outputValueMono(DecisionTableBody node);
     ClassName outputValueFlux(DecisionTableBody node);
-    
-    //ClassName inputSuperinterface(DecisionTableBody node);
-    //ClassName outputSuperinterface(DecisionTableBody node);
   }
   
   interface FlNaming {
@@ -89,6 +91,7 @@ public interface Namings {
     
     ClassName api(FlowBody node);
     ClassName impl(FlowBody node);
+    ParameterizedTypeName template(FlowBody node);
     
     TaskRefNaming ref(FlowBody node, TaskRef ref);
     ParameterizedTypeName execution(FlowBody body);
@@ -101,15 +104,6 @@ public interface Namings {
     
     ClassName outputValue(FlowBody node);
     ClassName outputValue(FlowBody node, ObjectDef object);
-    
-    
-    /*
-    ClassName ref(TaskRef ref);
-    ClassName refInput(TaskRef ref);
-    ClassName refOutput(TaskRef ref);
-    String refMethod(TaskRef ref);
-    ClassName taskState(FlowBody body, FlowTaskNode task);
-    */
   }
   
   @Value.Immutable

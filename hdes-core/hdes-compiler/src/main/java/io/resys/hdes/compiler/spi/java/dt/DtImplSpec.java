@@ -57,13 +57,11 @@ import io.resys.hdes.compiler.spi.java.invocation.InvocationSpec.InvocationSpecP
 import io.resys.hdes.compiler.spi.java.invocation.InvocationSpec.InvocationType;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
-import io.resys.hdes.executor.api.DecisionTableMeta;
 import io.resys.hdes.executor.api.DecisionTableMeta.DecisionTableMetaEntry;
 import io.resys.hdes.executor.api.HdesExecutable.ExecutionStatus;
 import io.resys.hdes.executor.api.HdesExecutable.SourceType;
 import io.resys.hdes.executor.api.HdesWhen;
 import io.resys.hdes.executor.api.ImmutableDecisionTableMeta;
-import io.resys.hdes.executor.api.ImmutableHdesExecution;
 
 public class DtImplSpec {
   
@@ -114,14 +112,14 @@ public class DtImplSpec {
       for(InvocationType scope : referedTypes.getTypes()) {
         switch (scope) {
         case IN:
-          formulaInput.add("\r\n").add("  .$L($L)", InvocationGetMethod.ACCESS_INPUT_VALUE, InvocationGetMethod.ACCESS_INPUT_VALUE);
+          formulaInput.add(".$L($L)", InvocationGetMethod.ACCESS_INPUT_VALUE, InvocationGetMethod.ACCESS_INPUT_VALUE);
           break;
         case OUT:
-          formulaInput.add("\r\n").add("  .$L($L)", InvocationGetMethodDt.ACCESS_OUTPUT_VALUE, InvocationGetMethodDt.ACCESS_OUTPUT_VALUE);
+          formulaInput.add(".$L($L)", InvocationGetMethodDt.ACCESS_OUTPUT_VALUE, InvocationGetMethodDt.ACCESS_OUTPUT_VALUE);
         case INSTANCE:
           continue;
         case STATIC:
-          formulaInput.add("\r\n").add("  .$L($L)", InvocationGetMethodDt.ACCESS_STATIC_VALUE, InvocationGetMethodDt.ACCESS_STATIC_VALUE);
+          formulaInput.add(".$L($L)", InvocationGetMethodDt.ACCESS_STATIC_VALUE, InvocationGetMethodDt.ACCESS_STATIC_VALUE);
           continue;
         default: throw new IllegalArgumentException("Scope: " + scope + " parameter: " + scalarDef + " not implemented!"); 
         }
@@ -131,7 +129,7 @@ public class DtImplSpec {
       ClassName impl = namings.fr().impl(body, scalarDef);
       CodeBlock formulaCall = CodeBlock.builder()
           .add("$T $L = new $T()", JavaSpecUtil.type(scalarDef.getType()), scalarDef.getName(), impl)
-          .add("\r\n").add("  .apply($L)", formulaInput.add("\r\n").add("    .build()").build())
+          .add("\r\n").add("  .apply($L)", formulaInput.add(".build()").build())
           .add("\r\n").addStatement("  .getOutputValue().$L", JavaSpecUtil.methodCall(scalarDef.getName()))
           .build();
 
@@ -311,20 +309,21 @@ public class DtImplSpec {
         }
       }
       
+      CodeBlock metaValue = CodeBlock.builder()
+          .add("$T.builder()", ImmutableDecisionTableMeta.class)
+          .add("\r\n  ").add(".id($S).status($T.COMPLETED) ", body.getId().getValue(), ExecutionStatus.class)
+          .add("\r\n  ").add(".start(start).end(end).time(end - start)")
+          .add("\r\n  ").add(".values(meta).build()").build();
+      
       execution.add("\r\n")
       .addStatement("long end = System.currentTimeMillis()")
-      .add("$T metaWrapper = $T.builder()", DecisionTableMeta.class, ImmutableDecisionTableMeta.class)
-      .add("\r\n  ").add(".id($S).status($T.COMPLETED) ", body.getId().getValue(), ExecutionStatus.class)
-      .add("\r\n  ").add(".start(start).end(end).time(end - start)")
-      .add("\r\n  ").addStatement(".values(meta).build()", body.getId().getValue(), ExecutionStatus.class)
-      
-      .addStatement("$T.Builder<$T, $T, $T> resultWrapper = $T.builder()", ImmutableHdesExecution.class, inputType, DecisionTableMeta.class, outputType, ImmutableHdesExecution.class)
-      .addStatement("return resultWrapper.inputValue(input).metaValue(metaWrapper).outputValue(output).build()")
+      .addStatement("return execution(input, output, $L)", metaValue)
       .build();
     
       return TypeSpec.classBuilder(namings.dt().impl(body))
           .addModifiers(Modifier.PUBLIC)
           .addSuperinterface(namings.dt().api(body))
+          .superclass(namings.dt().template(body))
           .addJavadoc(body.getDescription().orElse(""))
           .addAnnotations(annotations)
           .addField(FieldSpec.builder(HdesWhen.class, "when", Modifier.PRIVATE, Modifier.FINAL).build())

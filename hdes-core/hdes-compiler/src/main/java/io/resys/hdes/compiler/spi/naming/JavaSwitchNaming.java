@@ -30,6 +30,7 @@ import io.resys.hdes.compiler.spi.naming.Namings.SwitchNaming;
 import io.resys.hdes.executor.api.HdesExecutable.HdesExecution;
 import io.resys.hdes.executor.api.HdesExecutable.Switch;
 import io.resys.hdes.executor.api.SwitchMeta;
+import io.resys.hdes.executor.spi.HdesExecutableTemplate;
 
 public class JavaSwitchNaming implements SwitchNaming {
   private final JavaNaming parent;
@@ -71,6 +72,12 @@ public class JavaSwitchNaming implements SwitchNaming {
     ClassName output = outputValue(node, pointer);
     ClassName input = inputValue(node, pointer);
     return ParameterizedTypeName.get(ClassName.get(HdesExecution.class), input, ClassName.get(SwitchMeta.class), output);
+  }
+  @Override
+  public ParameterizedTypeName template(FlowBody node, FlowTaskNode pointer) {
+    ClassName output = outputValue(node, pointer);
+    ClassName input = inputValue(node, pointer);
+    return ParameterizedTypeName.get(ClassName.get(HdesExecutableTemplate.class), input, ClassName.get(SwitchMeta.class), output);
   }
   @Override
   public ParameterizedTypeName executable(FlowBody node, FlowTaskNode pointer) {

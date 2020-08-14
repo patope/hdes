@@ -37,6 +37,7 @@ import io.resys.hdes.executor.api.DecisionTableMeta;
 import io.resys.hdes.executor.api.FlowMetaValue;
 import io.resys.hdes.executor.api.HdesExecutable.Flow;
 import io.resys.hdes.executor.api.HdesExecutable.HdesExecution;
+import io.resys.hdes.executor.spi.HdesExecutableTemplate;
 
 public class JavaFlNaming implements FlNaming {
   private final JavaNaming parent;
@@ -92,6 +93,13 @@ public class JavaFlNaming implements FlNaming {
     return ParameterizedTypeName
         .get(ClassName.get(HdesExecution.class), input, ClassName.get(FlowMetaValue.class), output);
   } 
+  
+  @Override
+  public ParameterizedTypeName template(FlowBody body) {
+    ClassName output = outputValue(body);
+    ClassName input = inputValue(body);
+    return ParameterizedTypeName.get(ClassName.get(HdesExecutableTemplate.class), input, ClassName.get(FlowMetaValue.class), output);
+  }
   
   @Override
   public ClassName inputValue(FlowBody node, ObjectDef object) {

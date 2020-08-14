@@ -33,7 +33,7 @@ public class LogbackDeclarationFilter extends Filter<ILoggingEvent> {
     if (event.getMessage().contains(marker)) {
       return FilterReply.ACCEPT;
     }
-    return FilterReply.DENY;
+    return FilterReply.ACCEPT;
   }
 
   public String getMarker() {
