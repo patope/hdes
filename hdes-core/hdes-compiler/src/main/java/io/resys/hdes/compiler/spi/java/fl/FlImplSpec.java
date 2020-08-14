@@ -95,7 +95,7 @@ public class FlImplSpec {
       
       for(Mapping mapping : task.getRef().get().getMapping()) {
         MappingExpression expression = (MappingExpression) mapping.getRight();
-        EnScalarCodeSpec spec = ExpressionSpec.builder().parent(body).envir(namings.ast()).build(expression.getValue());
+        EnScalarCodeSpec spec = ExpressionSpec.builder().parent(body).envir(namings.ast()).flm(expression);
         
         execution.add(".$L($L)", mapping.getLeft(), spec.getValue());
       }

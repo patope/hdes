@@ -121,7 +121,7 @@ public class FlSwitchImplSpec {
       for(WhenThen whenThen : pointer.getValues()) {
         
         if(whenThen.getWhen().isPresent()) {
-          EnScalarCodeSpec scalar = ExpressionSpec.builder().parent(body).envir(namings.ast()).build(whenThen.getWhen().get());
+          EnScalarCodeSpec scalar = ExpressionSpec.builder().parent(body).envir(namings.ast()).flw(whenThen);
           
           execution
           .beginControlFlow("if($L)", scalar.getValue())

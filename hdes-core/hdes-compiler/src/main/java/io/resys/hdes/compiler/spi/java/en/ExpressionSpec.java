@@ -23,8 +23,11 @@ import io.resys.hdes.ast.api.AstEnvir;
  */
 
 import io.resys.hdes.ast.api.nodes.AstNode.Body;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.AstNodeVisitorContext;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
+import io.resys.hdes.ast.api.nodes.FlowNode.MappingExpression;
+import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
 import io.resys.hdes.ast.api.nodes.ImmutableAstNodeVisitorContext;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor.EnScalarCodeSpec;
@@ -49,10 +52,49 @@ public interface ExpressionSpec {
       this.envir = envir;
       return this;
     }
-    public EnScalarCodeSpec build(ExpressionBody value) {
+    /**
+     * flow switch
+     */
+    public EnScalarCodeSpec flw(WhenThen whenThen) {
       Assertions.notNull(envir, () -> "envir or context can't be null!");
       Assertions.isTrue(node != null, () -> "node or context can't be null!");
 
+      ExpressionBody value = whenThen.getWhen().get();
+      
+      // find body node
+      AstNodeVisitorContext parent = ImmutableAstNodeVisitorContext.builder().value(node).build();
+      AstNodeVisitorContext ctx = ImmutableAstNodeVisitorContext.builder().value(value).parent(parent).build();
+      
+      InvocationTypeDef resolver = InvocationTypeDef.builder().envir(envir).body(node).build();
+      return new ExpressionVisitor(resolver).visitBody(value, ctx);
+    }
+    /**
+     * flow mapping
+     */
+    public EnScalarCodeSpec flm(MappingExpression mapping) {
+      Assertions.notNull(envir, () -> "envir or context can't be null!");
+      Assertions.isTrue(node != null, () -> "node or context can't be null!");
+
+      ExpressionBody value = mapping.getValue();
+      
+      // find body node
+      AstNodeVisitorContext parent = ImmutableAstNodeVisitorContext.builder().value(node).build();
+      AstNodeVisitorContext ctx = ImmutableAstNodeVisitorContext.builder().value(value).parent(parent).build();
+      
+      InvocationTypeDef resolver = InvocationTypeDef.builder().envir(envir).body(node).build();
+      return new ExpressionVisitor(resolver).visitBody(value, ctx);
+    }
+    /**
+     * decision table formula
+     */
+    public EnScalarCodeSpec dtf(ScalarDef scalar) {
+      Assertions.notNull(envir, () -> "envir or context can't be null!");
+      Assertions.notNull(node, () -> "node can't be null!");
+      Assertions.notNull(scalar, () -> "scalar can't be null!");
+      Assertions.isTrue(scalar.getFormula().isPresent(), () -> "scalar formula can't be null!");
+      
+      ExpressionBody value = scalar.getFormula().get();
+      
       // find body node
       AstNodeVisitorContext parent = ImmutableAstNodeVisitorContext.builder().value(node).build();
       AstNodeVisitorContext ctx = ImmutableAstNodeVisitorContext.builder().value(value).parent(parent).build();
