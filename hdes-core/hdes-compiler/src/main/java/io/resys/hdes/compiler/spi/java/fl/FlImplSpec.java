@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.lang.model.element.Modifier;
 
@@ -16,6 +18,9 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 
+import io.resys.hdes.ast.api.nodes.AstNode.DirectionType;
+import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
+import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.FlowNode.EndPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
@@ -93,14 +98,32 @@ public class FlImplSpec {
       CodeBlock.Builder execution = CodeBlock.builder()
           .add("$T.builder()", JavaSpecUtil.immutable(ref.getInputValue()));
       
+      Map<String, TypeDef> defs = namings.ast().getByAstId(task.getRef().get().getValue())
+        .getHeaders().getValues().stream()
+        .filter(t -> isMappable(t))
+        .collect(Collectors.toMap(t -> t.getName(), t -> t));
+      
       for(Mapping mapping : task.getRef().get().getMapping()) {
+        if(!defs.containsKey(mapping.getLeft())) {
+         throw new HdesCompilerException(HdesCompilerException.builder().unknownFlMapping(body, task, mapping));
+        }
+        
         MappingExpression expression = (MappingExpression) mapping.getRight();
         EnScalarCodeSpec spec = ExpressionSpec.builder().parent(body).envir(namings.ast()).flm(expression);
-        
         execution.add(".$L($L)", mapping.getLeft(), spec.getValue());
       }
       
       return execution.add("\r\n").add(".build()").build(); 
+    }
+    
+    private static boolean isMappable(TypeDef t) {
+      if(t.getDirection() != DirectionType.IN) {
+        return false;
+      }
+      if(t instanceof ScalarDef) {
+        return ((ScalarDef) t).getFormula().isEmpty();
+      }
+      return true;
     }
     
     /*
@@ -189,7 +212,6 @@ public class FlImplSpec {
      */
     private CodeBlock end(FlowTaskNode task, EndPointer pointer) {
       final ClassName outputType = namings.fl().outputValue(body);
-      final ClassName inputType = namings.fl().inputValue(body);
       final ClassName immutableOutputType = JavaSpecUtil.immutable(outputType);
       
       final CodeBlock metaValue = CodeBlock.builder()
@@ -198,8 +220,17 @@ public class FlImplSpec {
           .add("\r\n").add(".status($T.$L).build()", ExecutionStatus.class, ExecutionStatus.COMPLETED)
           .build();
       
+      CodeBlock.Builder output = CodeBlock.builder();
+      for(Mapping mapping : pointer.getValues()) {
+        
+        MappingExpression expression = (MappingExpression) mapping.getRight();
+        EnScalarCodeSpec spec = ExpressionSpec.builder().parent(body).envir(namings.ast()).flm(expression);
+        output.add(".$L($L)", mapping.getLeft(), spec.getValue());
+      }
+      
+      
       return CodeBlock.builder().add("\r\n")
-        .addStatement("$T.Builder result = $T.builder()", immutableOutputType, immutableOutputType)
+        .addStatement("$T.Builder result = $T.builder()$L", immutableOutputType, immutableOutputType, output.build())
         .addStatement("long start = meta.getStart()")
         .addStatement("long end = System.currentTimeMillis()")      
         .addStatement("return execution(input, result.build(), $L)", metaValue)

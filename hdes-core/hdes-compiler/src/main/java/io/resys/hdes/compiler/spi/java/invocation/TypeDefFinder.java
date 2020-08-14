@@ -23,6 +23,7 @@ package io.resys.hdes.compiler.spi.java.invocation;
 import java.util.Arrays;
 import java.util.Optional;
 
+import io.resys.hdes.ast.api.nodes.AstNode;
 import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
@@ -119,6 +120,20 @@ public class TypeDefFinder {
       .findFirst();    
   }
 
+  @SuppressWarnings("unchecked")
+  public static <T extends AstNode> Optional<T> getNode(Class<T> type, AstNodeVisitorContext ctx) {
+    AstNodeVisitorContext parent = ctx;
+    do {
+      if(type.isAssignableFrom(parent.getValue().getClass())) {
+        return Optional.of((T) parent.getValue());
+      } else {
+        parent = parent.getParent().orElse(null);
+      }
+    } while(parent != null);
+    
+    return Optional.empty();
+  }
+  
   @SuppressWarnings("unchecked")
   public static <T extends Body> T getBody(AstNodeVisitorContext ctx) {
     AstNodeVisitorContext parent = ctx;

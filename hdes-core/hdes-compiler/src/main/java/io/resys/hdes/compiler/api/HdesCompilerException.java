@@ -15,6 +15,7 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.MethodInvocation;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskPointer;
+import io.resys.hdes.ast.api.nodes.FlowNode.Mapping;
 import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
 import io.resys.hdes.ast.api.nodes.ManualTaskNode.ManualTaskBody;
 
@@ -118,6 +119,21 @@ public class HdesCompilerException extends RuntimeException {
             .append(" does not exist!").append(System.lineSeparator())
           .append("  AST: ").append(ast.getValue()).append(System.lineSeparator())
           .append("    - ").append(ast).append("!")
+          .toString();
+    }
+    
+    public String unknownFlMapping(FlowBody flow, FlowTaskNode task, Mapping mapping) {
+      return new StringBuilder()
+          .append("Unknown FLOW task mapping").append(System.lineSeparator())
+            .append("  Flow: ")
+            .append("\"").append(flow.getId().getValue()).append("\"")
+            .append(" task: ")
+            .append("\"").append(task.getId()).append("\"")
+            .append(" mapping: ")
+            .append("\"").append(mapping.getLeft()).append("\"")
+            .append(" does not exist!").append(System.lineSeparator())
+          .append("  AST: ").append(System.lineSeparator())
+          .append("    - ").append(mapping).append("!")
           .toString();
     }
     

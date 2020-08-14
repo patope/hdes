@@ -31,6 +31,7 @@ import io.resys.hdes.ast.api.nodes.AstNodeVisitor.AstNodeVisitorContext;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.LambdaExpression;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
+import io.resys.hdes.ast.api.nodes.FlowNode.MappingExpression;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 
 public class InvocationGetMethodFl {
@@ -57,22 +58,34 @@ public class InvocationGetMethodFl {
       return CodeBlock.builder().add(name + (typeDef.getRequired() ? "" : ".get()")).build();
       
     }
-
+    final Optional<MappingExpression> mappingExpression = TypeDefFinder.getNode(MappingExpression.class, ctx);
+    
     // getFlow input or task output
     String[] pathName = node.getValue().split("\\.");
     String taskName = pathName[0];
     Optional<FlowTaskNode> task = TypeDefFinder.getTask(flow.getTask(), taskName);
     if(task.isPresent()) {
       String nextPath = node.getValue().substring(node.getValue().indexOf(".") + 1);
+      
+      if(mappingExpression.isPresent()) {
+        return CodeBlock.builder()
+          .add("after.$L.getDelegate().getOutputValue().$L", 
+              JavaSpecUtil.methodCall(taskName),
+              JavaSpecUtil.methodCall(nextPath))
+          .build();
+      }
       return CodeBlock.builder()
           .add("input.$L.$L.getDelegate().getOutputValue().$L", 
               JavaSpecUtil.methodCall(ACCESS_STATE_VALUE),
               JavaSpecUtil.methodCall(taskName),
               JavaSpecUtil.methodCall(nextPath))
-          .build();      
+          .build();
     }
     
-    String required = (typeDef.getRequired() ? "" : ".get()");
+    final String required = (typeDef.getRequired() ? "" : ".get()");
+    if(mappingExpression.isPresent()) {
+      return CodeBlock.builder().add("input.$L", JavaSpecUtil.methodCall(node.getValue()) + required).build();      
+    }
     String name = JavaSpecUtil.methodCall(InvocationGetMethod.ACCESS_INPUT_VALUE + "." + node.getValue());
     return CodeBlock.builder().add("input.$L", name + required).build();
   }

@@ -32,6 +32,8 @@ import io.resys.hdes.ast.api.nodes.ImmutableAstNodeVisitorContext;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.spi.java.en.ExpressionVisitor.EnScalarCodeSpec;
 import io.resys.hdes.compiler.spi.java.invocation.InvocationTypeDef;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationTypeDefDt;
+import io.resys.hdes.compiler.spi.java.invocation.InvocationTypeDefFl;
 
 public interface ExpressionSpec {
   
@@ -64,8 +66,7 @@ public interface ExpressionSpec {
       // find body node
       AstNodeVisitorContext parent = ImmutableAstNodeVisitorContext.builder().value(node).build();
       AstNodeVisitorContext ctx = ImmutableAstNodeVisitorContext.builder().value(value).parent(parent).build();
-      
-      InvocationTypeDef resolver = InvocationTypeDef.builder().envir(envir).body(node).build();
+      InvocationTypeDef resolver = new InvocationTypeDefFl(envir);
       return new ExpressionVisitor(resolver).visitBody(value, ctx);
     }
     /**
@@ -78,11 +79,12 @@ public interface ExpressionSpec {
       ExpressionBody value = mapping.getValue();
       
       // find body node
-      AstNodeVisitorContext parent = ImmutableAstNodeVisitorContext.builder().value(node).build();
-      AstNodeVisitorContext ctx = ImmutableAstNodeVisitorContext.builder().value(value).parent(parent).build();
+      AstNodeVisitorContext bodyCtx = ImmutableAstNodeVisitorContext.builder().value(node).build();
+      AstNodeVisitorContext mappingCtx = ImmutableAstNodeVisitorContext.builder().value(mapping).parent(bodyCtx).build();
+      AstNodeVisitorContext expCtx = ImmutableAstNodeVisitorContext.builder().value(value).parent(mappingCtx).build();
       
-      InvocationTypeDef resolver = InvocationTypeDef.builder().envir(envir).body(node).build();
-      return new ExpressionVisitor(resolver).visitBody(value, ctx);
+      InvocationTypeDef resolver = new InvocationTypeDefFl(envir);
+      return new ExpressionVisitor(resolver).visitBody(value, expCtx);
     }
     /**
      * decision table formula
@@ -98,8 +100,7 @@ public interface ExpressionSpec {
       // find body node
       AstNodeVisitorContext parent = ImmutableAstNodeVisitorContext.builder().value(node).build();
       AstNodeVisitorContext ctx = ImmutableAstNodeVisitorContext.builder().value(value).parent(parent).build();
-      
-      InvocationTypeDef resolver = InvocationTypeDef.builder().envir(envir).body(node).build();
+      InvocationTypeDef resolver = new InvocationTypeDefDt(envir);
       return new ExpressionVisitor(resolver).visitBody(value, ctx);
     }
   }

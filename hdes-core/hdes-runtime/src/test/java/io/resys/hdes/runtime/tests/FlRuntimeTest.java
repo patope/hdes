@@ -66,7 +66,7 @@ public class FlRuntimeTest {
         "    when: ? then: end as: { clientScore: FirstNameTask.value } },\n" + 
         "  LastNameTask: {\n" + 
         "    then: end as: { clientScore: FirstNameTask.value + LastNameTask.value }\n" + 
-        "    decision-table: NameScoreDt uses: { name: lastName } }\n" + 
+        "    decision-table: NameScoreDt uses: { value: lastName } }\n" + 
         "}";
     
     Map<String, Serializable> data = new HashMap<>();
@@ -75,7 +75,7 @@ public class FlRuntimeTest {
     data.put("lastName", "SAM");
 
     HdesExecution<? extends InputValue, FlowMetaValue, ? extends OutputValue> output = runFlow("NameScoreFlow", src, data);
-    Assertions.assertEquals(output.getMetaValue().toString(), "NameScoreFlowState{firstNameTask=null, nameScoreFlowswitch=null, lastNameTask=null}");
+    Assertions.assertEquals(output.getOutputValue().toString(), "NameScoreFlowOut{clientScore=70}");
   }
   
   

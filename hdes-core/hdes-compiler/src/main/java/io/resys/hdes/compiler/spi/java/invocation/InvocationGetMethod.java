@@ -67,7 +67,6 @@ public class InvocationGetMethod {
       if(body instanceof DecisionTableBody) {
         return new InvocationGetMethodDt().apply(ctx, invocation, typeDef);
       }
-      
       return new InvocationGetMethodFl().apply(ctx, invocation, typeDef);
     }
   }

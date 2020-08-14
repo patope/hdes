@@ -47,9 +47,7 @@ import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.naming.Namings;
 import io.resys.hdes.executor.api.HdesExecutable.ExecutionStatus;
 import io.resys.hdes.executor.api.HdesExecutable.SourceType;
-import io.resys.hdes.executor.api.ImmutableHdesExecution;
 import io.resys.hdes.executor.api.ImmutableSwitchMeta;
-import io.resys.hdes.executor.api.SwitchMeta;
 
 public class FlSwitchImplSpec {
   
@@ -141,22 +139,22 @@ public class FlSwitchImplSpec {
       
       ClassName inputType = namings.sw().inputValue(body, task);
       
+      CodeBlock metaValue = CodeBlock.builder()
+        .add("$T.builder()", ImmutableSwitchMeta.class)
+        .add(".id($S).status($T.COMPLETED)", task.getId(), ExecutionStatus.class)
+        .add(".start(start).end(end).time(end - start).build()").build();
+      
       execution.add("\r\n")
       .addStatement("$T output = result.build()", outputType)
-      .addStatement("long end = System.currentTimeMillis()")
-      .add("$T metaWrapper = $T.builder()", ImmutableSwitchMeta.class, ImmutableSwitchMeta.class)
-      .add("\r\n  ").add(".id($S).status($T.COMPLETED) ", task.getId(), ExecutionStatus.class)
-      .add("\r\n  ").addStatement(".start(start).end(end).time(end - start).build()")
-      .add("\r\n")
-      
-      .addStatement("$T.Builder<$T, $T, $T> resultWrapper = $T.builder()", ImmutableHdesExecution.class, inputType, SwitchMeta.class, outputType, ImmutableHdesExecution.class)
-      .addStatement("return resultWrapper.metaValue(metaWrapper).outputValue(output).build()")
+      .addStatement("long end = System.currentTimeMillis()")      
+      .addStatement("return execution(input, output, $L)", metaValue)
       .build();
     
       
       return TypeSpec.classBuilder(namings.sw().impl(body, task))
           .addModifiers(Modifier.PUBLIC)
           .addSuperinterface(namings.sw().api(body, task))
+          .superclass(namings.sw().template(body, task))
           .addJavadoc(body.getDescription().orElse(""))
           .addAnnotation(annotationSpec)
           .addMethod(sourceType)
