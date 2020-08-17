@@ -94,6 +94,7 @@ public interface Namings {
     ParameterizedTypeName template(FlowBody node);
     
     TaskRefNaming ref(FlowBody node, TaskRef ref);
+    
     ParameterizedTypeName execution(FlowBody body);
     TypeName executable(FlowBody node);
     

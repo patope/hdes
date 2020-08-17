@@ -118,6 +118,7 @@ public class JavaFlNaming implements FlNaming {
       String typeName = node.getValue();
       try {
         DecisionTableBody body = (DecisionTableBody) envir.getByAstId(typeName);
+        
         return ImmutableTaskRefNaming.builder()
             .api(parent.dt().api(body))
             .impl(parent.dt().impl(body))
