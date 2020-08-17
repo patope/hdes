@@ -101,8 +101,9 @@ DEFAULT_VALUE: 'default-value';
 TASKS: 'tasks';
 USES: 'uses';
 WHEN: 'when';
+WHERE: 'where';
 THEN: 'then';
-END: 'end';
+END: 'end-as';
 
 // MARKS
 QUESTION_MARK: '?';

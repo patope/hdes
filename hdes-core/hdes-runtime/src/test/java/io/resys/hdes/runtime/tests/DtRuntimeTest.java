@@ -157,7 +157,7 @@ public class DtRuntimeTest {
         "  name     STRING required IN,\n" + 
         "  lastName STRING required IN,\n" +  
         "  score    INTEGER optional OUT formula: sum(instance), // total score of hit columns\n" +  
-        "  max      INTEGER optional OUT formula: sum(static.map(row -> max(row))) // sum max possible score of defined fields\n" + 
+        "  max      INTEGER optional OUT formula: sum(static.map( row -> max(row) )) // sum max possible score of defined fields\n" + 
         "\n" + 
         "} MATRIX from STRING to INTEGER: {\n" + 
         "          { 'BOB', 'SAM', ? },\n" + 

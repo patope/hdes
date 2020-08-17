@@ -17,11 +17,13 @@ nextTask: typeName ':' '{' taskPointer taskRef? '}' fromPointer?;
 taskPointer: whenThenPointerArgs | thenPointer;
 whenThenPointerArgs: whenThenPointer (',' whenThenPointer)*;
 whenThenPointer: 'when' ':' ('?' | enBody) thenPointer;
-thenPointer: 'then' ':' (endMapping | typeName);
-fromPointer: 'from' typeName thenPointer;
+thenPointer: 'then' ':' (endMapping | typeName) asPointer?;
+fromPointer: 'from' ':' typeName where? thenPointer;
+asPointer: 'as' ':' typeName;
+where: 'where' ':' enBody;
 
 taskRef: taskTypes ':' typeName 'uses' ':' mapping;
-endMapping: 'end' 'as' ':' mapping;
+endMapping: 'end-as' ':' mapping;
 
 mapping: '{' mappingArgs? '}';
 mappingArgs: mappingArg (',' mappingArg)*; 

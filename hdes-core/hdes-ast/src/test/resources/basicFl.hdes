@@ -2,7 +2,7 @@ define flow: X description: 'descriptive'
 headers: {
   id INTEGER optional IN,
   externalId INTEGER required IN,
-  elements ARRAY of OBJECT required IN: {
+  schools ARRAY of OBJECT required IN: {
     value STRING required IN
   },
   output ARRAY of OBJECT required OUT: {
@@ -10,18 +10,18 @@ headers: {
   }
 }
 tasks: {
-  FirstTask: {
-    then: HandleElement
+  CreateScore: {
+    then: HandleElement as: score
     decision-table: bestDtTask uses: {
-      name: elements.value
+      name: schools.value
     }
-  } from elements then: EndTask,
+  } from: schools where: score.value > 10 then: EndTask,
   
   HandleElement: {
-    then: end as: { output: { value: FirstTask.dtOutput }}
+    then: end-as: { output: { value: FirstTask.dtOutput }}
   },
   
   EndTask: {
-    then: end as: { input1: arg1.x1, input2: arg2.x1 }
+    then: end-as: { input1: arg1.x1, input2: arg2.x1 }
   }
 }

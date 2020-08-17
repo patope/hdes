@@ -93,7 +93,7 @@ public class FlowAstNodeTest {
             + "when: ? then: nextTask\n" +
             "}, " +
             "nextTask: {"
-            + "then: end as: {}" +
+            + "then: end-as: {}" +
             "} " +
             
             "}\n");
@@ -115,7 +115,7 @@ public class FlowAstNodeTest {
             + "decision-table: XXX uses: {}"
             + "}, " +
             "nextTask: {"
-            + "then: end as: {}" +
+            + "then: end-as: {}" +
             "} " +
             "}\n");
   }
@@ -132,7 +132,7 @@ public class FlowAstNodeTest {
           
           "tasks: {\n" +
             "firstTask: {\n" +
-              "then: end as: {}" +
+              "then: end-as: {}" +
               "manual-task: bestManualTask uses: {}\n" + 
             "}\n" +
 
@@ -149,7 +149,7 @@ public class FlowAstNodeTest {
             "}\n" + 
             "tasks: {\n" +
             "firstTask: {\n"
-            + "then: end as: {}"
+            + "then: end-as: {}"
             + "service: bestServiceTask uses: {} \n"
             + "}\n" +
             "}\n");
@@ -166,9 +166,9 @@ public class FlowAstNodeTest {
             "}\n" +
             "tasks: {\n" +
             "firstTask: {\n"
-            + "then: end as: {}"
+            + "then: end-as: {}"
             + "service: bestFlowTask uses: {} \n"
-            + "} from x then: end as: {} \n" +
+            + "} from: x then: end-as: {} \n" +
             "}\n");
   }
 
@@ -193,9 +193,9 @@ public class FlowAstNodeTest {
             + "},\n" +
             
             "nextTask: {\n"
-            + "then: end as: { summary: { key: firstTask.value, value: nextTask.value } }\n"
+            + "then: end-as: { summary: { key: firstTask.value, value: nextTask.value } }\n"
             + "service: DoSmth uses: { value : firstTask.key } \n"
-            + "} from firstTask then: end as: { code: 5 } \n" +
+            + "} from: firstTask then: end-as: { code: 5 } \n" +
             
           "}\n");
   }
@@ -210,7 +210,7 @@ public class FlowAstNodeTest {
             "}\n" +
             "tasks: {\n" +
             "firstTask: {\n"
-            + "then: end as: {}"
+            + "then: end-as: {}"
             + "decision-table: bestDtTask uses: {} \n"
             + "}\n" +
             "}\n");
@@ -227,8 +227,7 @@ public class FlowAstNodeTest {
             "tasks: {\n" +
             "firstTask: {\n"
 
-            + "then: end \n"
-            + "as: {\n"
+            + "then: end-as: {\n"
               + "input1: arg1.x1,\n"
               + "input2: arg2.x1\n"
             + "}\n"

@@ -63,9 +63,9 @@ public class FlRuntimeTest {
         "    decision-table: NameScoreDt uses: { value: firstName } },\n" + 
         "  decision: {\n" + 
         "    when: FirstNameTask.value > 10 then: LastNameTask,\n" + 
-        "    when: ? then: end as: { clientScore: FirstNameTask.value } },\n" + 
+        "    when: ? then: end-as: { clientScore: FirstNameTask.value } },\n" + 
         "  LastNameTask: {\n" + 
-        "    then: end as: { clientScore: FirstNameTask.value + LastNameTask.value }\n" + 
+        "    then: end-as: { clientScore: FirstNameTask.value + LastNameTask.value }\n" + 
         "    decision-table: NameScoreDt uses: { value: lastName } }\n" + 
         "}";
     
