@@ -118,7 +118,7 @@ public class FwParserAstNodeVisitor extends MtParserAstNodeVisitor {
         .headers(headers)
         .token(token(ctx))
         .id(ImmutableBodyId.builder().token(id.getToken()).value(id.getValue()).build())
-        .description(children.of(RedundentDescription.class).map(e -> e.getValue()).orElse(null))
+        .description(children.of(RedundentDescription.class).map(e -> e.getValue()))
         .task(tasks.getFirst())
         .unreachableTasks(tasks.getUnclaimed())
         .build();

@@ -130,9 +130,24 @@ public class JavaFlNaming implements FlNaming {
       } catch(AstNodeException e) {
         throw new HdesCompilerException(HdesCompilerException.builder().unknownFlTaskRef(flow, node));        
       }
-        
     }
-    //case FLOW_TASK: return ClassName.get(parent, node.getValue());
+    case FLOW_TASK: {
+      String typeName = node.getValue();
+      try {
+        FlowBody body = (FlowBody) envir.getByAstId(typeName);
+        
+        return ImmutableTaskRefNaming.builder()
+            .api(parent.fl().api(body))
+            .impl(parent.fl().impl(body))
+            .meta(ClassName.get(FlowMetaValue.class))
+            .execution(parent.fl().execution(body))
+            .inputValue(parent.fl().inputValue(body))
+            .outputValue(parent.fl().outputValue(body))
+            .build();
+      } catch(AstNodeException e) {
+        throw new HdesCompilerException(HdesCompilerException.builder().unknownFlTaskRef(flow, node));        
+      }
+    }
     //case MANUAL_TASK: return ClassName.get(parent, node.getValue());
     //case SERVICE_TASK: return ClassName.get(parent, node.getValue());
     default: throw new HdesCompilerException(HdesCompilerException.builder().unknownFlTaskRef(flow, node));

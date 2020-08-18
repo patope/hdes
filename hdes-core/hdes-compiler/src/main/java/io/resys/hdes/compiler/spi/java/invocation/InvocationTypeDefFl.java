@@ -96,7 +96,7 @@ public class InvocationTypeDefFl implements InvocationTypeDef {
   }
   
   private Invocation deconstruct(Invocation src) {
-    String nextPath = "instance." + src.getValue().substring(src.getValue().indexOf(".") + 1);
+    String nextPath = src.getValue().substring(src.getValue().indexOf(".") + 1);
     return ImmutableInstanceInvocation.builder().from(src).value(nextPath).build();
   }
 

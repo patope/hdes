@@ -44,59 +44,52 @@ import io.resys.hdes.runtime.api.HdesRuntime.RuntimeEnvir;
 import io.resys.hdes.runtime.api.HdesRuntime.RuntimeTask;
 import io.resys.hdes.runtime.spi.ImmutableHdesRuntime;
 
-public class FlRuntimeTest {
+public class FlowWithNestedFlowTest {
   private static final HdesCompiler compiler = JavaHdesCompiler.config().build();
   private static final ObjectMapper objectMapper = new ObjectMapper();
   
   @Test
   public void simpleFlow() {
-    String src = "define flow: NameScoreFlow description: 'descriptive'\n" +
+    String src = "define flow: CascoPricingFlow\n" +
         "headers: {\n" + 
-        "  type INTEGER required IN,\n" + 
-        "  firstName STRING required IN,\n" +
-        "  lastName STRING required IN,\n" +
-        "  clientScore INTEGER optional OUT\n" +
+        "  factor1 INTEGER required IN,\n" + 
+        "  factor2 INTEGER required IN,\n" +
+        "  total INTEGER optional OUT\n" +
         "}\n" + 
         "tasks: {\n" + 
-        "  FirstNameTask: {\n" + 
-        "    then: decision\n" + 
-        "    decision-table: NameScoreDt uses: { value: firstName } },\n" + 
-        "  decision: {\n" + 
-        "    when: FirstNameTask.value > 10 then: LastNameTask,\n" + 
-        "    when: ? then: end-as: { clientScore: FirstNameTask.value } },\n" + 
-        "  LastNameTask: {\n" + 
-        "    then: end-as: { clientScore: FirstNameTask.value + LastNameTask.value }\n" + 
-        "    decision-table: NameScoreDt uses: { value: lastName } }\n" + 
+        "  CalculateFactors: {\n" + 
+        "    then: end-as: { total: CalculateFactors.result }\n" +
+        "    flow: CalculateFactorFlow uses: { factor1: factor1, factor2: factor2 }\n"
+        + "}\n" + 
         "}";
     
     Map<String, Serializable> data = new HashMap<>();
-    data.put("type", 11);
-    data.put("firstName", "BOB");
-    data.put("lastName", "SAM");
+    data.put("factor1", 11);
+    data.put("factor2", 20);
 
-    HdesExecution<? extends InputValue, FlowMetaValue, ? extends OutputValue> output = runFlow("NameScoreFlow", src, data);
-    Assertions.assertEquals(output.getOutputValue().toString(), "NameScoreFlowOut{clientScore=70}");
+    HdesExecution<? extends InputValue, FlowMetaValue, ? extends OutputValue> output = runFlow("CascoPricingFlow", src, data);
+    Assertions.assertEquals(output.getOutputValue().toString(), "CascoPricingFlowOut{total=31}");
   }
   
   
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  private static HdesExecution<? extends InputValue, FlowMetaValue, ? extends OutputValue> runFlow(
-      String name, 
-      String src, 
-      Map<String, Serializable> data) {
+  private static HdesExecution<? extends InputValue, FlowMetaValue, ? extends OutputValue> runFlow(String name, String src, Map<String, Serializable> data) {
     
-    String nameScoreDt = "define decision-table: NameScoreDt\n" + 
-        "headers: {\n" + 
-        "  value     STRING required IN\n" +
-        "} MATRIX from STRING to INTEGER: {\n" + 
-        "         { 'BOB', 'SAM',  ?  },\n" +  
-        "  value: {    20,    50,  60 } \n" + 
-        "}";
-    
+    String calculateFactorFlow = "define flow: CalculateFactorFlow\n" + 
+            "headers: {\n" + 
+            "  factor1 INTEGER required IN,\n" + 
+            "  factor2 INTEGER required IN,\n" +
+            "  result INTEGER required OUT\n" +
+            "}\n" + 
+            "tasks: {\n" + 
+            "  SumFactors: {\n" + 
+            "    then: end-as: { result: factor1 + factor2 }\n" +
+            " }" +
+            "}";
     try {
       List<Resource> resources = compiler.parser()
           .add(name, src)
-          .add("NameScoreDt", nameScoreDt)
+          .add("CalculateFactorFlow", calculateFactorFlow)
           .build();
       
       RuntimeEnvir runtime = ImmutableHdesRuntime.builder().from(resources).build();

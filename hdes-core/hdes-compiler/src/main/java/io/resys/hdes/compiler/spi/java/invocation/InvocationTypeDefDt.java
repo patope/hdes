@@ -77,6 +77,14 @@ public class InvocationTypeDefDt implements InvocationTypeDef {
         if(typeDef.isPresent()) {
           return typeDef.get();
         }
+        
+        for(TypeDef childTypeDef : body.getHeaders().getInstance().get().getValues()) {
+          Optional<TypeDef> instanceTypeDef = TypeDefFinder.getTypeDef(childTypeDef, pathName);
+          if(instanceTypeDef.isPresent()) {
+            return instanceTypeDef.get();
+          }
+        }
+        
         throw new HdesCompilerException(HdesCompilerException.builder().unknownExpressionParameter(invocation));
         
       }
