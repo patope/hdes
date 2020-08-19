@@ -80,7 +80,7 @@ public class JavaSpecUtil {
     int index = pkg.lastIndexOf(".");
     
     String top;
-    if(Character.isUpperCase(pkg.charAt(index + 1))) {
+    if(index > -1 && Character.isUpperCase(pkg.charAt(index + 1))) {
       top = pkg.substring(0, index);
     } else {
       top = pkg;

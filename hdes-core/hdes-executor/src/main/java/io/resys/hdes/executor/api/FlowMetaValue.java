@@ -50,7 +50,8 @@ public interface FlowMetaValue extends HdesExecutable.MetaValue {
   }
   
   @Value.Immutable
-  interface FlowTaskMetaFlux<I extends InputValue, M extends MetaValue, T extends OutputValue> extends FlowTaskMeta {
+  interface FlowTaskMetaFlux<I extends InputValue, M extends MetaValue, T extends OutputValue, F extends FlowState> extends FlowTaskMeta {
     List<HdesExecution<I, M, T>> getDelegate();
+    List<F> getSubState();
   }
 }
