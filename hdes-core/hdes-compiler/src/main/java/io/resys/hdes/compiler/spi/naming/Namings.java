@@ -92,13 +92,13 @@ public interface Namings {
     ClassName api(FlowBody node);
     ClassName impl(FlowBody node);
     ParameterizedTypeName template(FlowBody node);
-    
     TaskRefNaming ref(FlowBody node, TaskRef ref);
     
     ParameterizedTypeName execution(FlowBody body);
     TypeName executable(FlowBody node);
     
     ClassName stateValue(FlowBody body);
+    //ClassName stateValue(FlowBody body, FlowTaskNode pointer);
     
     ClassName inputValue(FlowBody node);
     ClassName inputValue(FlowBody node, ObjectDef object);
@@ -109,6 +109,7 @@ public interface Namings {
   
   @Value.Immutable
   interface TaskRefNaming {
+    Boolean getArray();
     ClassName getApi();
     ClassName getImpl();
     ClassName getMeta();

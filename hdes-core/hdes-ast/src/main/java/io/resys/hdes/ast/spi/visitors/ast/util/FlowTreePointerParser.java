@@ -33,15 +33,15 @@ import org.immutables.value.Value;
 import io.resys.hdes.ast.api.AstNodeException;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.FlowNode.EndPointer;
-import io.resys.hdes.ast.api.nodes.FlowNode.FlowLoop;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskPointer;
+import io.resys.hdes.ast.api.nodes.FlowNode.LoopPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.ThenPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 import io.resys.hdes.ast.api.nodes.ImmutableErrorNode;
-import io.resys.hdes.ast.api.nodes.ImmutableFlowLoop;
 import io.resys.hdes.ast.api.nodes.ImmutableFlowTaskNode;
+import io.resys.hdes.ast.api.nodes.ImmutableLoopPointer;
 import io.resys.hdes.ast.api.nodes.ImmutableThenPointer;
 import io.resys.hdes.ast.api.nodes.ImmutableWhenThen;
 import io.resys.hdes.ast.api.nodes.ImmutableWhenThenPointer;
@@ -81,15 +81,7 @@ public class FlowTreePointerParser {
     }
 
     FlowTaskPointer next = visit(bodyId, task.getNext());
-    Optional<FlowLoop> loop = task.getLoop()
-        .map(l -> ImmutableFlowLoop.builder().from(l).next(visit(bodyId, l.getNext())).build()); 
-    
-    FlowTaskNode clone = ImmutableFlowTaskNode.builder()
-        .from(task)
-        .next(next)
-        .loop(loop)
-        .build();
-    
+    FlowTaskNode clone = ImmutableFlowTaskNode.builder().from(task).next(next).build();
     createdTasks.put(clone.getId(), clone);
     return clone;
   }
@@ -97,6 +89,8 @@ public class FlowTreePointerParser {
   private FlowTaskPointer visit(String bodyId, FlowTaskPointer pointer) {
     if(pointer instanceof WhenThenPointer) {
       return visit(bodyId, (WhenThenPointer) pointer);
+    } else if(pointer instanceof LoopPointer) {
+      return visit(bodyId, (LoopPointer) pointer);
     } else if(pointer instanceof ThenPointer) {
       return visit(bodyId, (ThenPointer) pointer);
     } else if(pointer instanceof EndPointer) {
@@ -116,6 +110,18 @@ public class FlowTreePointerParser {
     return ImmutableWhenThenPointer.builder()
         .from(pointer)
         .values(values)
+        .build();
+  }
+  
+  private FlowTaskPointer visit(String id, LoopPointer pointer) {
+
+    FlowTaskPointer insidePointer = visit(id, pointer.getInsidePointer());
+    FlowTaskPointer afterPointer = visit(id, pointer.getAfterPointer());
+    
+    return ImmutableLoopPointer.builder()
+        .from(pointer)
+        .insidePointer(insidePointer)
+        .afterPointer(afterPointer)
         .build();
   }
 

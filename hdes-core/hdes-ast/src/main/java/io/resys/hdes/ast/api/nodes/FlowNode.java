@@ -44,14 +44,7 @@ public interface FlowNode extends AstNode {
     String getId();
     FlowTaskPointer getNext();
     Optional<TaskRef> getRef();
-    Optional<FlowLoop> getLoop();
   }
-  
-  @Value.Immutable
-  interface FlowLoop extends FlowNode {
-    TypeInvocation getArrayName();
-    FlowTaskPointer getNext();
-  } 
   
   @Value.Immutable
   interface WhenThenPointer extends FlowTaskPointer {
@@ -65,6 +58,16 @@ public interface FlowNode extends AstNode {
     Optional<FlowTaskNode> getTask();
   }
 
+  @Value.Immutable
+  interface LoopPointer extends FlowTaskPointer {
+    FlowTaskPointer getInsidePointer();
+    FlowTaskPointer getAfterPointer();
+    TypeInvocation getInputType();
+
+    Optional<ExpressionBody> getWhere();
+    Optional<TypeInvocation> getOutputType();
+  }
+  
   @Value.Immutable
   interface EndPointer extends FlowTaskPointer {
     String getName();

@@ -64,8 +64,8 @@ import io.resys.hdes.executor.api.HdesExecutable.ExecutionStatus;
 import io.resys.hdes.executor.api.HdesExecutable.SourceType;
 import io.resys.hdes.executor.api.HdesWhen;
 import io.resys.hdes.executor.api.ImmutableFlowMetaValue;
-import io.resys.hdes.executor.api.ImmutableFlowTaskMetaFlux;
-import io.resys.hdes.executor.api.ImmutableFlowTaskMetaMono;
+import io.resys.hdes.executor.api.ImmutableFlowTaskMono;
+import io.resys.hdes.executor.api.ImmutableFlowTaskMulti;
 import io.resys.hdes.executor.api.ImmutableHdesExecution;
 import io.resys.hdes.executor.api.SwitchMeta;
 
@@ -160,13 +160,14 @@ public class FlImplSpec {
           .add("\r\n  ").addStatement(".apply($L)", mapping(task));
       
       ClassName stateType = namings.fl().stateValue(body);
-      ClassName delegateType = ClassName.get(task.getLoop().isPresent() ? ImmutableFlowTaskMetaFlux.class : ImmutableFlowTaskMetaMono.class);      
+      ClassName delegateType = ClassName.get(ref.getArray() ? ImmutableFlowTaskMulti.class : ImmutableFlowTaskMono.class);
+      
       return Optional.of(CodeBlock.builder()
           .add(delegate.build())
           .add("\r\n")
           .addStatement("$T.Builder<$T, $T, $T> task = $T.builder()", delegateType, ref.getInputValue(), ref.getMeta(), ref.getOutputValue(), delegateType)
           .add("\r\n")
-          .add("after = $T.builder().from(before)", JavaSpecUtil.immutable(stateType))
+          .add("after = $T.builder().from(after)", JavaSpecUtil.immutable(stateType))
           .addStatement(".$L(task.id($S).delegate(delegate).build()).build()", JavaSpecUtil.decapitalize(task.getId()), task.getId())
           .build());
     }
@@ -190,7 +191,7 @@ public class FlImplSpec {
           .addStatement(".apply($L)", delegateInput)
           .add("\r\n")
           
-          .addStatement("$T.Builder<$T, $T, $T> task = $T.builder()", ImmutableFlowTaskMetaMono.class, namings.sw().inputValue(body, task), SwitchMeta.class, namings.sw().outputValue(body, task), ImmutableFlowTaskMetaMono.class)
+          .addStatement("$T.Builder<$T, $T, $T> task = $T.builder()", ImmutableFlowTaskMono.class, namings.sw().inputValue(body, task), SwitchMeta.class, namings.sw().outputValue(body, task), ImmutableFlowTaskMono.class)
           
           .add("after = $T.builder().from(before)", JavaSpecUtil.immutable(stateType))
           .addStatement(".$L(task.id($S).delegate(delegate).build()).build()", JavaSpecUtil.decapitalize(task.getId()), task.getId())

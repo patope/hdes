@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -48,7 +47,8 @@ public class FlowWithLoopTest {
   private static final HdesCompiler compiler = JavaHdesCompiler.config().build();
   private static final ObjectMapper objectMapper = new ObjectMapper();
   
-  @Test
+  
+  //@Test
   public void simpleFlow() {
     String src = "define flow: CalculateRiskCoversFlow\n" +
         "headers: {\n" + 

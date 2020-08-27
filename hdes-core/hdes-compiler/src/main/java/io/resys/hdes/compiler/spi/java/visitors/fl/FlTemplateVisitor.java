@@ -31,9 +31,9 @@ import io.resys.hdes.ast.api.nodes.AstNodeVisitor.FlowAstNodeVisitor;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.EndPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
-import io.resys.hdes.ast.api.nodes.FlowNode.FlowLoop;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskPointer;
+import io.resys.hdes.ast.api.nodes.FlowNode.LoopPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.MappingValue;
 import io.resys.hdes.ast.api.nodes.FlowNode.ThenPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
@@ -112,11 +112,6 @@ public class FlTemplateVisitor<T, R> implements FlowAstNodeVisitor<T, R> {
   }
 
   @Override
-  public T visitLoop(FlowLoop node, AstNodeVisitorContext ctx) {
-    throw new IllegalArgumentException("Not implemented");
-  }
-
-  @Override
   public T visitInputs(List<TypeDef> node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
@@ -128,6 +123,11 @@ public class FlTemplateVisitor<T, R> implements FlowAstNodeVisitor<T, R> {
 
   @Override
   public T visitInvocation(Invocation node, AstNodeVisitorContext ctx) {
+    throw new IllegalArgumentException("Not implemented");
+  }
+
+  @Override
+  public T visitLoop(LoopPointer node, AstNodeVisitorContext ctx) {
     throw new IllegalArgumentException("Not implemented");
   }
 }

@@ -28,6 +28,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.immutables.value.Value;
 
 import io.resys.hdes.ast.HdesParser;
+import io.resys.hdes.ast.HdesParser.AsPointerContext;
 import io.resys.hdes.ast.HdesParser.EndMappingContext;
 import io.resys.hdes.ast.HdesParser.FlBodyContext;
 import io.resys.hdes.ast.HdesParser.FromPointerContext;
@@ -52,7 +53,6 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.ExpressionBody;
 import io.resys.hdes.ast.api.nodes.FlowNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.EndPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
-import io.resys.hdes.ast.api.nodes.FlowNode.FlowLoop;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.Mapping;
@@ -64,8 +64,8 @@ import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 import io.resys.hdes.ast.api.nodes.ImmutableBodyId;
 import io.resys.hdes.ast.api.nodes.ImmutableEndPointer;
 import io.resys.hdes.ast.api.nodes.ImmutableFlowBody;
-import io.resys.hdes.ast.api.nodes.ImmutableFlowLoop;
 import io.resys.hdes.ast.api.nodes.ImmutableFlowTaskNode;
+import io.resys.hdes.ast.api.nodes.ImmutableLoopPointer;
 import io.resys.hdes.ast.api.nodes.ImmutableMapping;
 import io.resys.hdes.ast.api.nodes.ImmutableMappingArray;
 import io.resys.hdes.ast.api.nodes.ImmutableMappingExpression;
@@ -99,6 +99,20 @@ public class FwParserAstNodeVisitor extends MtParserAstNodeVisitor {
     RefTaskType getValue();
   }
 
+  @Value.Immutable
+  public interface FwRedundentFromLoop extends FlowNode {
+    FlowTaskPointer getThenPointer();
+    TypeInvocation getInputType();
+    
+    Optional<TypeInvocation> getOutputType();
+    Optional<ExpressionBody> getWhereExpression();
+  }
+  
+  @Value.Immutable
+  public interface FwRedundentAs extends FlowNode {
+    TypeInvocation getValue();
+  }
+  
   @Override
   public FlowBody visitFlBody(FlBodyContext ctx) {
     Nodes children = nodes(ctx);
@@ -154,21 +168,51 @@ public class FwParserAstNodeVisitor extends MtParserAstNodeVisitor {
   @Override
   public FlowTaskNode visitNextTask(NextTaskContext ctx) {
     Nodes nodes = nodes(ctx);
+    Optional<FwRedundentFromLoop> loop = nodes.of(FwRedundentFromLoop.class);
+    FlowTaskPointer inner = nodes.of(FlowTaskPointer.class).get();
+    
+    
+    final FlowTaskPointer next;
+    if(loop.isPresent()) {
+      next = ImmutableLoopPointer.builder()
+          .token(loop.get().getToken())
+          .afterPointer(loop.get().getThenPointer())
+          .where(loop.get().getWhereExpression())
+          .inputType(loop.get().getInputType())
+          .outputType(loop.get().getOutputType())
+          .insidePointer(inner)
+          .build();
+    } else {
+      next = inner;
+    }
+    
     return ImmutableFlowTaskNode.builder()
         .token(token(ctx))
         .id(nodes.of(TypeInvocation.class).get().getValue())
-        .next(nodes.of(FlowTaskPointer.class).get())
+        .next(next)
         .ref(nodes.of(TaskRef.class))
-        .loop(nodes.of(FlowLoop.class))
         .build();
   }
+  
   @Override
-  public FlowLoop visitFromPointer(FromPointerContext ctx) {
+  public FwRedundentFromLoop visitFromPointer(FromPointerContext ctx) {
     Nodes nodes = nodes(ctx);
-    return ImmutableFlowLoop.builder()
+    FlowTaskPointer taskPointer = nodes.of(FlowTaskPointer.class).get();
+    return ImmutableFwRedundentFromLoop.builder()
         .token(token(ctx))
-        .arrayName(nodes.of(TypeInvocation.class).get())
-        .next(nodes.of(FlowTaskPointer.class).get())
+        .inputType(nodes.of(TypeInvocation.class).get())
+        .outputType(nodes.of(FwRedundentAs.class).map(f -> f.getValue()))
+        .whereExpression(nodes.of(ExpressionBody.class))
+        .thenPointer(taskPointer)
+        .build();
+  }
+  
+  @Override
+  public FwRedundentAs visitAsPointer(AsPointerContext ctx) {
+    Nodes nodes = nodes(ctx);
+    return ImmutableFwRedundentAs.builder()
+        .token(token(ctx))
+        .value(nodes.of(TypeInvocation.class).get())
         .build();
   }
   
@@ -275,9 +319,6 @@ public class FwParserAstNodeVisitor extends MtParserAstNodeVisitor {
     // TODO:: error handling
     default: throw new AstNodeException("Unknown task type: " + ctx.getText() + "!");
     }
-    return ImmutableFwRedundentRefTaskType.builder()
-        .token(token(ctx))
-        .value(type)
-        .build();
+    return ImmutableFwRedundentRefTaskType.builder().token(token(ctx)).value(type).build();
   }
 }

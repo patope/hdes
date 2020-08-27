@@ -63,9 +63,9 @@ import io.resys.hdes.ast.api.nodes.ExpressionNode.PreDecrementUnary;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.PreIncrementUnary;
 import io.resys.hdes.ast.api.nodes.FlowNode.EndPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
-import io.resys.hdes.ast.api.nodes.FlowNode.FlowLoop;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskPointer;
+import io.resys.hdes.ast.api.nodes.FlowNode.LoopPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.MappingValue;
 import io.resys.hdes.ast.api.nodes.FlowNode.ThenPointer;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
@@ -161,7 +161,7 @@ public interface AstNodeVisitor<T, R> {
     T visitThenPointer(FlowTaskNode parent, ThenPointer node, AstNodeVisitorContext ctx);
     T visitEndPointer(FlowTaskNode parent, EndPointer node, AstNodeVisitorContext ctx);
     
-    T visitLoop(FlowLoop node, AstNodeVisitorContext ctx);
+    T visitLoop(LoopPointer node, AstNodeVisitorContext ctx);
     T visitWhenThen(WhenThen node, AstNodeVisitorContext ctx);
     T visitWhen(ExpressionBody node, AstNodeVisitorContext ctx);
     T visitMapping(FlowTaskNode node, AstNodeVisitorContext ctx);

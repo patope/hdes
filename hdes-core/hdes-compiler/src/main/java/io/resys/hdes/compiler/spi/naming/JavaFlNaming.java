@@ -28,6 +28,7 @@ import io.resys.hdes.ast.api.AstEnvir;
 import io.resys.hdes.ast.api.AstNodeException;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
+import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyAll;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
 import io.resys.hdes.compiler.api.HdesCompilerException;
@@ -120,6 +121,7 @@ public class JavaFlNaming implements FlNaming {
         DecisionTableBody body = (DecisionTableBody) envir.getByAstId(typeName);
         
         return ImmutableTaskRefNaming.builder()
+            .array(body.getHitPolicy() instanceof HitPolicyAll)
             .api(parent.dt().api(body))
             .impl(parent.dt().impl(body))
             .meta(ClassName.get(DecisionTableMeta.class))
@@ -137,6 +139,7 @@ public class JavaFlNaming implements FlNaming {
         FlowBody body = (FlowBody) envir.getByAstId(typeName);
         
         return ImmutableTaskRefNaming.builder()
+            .array(false)
             .api(parent.fl().api(body))
             .impl(parent.fl().impl(body))
             .meta(ClassName.get(FlowMetaValue.class))

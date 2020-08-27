@@ -11,11 +11,11 @@ headers: {
 }
 tasks: {
   CreateScore: {
-    then: HandleElement as: score
+    then: HandleElement 
     decision-table: bestDtTask uses: {
       name: schools.value
     }
-  } from: schools where: score.value > 10 then: EndTask,
+  } from: schools as: score where: score.value > 10 then: EndTask,
   
   HandleElement: {
     then: end-as: { output: { value: FirstTask.dtOutput }}

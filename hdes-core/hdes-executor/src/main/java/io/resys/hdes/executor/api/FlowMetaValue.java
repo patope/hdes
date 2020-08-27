@@ -37,21 +37,26 @@ public interface FlowMetaValue extends HdesExecutable.MetaValue {
   FlowState getState();
   
   interface FlowState extends Serializable {
-    
   }
   
-  interface FlowTaskMeta extends Serializable {
+  interface FlowTaskState extends Serializable {
     String getId();
   }
   
   @Value.Immutable
-  interface FlowTaskMetaMono<I extends InputValue, M extends MetaValue, T extends OutputValue> extends FlowTaskMeta {
+  interface FlowTaskMono<I extends InputValue, M extends MetaValue, T extends OutputValue> extends FlowTaskState {
     HdesExecution<I, M, T> getDelegate();
   }
   
   @Value.Immutable
-  interface FlowTaskMetaFlux<I extends InputValue, M extends MetaValue, T extends OutputValue, F extends FlowState> extends FlowTaskMeta {
+  interface FlowTaskMulti<I extends InputValue, M extends MetaValue, T extends OutputValue> extends FlowTaskState {
     List<HdesExecution<I, M, T>> getDelegate();
-    List<F> getSubState();
   }
+  
+  @Value.Immutable
+  interface FlowTaskFlux<I extends InputValue, M extends MetaValue, T extends OutputValue, S extends FlowState> extends FlowTaskState {
+    List<HdesExecution<I, M, T>> getDelegate();
+    List<S> getSubStates();
+  }
+  
 }
