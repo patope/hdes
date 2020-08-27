@@ -56,7 +56,6 @@ import io.resys.hdes.compiler.spi.en.ExpressionVisitor.EnScalarCodeSpec;
 import io.resys.hdes.compiler.spi.invocation.InvocationGetMethod;
 import io.resys.hdes.compiler.spi.invocation.InvocationGetMethodDt;
 import io.resys.hdes.compiler.spi.invocation.InvocationSpec;
-import io.resys.hdes.compiler.spi.invocation.InvocationSpec.InvocationSpecParams;
 import io.resys.hdes.compiler.spi.invocation.InvocationSpec.InvocationType;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.executor.api.DecisionTableMeta.DecisionTableMetaEntry;
@@ -105,38 +104,8 @@ public class DtImplSpec {
       ClassName typeName = scalarDef.getDirection() == DirectionType.IN ? 
           namings.dt().inputValue(body) :
           namings.dt().outputValueMono(body);
-
-      // Map inputs -> Immutable.Builder().val1(input.getCal1())...
-      CodeBlock.Builder formulaInput = CodeBlock.builder()
-          .add("$T.builder()",  JavaSpecUtil.immutable(namings.fr().inputValue(body, scalarDef)));
-      
-      InvocationSpecParams referedTypes = InvocationSpec.builder().envir(namings.ast()).parent(body).build(scalarDef.getFormula().get());
-      for(InvocationType scope : referedTypes.getTypes()) {
-        switch (scope) {
-        case IN:
-          formulaInput.add(".$L($L)", InvocationGetMethod.ACCESS_INPUT_VALUE, InvocationGetMethod.ACCESS_INPUT_VALUE);
-          break;
-        case OUT:
-          formulaInput.add(".$L($L)", InvocationGetMethodDt.ACCESS_OUTPUT_VALUE, InvocationGetMethodDt.ACCESS_OUTPUT_VALUE);
-        case INSTANCE:
-          continue;
-        case STATIC:
-          formulaInput.add(".$L($L)", InvocationGetMethodDt.ACCESS_STATIC_VALUE, InvocationGetMethodDt.ACCESS_STATIC_VALUE);
-          continue;
-        default: throw new IllegalArgumentException("Scope: " + scope + " parameter: " + scalarDef + " not implemented!"); 
-        }
-      }
-      
-      // add inputs -> apply(builder.build())
-      ClassName impl = namings.fr().impl(body, scalarDef);
-      CodeBlock formulaCall = CodeBlock.builder()
-          .add("$T $L = new $T()", JavaSpecUtil.type(scalarDef.getType()), scalarDef.getName(), impl)
-          .add("\r\n").add("  .apply($L)", formulaInput.add(".build()").build())
-          .add("\r\n").addStatement("  .getOutputValue().$L", JavaSpecUtil.methodCall(scalarDef.getName()))
-          .build();
       
       EnScalarCodeSpec formulaSpec = ExpressionSpec.builder().envir(namings.ast()).parent(body).dtf(scalarDef);
-      
       return CodeBlock.builder()
           .addStatement("mutator = $T.builder().from(mutator).$L($L).build()", JavaSpecUtil.immutable(typeName), scalarDef.getName(), formulaSpec.getValue())
           .build();

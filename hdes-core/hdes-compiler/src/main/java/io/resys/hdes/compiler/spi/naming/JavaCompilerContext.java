@@ -35,9 +35,7 @@ public class JavaCompilerContext implements CompilerContext {
   private final JavaFlNaming flNaming;
   private final JavaDtNaming dtNaming;
   private final SwitchNaming swNaming;
-  private final FormulaNaming frNaming;
 
-  
   private final AstEnvir envir;
   private final String fl;
   private final String dt;
@@ -52,7 +50,6 @@ public class JavaCompilerContext implements CompilerContext {
     this.flNaming = new JavaFlNaming(this, envir, this.fl);
     this.dtNaming = new JavaDtNaming(this, this.dt);
     this.swNaming = new JavaSwitchNaming(this);
-    this.frNaming = new JavaFormulaNaming(this);
   }
   
   public String pkg(Body body) {
@@ -84,11 +81,6 @@ public class JavaCompilerContext implements CompilerContext {
   @Override
   public SwitchNaming sw() {
     return swNaming;
-  }
-  
-  @Override
-  public FormulaNaming fr() {
-    return frNaming;
   }
 
   public static Config config() {

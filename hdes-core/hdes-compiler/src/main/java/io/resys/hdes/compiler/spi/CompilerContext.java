@@ -29,7 +29,6 @@ import com.squareup.javapoet.TypeName;
 import io.resys.hdes.ast.api.AstEnvir;
 import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
-import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
@@ -41,22 +40,8 @@ public interface CompilerContext {
   FlNaming fl();
   DtNaming dt();
   SwitchNaming sw();
-  FormulaNaming fr();
   
   String pkg(Body body);
-  
-  
-  interface FormulaNaming {
-    ClassName api(Body node, ScalarDef pointer);
-    ClassName impl(Body node, ScalarDef pointer);
-    ParameterizedTypeName template(Body node, ScalarDef pointer);
-    
-    ParameterizedTypeName executable(Body node, ScalarDef pointer);
-    ParameterizedTypeName execution(Body node, ScalarDef pointer);
-    
-    ClassName inputValue(Body node, ScalarDef pointer);
-    ClassName outputValue(Body node, ScalarDef pointer);
-  }
   
   interface SwitchNaming {
     ClassName api(FlowBody node, FlowTaskNode pointer);
