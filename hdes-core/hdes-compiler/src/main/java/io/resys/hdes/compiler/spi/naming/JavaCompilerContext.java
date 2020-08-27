@@ -34,7 +34,6 @@ public class JavaCompilerContext implements CompilerContext {
   private final String root;
   private final JavaFlNaming flNaming;
   private final JavaDtNaming dtNaming;
-  private final SwitchNaming swNaming;
 
   private final AstEnvir envir;
   private final String fl;
@@ -49,7 +48,6 @@ public class JavaCompilerContext implements CompilerContext {
     this.dt = root + "." + dt;
     this.flNaming = new JavaFlNaming(this, envir, this.fl);
     this.dtNaming = new JavaDtNaming(this, this.dt);
-    this.swNaming = new JavaSwitchNaming(this);
   }
   
   public String pkg(Body body) {
@@ -76,11 +74,6 @@ public class JavaCompilerContext implements CompilerContext {
   @Override
   public AstEnvir ast() {
     return envir;
-  }
-
-  @Override
-  public SwitchNaming sw() {
-    return swNaming;
   }
 
   public static Config config() {

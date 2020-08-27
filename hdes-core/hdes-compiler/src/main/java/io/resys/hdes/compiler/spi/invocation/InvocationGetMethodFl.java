@@ -36,8 +36,6 @@ import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 
 public class InvocationGetMethodFl {
   
-  public final static String ACCESS_STATE_VALUE = "stateValue";
-  
   public CodeBlock apply(
       AstNodeVisitorContext ctx, 
       Invocation node, 
@@ -66,20 +64,11 @@ public class InvocationGetMethodFl {
     Optional<FlowTaskNode> task = TypeDefFinder.getTask(flow.getTask(), taskName);
     if(task.isPresent()) {
       String nextPath = node.getValue().substring(node.getValue().indexOf(".") + 1);
-      
-      if(mappingExpression.isPresent()) {
-        return CodeBlock.builder()
-          .add("after.$L.getDelegate().getOutputValue().$L", 
-              JavaSpecUtil.methodCall(taskName),
-              JavaSpecUtil.methodCall(nextPath))
-          .build();
-      }
       return CodeBlock.builder()
-          .add("input.$L.$L.getDelegate().getOutputValue().$L", 
-              JavaSpecUtil.methodCall(ACCESS_STATE_VALUE),
-              JavaSpecUtil.methodCall(taskName),
-              JavaSpecUtil.methodCall(nextPath))
-          .build();
+        .add("after.$L.getDelegate().getOutputValue().$L", 
+            JavaSpecUtil.methodCall(taskName),
+            JavaSpecUtil.methodCall(nextPath))
+        .build();
     }
     
     final String required = (typeDef.getRequired() ? "" : ".get()");

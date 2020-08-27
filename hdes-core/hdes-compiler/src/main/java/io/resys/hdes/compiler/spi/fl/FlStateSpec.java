@@ -51,7 +51,6 @@ import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.executor.api.FlowMetaValue;
 import io.resys.hdes.executor.api.FlowMetaValue.FlowTaskMono;
 import io.resys.hdes.executor.api.FlowMetaValue.FlowTaskMulti;
-import io.resys.hdes.executor.api.SwitchMeta;
 
 public class FlStateSpec {
 
@@ -90,6 +89,7 @@ public class FlStateSpec {
         return Optional.of(methodSpec);
       }
       
+      /* TODO clean up
       FlowTaskPointer pointer = start.getNext();
       if (pointer instanceof WhenThenPointer) {
         final MethodSpec methodSpec = MethodSpec.methodBuilder(JavaSpecUtil.methodName(start.getId()))
@@ -101,7 +101,7 @@ public class FlStateSpec {
                 ClassName.get(SwitchMeta.class), 
                 namings.sw().outputValue(body, start))).build();
         return Optional.of(methodSpec);
-      }
+      }*/
       
       return Optional.empty();
     }

@@ -52,13 +52,12 @@ import io.resys.hdes.ast.api.nodes.FlowNode.WhenThen;
 import io.resys.hdes.ast.api.nodes.FlowNode.WhenThenPointer;
 import io.resys.hdes.ast.spi.Assertions;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.CompilerContext;
 import io.resys.hdes.compiler.spi.CompilerContext.TaskRefNaming;
 import io.resys.hdes.compiler.spi.dt.DtImplSpec;
 import io.resys.hdes.compiler.spi.en.ExpressionSpec;
 import io.resys.hdes.compiler.spi.en.ExpressionVisitor.EnScalarCodeSpec;
-import io.resys.hdes.executor.api.FlowExecutionException;
+import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.executor.api.FlowMetaValue;
 import io.resys.hdes.executor.api.HdesExecutable.ExecutionStatus;
 import io.resys.hdes.executor.api.HdesExecutable.SourceType;
@@ -67,7 +66,6 @@ import io.resys.hdes.executor.api.ImmutableFlowMetaValue;
 import io.resys.hdes.executor.api.ImmutableFlowTaskMono;
 import io.resys.hdes.executor.api.ImmutableFlowTaskMulti;
 import io.resys.hdes.executor.api.ImmutableHdesExecution;
-import io.resys.hdes.executor.api.SwitchMeta;
 
 public class FlImplSpec {
 
@@ -178,54 +176,44 @@ public class FlImplSpec {
     private CodeBlock sw(FlowTaskNode task) {
       final FlowTaskPointer pointer = task.getNext();
       final WhenThenPointer whenThen = (WhenThenPointer) pointer;
-      final ClassName stateType = namings.fl().stateValue(body);
-      
-      CodeBlock delegateInput = CodeBlock.builder()
-          .add("$T.builder()", JavaSpecUtil.immutable(namings.sw().inputValue(body, task)))
-          .add(".inputValue(input)")
-          .add(".stateValue(before)")
-          .add(".build()").build();
-      
-      CodeBlock.Builder execution = CodeBlock.builder()
-          .add("$T delegate = new $T()", namings.sw().execution(body, task), namings.sw().impl(body, task))
-          .addStatement(".apply($L)", delegateInput)
-          .add("\r\n")
-          
-          .addStatement("$T.Builder<$T, $T, $T> task = $T.builder()", ImmutableFlowTaskMono.class, namings.sw().inputValue(body, task), SwitchMeta.class, namings.sw().outputValue(body, task), ImmutableFlowTaskMono.class)
-          
-          .add("after = $T.builder().from(before)", JavaSpecUtil.immutable(stateType))
-          .addStatement(".$L(task.id($S).delegate(delegate).build()).build()", JavaSpecUtil.decapitalize(task.getId()), task.getId())
-          
-          .add("\r\n")
-          .addStatement("$T gate = after.$L.getDelegate().getOutputValue().getGate()", 
-              namings.sw().gate(body, task), 
-              JavaSpecUtil.methodCall(task.getId()));
-      
-      execution.beginControlFlow("switch(gate)");
+
+      CodeBlock.Builder execution = CodeBlock.builder();      
       for (WhenThen c : whenThen.getValues()) {
         FlowTaskPointer nextPointer = c.getThen();
-       
+      
+        CodeBlock.Builder control = CodeBlock.builder();
         if(nextPointer instanceof ThenPointer) {
           String nextTaskId = ((ThenPointer) nextPointer).getTask().get().getId();
           String nextMethodName = getExecuteTaskMethodName(nextTaskId);
-          execution.addStatement("case $L: return $L(input, after, meta)", nextTaskId, nextMethodName);
+          control.addStatement("return $L(input, after, meta)", nextMethodName);
         } else if(nextPointer instanceof EndPointer) {
           EndPointer endPointer = (EndPointer) nextPointer;
-          execution
-            .add("case $L:", endPointer.getName())
-            .add("\r\n").add(end(task, endPointer));
+          control.add(end(task, endPointer));
         } else {
           throw new HdesCompilerException(HdesCompilerException.builder().unknownSwitchThen(task));
         }
+        
+        
+        if(c.getWhen().isPresent()) {
+          EnScalarCodeSpec scalar = ExpressionSpec.builder().parent(body).envir(namings.ast()).flw(c);
+          
+          execution
+          .beginControlFlow("if($L)", scalar.getValue())
+          .add(control.build())
+          .endControlFlow();
+          
+          // if not boolean then null check or Optional.isPresent ?
+        } else if(whenThen.getValues().size() > 1) {
+          execution
+          .beginControlFlow("else")
+          .add(control.build())
+          .endControlFlow();
+          
+          break;
+        }
       }
       
-      String msg = new StringBuilder().append("Switch statement gate is not covered in flow: '")
-          .append(body.getId().getValue()).append("', switch task: '")
-          .append(task.getId()).append("'").toString();
-      return execution
-          .addStatement("default: throw new $T(after, $S)", FlowExecutionException.class, msg)
-          .endControlFlow()
-          .build();
+      return execution.build();
     }
     
     /**

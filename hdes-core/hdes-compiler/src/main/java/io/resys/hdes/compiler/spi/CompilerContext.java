@@ -31,7 +31,6 @@ import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.ast.api.nodes.AstNode.ObjectDef;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
-import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
 import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
 
 public interface CompilerContext {
@@ -39,22 +38,8 @@ public interface CompilerContext {
   AstEnvir ast();
   FlNaming fl();
   DtNaming dt();
-  SwitchNaming sw();
   
   String pkg(Body body);
-  
-  interface SwitchNaming {
-    ClassName api(FlowBody node, FlowTaskNode pointer);
-    ClassName impl(FlowBody node, FlowTaskNode pointer);
-    ParameterizedTypeName template(FlowBody node, FlowTaskNode pointer);
-    
-    ParameterizedTypeName executable(FlowBody node, FlowTaskNode pointer);
-    ParameterizedTypeName execution(FlowBody node, FlowTaskNode pointer);
-    
-    ClassName gate(FlowBody node, FlowTaskNode pointer);
-    ClassName inputValue(FlowBody node, FlowTaskNode pointer);
-    ClassName outputValue(FlowBody node, FlowTaskNode pointer);
-  }
   
   interface DtNaming {
     ClassName api(DecisionTableBody node);
