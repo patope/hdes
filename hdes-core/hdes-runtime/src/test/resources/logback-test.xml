@@ -23,7 +23,7 @@
 
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <filter class="io.resys.hdes.runtime.tests.LogbackDeclarationFilter">
-      <Marker>NameScoreFlow</Marker>
+      <Marker>DtWithFormula</Marker>
     </filter>
     <encoder>
       <param name="pattern" value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n" />

@@ -49,14 +49,16 @@ import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyMatrix;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.MatrixRow;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.RuleRow;
 import io.resys.hdes.ast.spi.Assertions;
-import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.compiler.spi.CompilerContext;
 import io.resys.hdes.compiler.spi.dt.RuleRowSpec.DtControlStatement;
+import io.resys.hdes.compiler.spi.en.ExpressionSpec;
+import io.resys.hdes.compiler.spi.en.ExpressionVisitor.EnScalarCodeSpec;
 import io.resys.hdes.compiler.spi.invocation.InvocationGetMethod;
 import io.resys.hdes.compiler.spi.invocation.InvocationGetMethodDt;
 import io.resys.hdes.compiler.spi.invocation.InvocationSpec;
 import io.resys.hdes.compiler.spi.invocation.InvocationSpec.InvocationSpecParams;
 import io.resys.hdes.compiler.spi.invocation.InvocationSpec.InvocationType;
+import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 import io.resys.hdes.executor.api.DecisionTableMeta.DecisionTableMetaEntry;
 import io.resys.hdes.executor.api.HdesExecutable.ExecutionStatus;
 import io.resys.hdes.executor.api.HdesExecutable.SourceType;
@@ -132,10 +134,11 @@ public class DtImplSpec {
           .add("\r\n").add("  .apply($L)", formulaInput.add(".build()").build())
           .add("\r\n").addStatement("  .getOutputValue().$L", JavaSpecUtil.methodCall(scalarDef.getName()))
           .build();
-
+      
+      EnScalarCodeSpec formulaSpec = ExpressionSpec.builder().envir(namings.ast()).parent(body).dtf(scalarDef);
+      
       return CodeBlock.builder()
-          .add(formulaCall)
-          .addStatement("mutator = $T.builder().from(mutator).$L($L).build()", JavaSpecUtil.immutable(typeName), scalarDef.getName(), scalarDef.getName())
+          .addStatement("mutator = $T.builder().from(mutator).$L($L).build()", JavaSpecUtil.immutable(typeName), scalarDef.getName(), formulaSpec.getValue())
           .build();
     }
     

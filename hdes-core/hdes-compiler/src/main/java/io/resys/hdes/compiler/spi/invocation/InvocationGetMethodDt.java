@@ -32,7 +32,6 @@ import io.resys.hdes.ast.api.nodes.AstNode.TypeDef;
 import io.resys.hdes.ast.api.nodes.AstNode.TypeInvocation;
 import io.resys.hdes.ast.api.nodes.AstNodeVisitor.AstNodeVisitorContext;
 import io.resys.hdes.ast.api.nodes.ExpressionNode.LambdaExpression;
-import io.resys.hdes.compiler.spi.en.ExpressionVisitor;
 import io.resys.hdes.compiler.spi.naming.JavaSpecUtil;
 
 public class InvocationGetMethodDt {
@@ -64,19 +63,18 @@ public class InvocationGetMethodDt {
     } else if(node instanceof StaticInvocation) {
     
       String name = typeName.replaceFirst("static", ACCESS_STATIC_VALUE);
-      value.add("$L.$L", ExpressionVisitor.ACCESS_SRC_VALUE, JavaSpecUtil.methodCall(name) + (typeDef.getRequired() ? "" : ".get()"));
+      value.add("$L", name + (typeDef.getRequired() ? "" : ".get()"));
       
     } else if(node instanceof InstanceInvocation) {
-      String name = JavaSpecUtil.methodCall(ACCESS_OUTPUT_VALUE);
-      value.add("$L.$L", ExpressionVisitor.ACCESS_SRC_VALUE, name + (typeDef.getRequired() ? "" : ".get()"));
+      value.add("$L", ACCESS_OUTPUT_VALUE + (typeDef.getRequired() ? "" : ".get()"));
     
     } else if(typeDef.getDirection() == DirectionType.IN) {
-      String name = JavaSpecUtil.methodCall(InvocationGetMethod.ACCESS_INPUT_VALUE + "." + typeName);
-      value.add("$L.$L", ExpressionVisitor.ACCESS_SRC_VALUE, name + (typeDef.getRequired() ? "" : ".get()"));
+      String name = JavaSpecUtil.methodCall(typeName);
+      value.add("$L.$L", InvocationGetMethod.ACCESS_INPUT_VALUE, name + (typeDef.getRequired() ? "" : ".get()"));
     
     } else {
-      String name = JavaSpecUtil.methodCall(ACCESS_OUTPUT_VALUE + "." + typeName);
-      value.add("$L.$L", ExpressionVisitor.ACCESS_SRC_VALUE, name + (typeDef.getRequired() ? "" : ".get()"));
+      String name = JavaSpecUtil.methodCall(typeName);
+      value.add("$L.$L", ACCESS_OUTPUT_VALUE, name + (typeDef.getRequired() ? "" : ".get()"));
     }
     return value.build();
   }
