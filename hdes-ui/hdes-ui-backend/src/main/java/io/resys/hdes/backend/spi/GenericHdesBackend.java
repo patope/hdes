@@ -36,7 +36,7 @@ import io.resys.hdes.backend.api.HdesBackendStorage.StorageWriter;
 import io.resys.hdes.backend.api.ImmutableStatus;
 import io.resys.hdes.backend.api.ReaderException;
 import io.resys.hdes.compiler.api.HdesCompiler;
-import io.resys.hdes.compiler.spi.java.JavaHdesCompiler;
+import io.resys.hdes.compiler.spi.JavaHdesCompiler;
 
 public class GenericHdesBackend implements HdesBackend {
   

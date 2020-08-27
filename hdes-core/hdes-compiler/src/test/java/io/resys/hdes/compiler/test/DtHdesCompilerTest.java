@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 
 import io.resys.hdes.compiler.api.HdesCompiler;
 import io.resys.hdes.compiler.api.HdesCompiler.Resource;
-import io.resys.hdes.compiler.spi.java.JavaHdesCompiler;
+import io.resys.hdes.compiler.spi.JavaHdesCompiler;
 
 public class DtHdesCompilerTest {
   private final HdesCompiler compiler = JavaHdesCompiler.config().build();

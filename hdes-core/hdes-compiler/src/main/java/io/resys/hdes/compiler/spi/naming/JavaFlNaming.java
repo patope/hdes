@@ -32,8 +32,9 @@ import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyAll;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.TaskRef;
 import io.resys.hdes.compiler.api.HdesCompilerException;
-import io.resys.hdes.compiler.spi.naming.Namings.FlNaming;
-import io.resys.hdes.compiler.spi.naming.Namings.TaskRefNaming;
+import io.resys.hdes.compiler.spi.CompilerContext.FlNaming;
+import io.resys.hdes.compiler.spi.CompilerContext.TaskRefNaming;
+import io.resys.hdes.compiler.spi.ImmutableTaskRefNaming;
 import io.resys.hdes.executor.api.DecisionTableMeta;
 import io.resys.hdes.executor.api.FlowMetaValue;
 import io.resys.hdes.executor.api.HdesExecutable.Flow;
@@ -41,30 +42,25 @@ import io.resys.hdes.executor.api.HdesExecutable.HdesExecution;
 import io.resys.hdes.executor.spi.HdesExecutableTemplate;
 
 public class JavaFlNaming implements FlNaming {
-  private final JavaNaming parent;
+  private final JavaCompilerContext parent;
   private final AstEnvir envir;
   private final String pkg;
 
-  public JavaFlNaming(JavaNaming parent, AstEnvir envir, String pkg) {
+  public JavaFlNaming(JavaCompilerContext parent, AstEnvir envir, String pkg) {
     super();
     this.parent = parent;
     this.envir = envir;
     this.pkg = pkg;
   }
-
-  @Override
-  public String pkg(FlowBody node) {
-    return pkg + "." + node.getId().getValue().toLowerCase();
-  }
-
+  
   @Override
   public ClassName api(FlowBody node) {
-    return ClassName.get(pkg(node), node.getId().getValue());
+    return ClassName.get(parent.pkg(node), node.getId().getValue());
   }
 
   @Override
   public ClassName impl(FlowBody node) {
-    return ClassName.get(pkg(node), node.getId().getValue() + "Gen");
+    return ClassName.get(parent.pkg(node), node.getId().getValue() + "Gen");
   }
   
   @Override

@@ -28,7 +28,7 @@ import org.apache.commons.io.IOUtils;
 
 import io.resys.hdes.compiler.api.HdesCompiler;
 import io.resys.hdes.compiler.api.HdesCompiler.Resource;
-import io.resys.hdes.compiler.spi.java.JavaHdesCompiler;
+import io.resys.hdes.compiler.spi.JavaHdesCompiler;
 
 public class FlJavaHdesCompilerTest {
   

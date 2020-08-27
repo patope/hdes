@@ -26,32 +26,20 @@ import com.squareup.javapoet.TypeName;
 
 import io.resys.hdes.ast.api.nodes.AstNode.Body;
 import io.resys.hdes.ast.api.nodes.AstNode.ScalarDef;
-import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
-import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
-import io.resys.hdes.compiler.spi.naming.Namings.FormulaNaming;
+import io.resys.hdes.compiler.spi.CompilerContext.FormulaNaming;
 import io.resys.hdes.executor.api.FormulaMeta;
 import io.resys.hdes.executor.api.HdesExecutable.Formula;
 import io.resys.hdes.executor.api.HdesExecutable.HdesExecution;
 import io.resys.hdes.executor.spi.HdesExecutableTemplate;
 
 public class JavaFormulaNaming implements FormulaNaming {
-  private final JavaNaming parent;
+  private final JavaCompilerContext parent;
 
-  public JavaFormulaNaming(JavaNaming parent) {
+  public JavaFormulaNaming(JavaCompilerContext parent) {
     super();
     this.parent = parent;
   }
 
-  @Override
-  public String pkg(Body body) {
-    if(body instanceof FlowBody) {
-      return parent.fl().pkg((FlowBody) body);
-    } else if(body instanceof DecisionTableBody) {
-      return parent.dt().pkg((DecisionTableBody) body);
-    }
-    throw new IllegalArgumentException("Formula naming not implemented for: " + body + "!");
-  }
-  
   @Override
   public ParameterizedTypeName execution(Body body, ScalarDef pointer) {
     ClassName output = outputValue(body, pointer);
@@ -69,12 +57,12 @@ public class JavaFormulaNaming implements FormulaNaming {
   
   @Override
   public ClassName api(Body node, ScalarDef pointer) {
-    return ClassName.get(pkg(node), node.getId().getValue() + JavaSpecUtil.capitalize(pointer.getName()) + "Formula");
+    return ClassName.get(parent.pkg(node), node.getId().getValue() + JavaSpecUtil.capitalize(pointer.getName()) + "Formula");
   }
 
   @Override
   public ClassName impl(Body node, ScalarDef pointer) {
-    return ClassName.get(pkg(node), node.getId().getValue() + JavaSpecUtil.capitalize(pointer.getName()) + "FormulaGen");
+    return ClassName.get(parent.pkg(node), node.getId().getValue() + JavaSpecUtil.capitalize(pointer.getName()) + "FormulaGen");
   }
   
   @Override

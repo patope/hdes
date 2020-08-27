@@ -26,25 +26,20 @@ import com.squareup.javapoet.TypeName;
 
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.DecisionTableBody;
 import io.resys.hdes.ast.api.nodes.DecisionTableNode.HitPolicyAll;
-import io.resys.hdes.compiler.spi.naming.Namings.DtNaming;
+import io.resys.hdes.compiler.spi.CompilerContext.DtNaming;
 import io.resys.hdes.executor.api.DecisionTableMeta;
 import io.resys.hdes.executor.api.HdesExecutable.DecisionTable;
 import io.resys.hdes.executor.api.HdesExecutable.HdesExecution;
 import io.resys.hdes.executor.spi.HdesExecutableTemplate;
 
 public class JavaDtNaming implements DtNaming {
-  private final JavaNaming parent;
+  private final JavaCompilerContext parent;
   private final String pkg;
 
-  public JavaDtNaming(JavaNaming parent, String pkg) {
+  public JavaDtNaming(JavaCompilerContext parent, String pkg) {
     super();
     this.parent = parent;
     this.pkg = pkg;
-  }
-
-  @Override
-  public String pkg(DecisionTableBody node) {
-    return pkg;
   }
 
   @Override

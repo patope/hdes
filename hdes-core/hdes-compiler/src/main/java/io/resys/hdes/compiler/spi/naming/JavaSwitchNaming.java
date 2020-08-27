@@ -26,22 +26,18 @@ import com.squareup.javapoet.TypeName;
 
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowBody;
 import io.resys.hdes.ast.api.nodes.FlowNode.FlowTaskNode;
-import io.resys.hdes.compiler.spi.naming.Namings.SwitchNaming;
+import io.resys.hdes.compiler.spi.CompilerContext.SwitchNaming;
 import io.resys.hdes.executor.api.HdesExecutable.HdesExecution;
 import io.resys.hdes.executor.api.HdesExecutable.Switch;
 import io.resys.hdes.executor.api.SwitchMeta;
 import io.resys.hdes.executor.spi.HdesExecutableTemplate;
 
 public class JavaSwitchNaming implements SwitchNaming {
-  private final JavaNaming parent;
+  private final JavaCompilerContext parent;
 
-  public JavaSwitchNaming(JavaNaming parent) {
+  public JavaSwitchNaming(JavaCompilerContext parent) {
     super();
     this.parent = parent;
-  }
-  @Override
-  public String pkg(FlowBody body) {
-    return parent.fl().pkg(body);
   }
   @Override
   public ClassName gate(FlowBody node, FlowTaskNode pointer) {
@@ -50,7 +46,7 @@ public class JavaSwitchNaming implements SwitchNaming {
   }
   @Override
   public ClassName api(FlowBody node, FlowTaskNode pointer) {
-    return ClassName.get(pkg(node), node.getId().getValue() + pointer.getId());
+    return ClassName.get(parent.pkg(node), node.getId().getValue() + pointer.getId());
   }
   @Override
   public ClassName inputValue(FlowBody node, FlowTaskNode pointer) {

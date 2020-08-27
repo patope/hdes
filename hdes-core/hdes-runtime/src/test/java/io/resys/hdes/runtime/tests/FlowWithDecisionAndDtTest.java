@@ -33,7 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.resys.hdes.compiler.api.HdesCompiler;
 import io.resys.hdes.compiler.api.HdesCompiler.Resource;
-import io.resys.hdes.compiler.spi.java.JavaHdesCompiler;
+import io.resys.hdes.compiler.spi.JavaHdesCompiler;
 import io.resys.hdes.executor.api.FlowMetaValue;
 import io.resys.hdes.executor.api.HdesExecutable;
 import io.resys.hdes.executor.api.HdesExecutable.Flow;
